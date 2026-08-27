@@ -41,19 +41,9 @@ export const demoProject: Project = {
       role: 'Gameplay Developer',
     },
     {
-      id: 'maya',
-      displayName: 'Maya',
-      role: '3D Artist',
-    },
-    {
-      id: 'jordan',
-      displayName: 'Jordan',
-      role: 'Animator',
-    },
-    {
-      id: 'alex',
-      displayName: 'Alex',
-      role: 'UI Developer',
+      id: 'sammie',
+      displayName: 'Samantha Matthews',
+      role: '3D Artist/Animator',
     },
   ],
 }
