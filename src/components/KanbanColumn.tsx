@@ -1,14 +1,16 @@
-import type { BoardColumn, Task } from '../types/board'
+import type { BoardColumn, DemoUser, Task } from '../types/board'
 import { TaskCard } from './TaskCard'
 
 interface KanbanColumnProps {
   column: BoardColumn
   tasks: Task[]
+  members: DemoUser[]
 }
 
 export function KanbanColumn({
   column,
   tasks,
+  members,
 }: KanbanColumnProps) {
   return (
     <section className="kanban-column">
@@ -18,16 +20,17 @@ export function KanbanColumn({
       </header>
 
       <div className="kanban-column__content">
-        {tasks.length === 0 && (
-          <p className="kanban-column__empty">No tasks</p>
-        )}
+        {tasks.map((task) => {
+          const assignee = members.find((member) => member.id === task.assigneeId) ?? null
 
-        {tasks.map((task) => (
-          <TaskCard
-            key={task.id}
-            task={task}
-          />
-        ))}
+          return (
+            <TaskCard
+              key={task.id}
+              task={task}
+              assignee={assignee}
+            />
+          )
+        })}
       </div>
     </section>
   )

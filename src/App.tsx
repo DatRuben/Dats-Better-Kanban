@@ -33,6 +33,7 @@ function App() {
               key={column.id}
               column={column}
               tasks={columnTasks}
+              members={demoProject.members}
             />
           )
         })}

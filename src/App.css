@@ -106,6 +106,7 @@
   text-transform: uppercase;
 }
 
+.task-card__assignee,
 .task-card__deadline {
   margin: 0.75rem 0 0;
   color: #8f99aa;
