@@ -106,6 +106,12 @@
   text-transform: uppercase;
 }
 
+.task-card__deadline {
+  margin: 0.75rem 0 0;
+  color: #8f99aa;
+  font-size: 0.75rem;
+}
+
 .task-card h3 {
   margin: 0;
   font-size: 0.95rem;

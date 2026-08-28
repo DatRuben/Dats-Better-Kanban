@@ -9,6 +9,7 @@ export function TaskCard({ task }: TaskCardProps) {
     <article className="task-card">
       <p className="task-card__priority">{task.priority}</p>
       <h3>{task.title}</h3>
+      <p className="task-card__deadline"> Deadline: {task.deadline ?? 'None'}</p>
     </article>
   )
 }
