@@ -20,6 +20,10 @@ export function KanbanColumn({
       </header>
 
       <div className="kanban-column__content">
+        {tasks.length === 0 && (
+          <p className="kanban-column__empty">No tasks</p>
+        )}
+        
         {tasks.map((task) => {
           const assignee = members.find((member) => member.id === task.assigneeId) ?? null
 
