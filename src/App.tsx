@@ -24,15 +24,15 @@ function App() {
         aria-label={`${demoProject.name} Kanban board`}
       >
         {orderedColumns.map((column) => {
-          const taskCount = demoProject.tasks.filter(
+          const columnTasks = demoProject.tasks.filter(
             (task) => task.columnId === column.id,
-          ).length
+          )
 
           return (
             <KanbanColumn
               key={column.id}
               column={column}
-              taskCount={taskCount}
+              tasks={columnTasks}
             />
           )
         })}
