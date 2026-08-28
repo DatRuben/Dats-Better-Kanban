@@ -32,7 +32,19 @@ export const demoProject: Project = {
     },
   ],
 
-  tasks: [],
+  tasks: [
+    {
+      id: 'night-crawler-hitbox',
+      title: 'Create Night Crawler hitbox',
+      description: 'Add the first simple hitbox for the Night Crawler.',
+      columnId: 'backlog',
+      priority: 'medium',
+      assigneeId: 'ruben',
+      deadline: null,
+      attachments: [],
+      createdAt: '2026-08-28',
+    },
+  ],
 
   members: [
     {
