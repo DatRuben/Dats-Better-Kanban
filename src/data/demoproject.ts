@@ -42,7 +42,7 @@ export const demoProject: Project = {
       assigneeId: 'ruben',
       deadline: null,
       attachments: [],
-      createdAt: '2026-08-28',
+      createdAt: '2026-08-27',
     },
   ],
 
