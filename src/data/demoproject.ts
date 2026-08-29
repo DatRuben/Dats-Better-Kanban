@@ -44,6 +44,17 @@ export const demoProject: Project = {
       attachments: [],
       createdAt: '2026-08-27',
     },
+        {
+      id: 'attack-animation-rin',
+      title: 'Create attack animation for rin',
+      description: 'Add the first attack animation for rin.',
+      columnId: 'in-progress',
+      priority: 'low',
+      assigneeId: 'sammie',
+      deadline: '2026-10-01',
+      attachments: [],
+      createdAt: '2026-08-28',
+    },
   ],
 
   members: [
