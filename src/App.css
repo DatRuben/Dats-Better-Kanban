@@ -99,11 +99,26 @@
 
 .task-card__priority {
   margin: 0 0 0.5rem;
-  color: #d7b26d;
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+.task-card__priority--critical {
+  color: #ff6b6b;
+}
+
+.task-card__priority--high {
+  color: #f59f58;
+}
+
+.task-card__priority--medium {
+  color: #d7b26d;
+}
+
+.task-card__priority--low {
+  color: #76a9e0;
 }
 
 .task-card__assignee,

@@ -11,7 +11,11 @@ export function TaskCard({
 }: TaskCardProps) {
   return (
     <article className="task-card">
-      <p className="task-card__priority">{task.priority}</p>
+      <p
+        className={`task-card__priority task-card__priority--${task.priority}`}
+      >
+        {task.priority}
+      </p>
       <h3>{task.title}</h3>
       <p className="task-card__assignee">
         Assigned: {assignee?.displayName ?? 'Unassigned'}
