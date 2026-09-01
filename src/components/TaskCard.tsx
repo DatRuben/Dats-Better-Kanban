@@ -6,6 +6,18 @@ interface TaskCardProps {
   taskNumber: number
 }
 
+function getInitials(displayName: string) {
+  const nameParts = displayName.trim().split(/\s+/)
+
+  const firstInitial = nameParts[0]?.[0] ?? ''
+  const lastInitial =
+    nameParts.length > 1
+      ? nameParts[nameParts.length - 1]?.[0] ?? ''
+      : ''
+
+  return `${firstInitial}${lastInitial}`.toUpperCase()
+}
+
 export function TaskCard({
   task,
   assignee,
@@ -34,9 +46,12 @@ export function TaskCard({
         {task.description}
       </p>
 
-      <p className="task-card__assignee">
-        {assignee?.displayName ?? 'Unassigned'}
-      </p>
+      <div
+        className="task-card__assignee"
+        title={assignee?.displayName ?? 'Unassigned'}
+      >
+        {assigneeInitials}
+      </div>
     </article>
   )
 }
