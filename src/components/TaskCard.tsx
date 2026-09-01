@@ -27,6 +27,11 @@ export function TaskCard({
     ? getInitials(assignee.displayName)
     : '?'
 
+  const imageAttachment = task.attachments.find(
+    (attachment) =>
+      attachment.mimeType.startsWith('image/'),
+  )
+
   return (
     <article className="task-card">
       <div className="task-card__top">
@@ -56,6 +61,15 @@ export function TaskCard({
       >
         {assigneeInitials}
       </div>
+
+      {imageAttachment && (
+        <div className="task-card__attachment">
+          <img
+            src={imageAttachment.previewUrl}
+            alt={imageAttachment.fileName}
+          />
+        </div>
+      )}
     </article>
   )
 }
