@@ -121,9 +121,37 @@
   color: #76a9e0;
 }
 
-.task-card__assignee,
+.task-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.task-card__ranking {
+  text-align: right;
+}
+
+.task-card__number {
+  margin: 0;
+  font-weight: 700;
+}
+
 .task-card__deadline {
-  margin: 0.75rem 0 0;
+  margin: 0.2rem 0 0;
+  color: #8f99aa;
+  font-size: 0.7rem;
+}
+
+.task-card__description {
+  margin: 0.5rem 0 0;
+  color: #aeb6c5;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.task-card__assignee {
+  margin: 1rem 0 0;
   color: #8f99aa;
   font-size: 0.75rem;
 }

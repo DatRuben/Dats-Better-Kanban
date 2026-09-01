@@ -13,17 +13,30 @@ export function TaskCard({
 }: TaskCardProps) {
   return (
     <article className="task-card">
-      <p
-        className={`task-card__priority task-card__priority--${task.priority}`}
-      >
-        {task.priority}
-      </p>
-      <p className="task-card__number">{taskNumber}</p>
+      <div className="task-card__top">
+        <p
+          className={`task-card__priority task-card__priority--${task.priority}`}
+        >
+          {task.priority}
+        </p>
+
+        <div className="task-card__ranking">
+          <p className="task-card__number">{taskNumber}</p>
+          <p className="task-card__deadline">
+            {task.deadline ?? 'No deadline'}
+          </p>
+        </div>
+      </div>
+
       <h3>{task.title}</h3>
-      <p className="task-card__assignee">
-        Assigned: {assignee?.displayName ?? 'Unassigned'}
+
+      <p className="task-card__description">
+        {task.description}
       </p>
-      <p className="task-card__deadline"> Deadline: {task.deadline ?? 'None'}</p>
+
+      <p className="task-card__assignee">
+        {assignee?.displayName ?? 'Unassigned'}
+      </p>
     </article>
   )
 }
