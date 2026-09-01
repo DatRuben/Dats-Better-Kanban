@@ -10,10 +10,9 @@ const priorityOrder = {
 }
 
 function App() {
-  const sortedColumnTasks = [...columnTasks].sort(
-    (firstTask, secondTask) =>
-      priorityOrder[firstTask.priority] -
-      priorityOrder[secondTask.priority],
+  const orderedColumns = [...demoProject.columns].sort(
+    (firstColumn, secondColumn) =>
+      firstColumn.order - secondColumn.order,
   )
 
   return (
