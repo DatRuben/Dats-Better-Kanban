@@ -24,7 +24,7 @@ export function KanbanColumn({
           <p className="kanban-column__empty">No tasks</p>
         )}
         
-        {tasks.map((task) => {
+        {tasks.map((task, index) => {
           const assignee = members.find((member) => member.id === task.assigneeId) ?? null
 
           return (
@@ -32,6 +32,7 @@ export function KanbanColumn({
               key={task.id}
               task={task}
               assignee={assignee}
+              taskNumber={index + 1}
             />
           )
         })}
