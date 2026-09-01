@@ -151,9 +151,17 @@
 }
 
 .task-card__assignee {
-  margin: 1rem 0 0;
-  color: #8f99aa;
-  font-size: 0.75rem;
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  margin-top: 1rem;
+  place-items: center;
+  border: 1px solid #384155;
+  border-radius: 50%;
+  background: #252a35;
+  color: #c8d0df;
+  font-size: 0.7rem;
+  font-weight: 700;
 }
 
 .task-card h3 {
