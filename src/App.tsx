@@ -2,10 +2,18 @@ import './App.css'
 import { KanbanColumn } from './components/KanbanColumn'
 import { demoProject } from './data/demoProject'
 
+const priorityOrder = {
+  critical: 0,
+  high: 1,
+  medium: 2,
+  low: 3,
+}
+
 function App() {
-  const orderedColumns = [...demoProject.columns].sort(
-    (firstColumn, secondColumn) =>
-      firstColumn.order - secondColumn.order,
+  const sortedColumnTasks = [...columnTasks].sort(
+    (firstTask, secondTask) =>
+      priorityOrder[firstTask.priority] -
+      priorityOrder[secondTask.priority],
   )
 
   return (
@@ -28,11 +36,17 @@ function App() {
             (task) => task.columnId === column.id,
           )
 
+          const sortedColumnTasks = [...columnTasks].sort(
+            (firstTask, secondTask) =>
+              priorityOrder[firstTask.priority] -
+              priorityOrder[secondTask.priority],
+          )
+
           return (
             <KanbanColumn
               key={column.id}
               column={column}
-              tasks={columnTasks}
+              tasks={sortedColumnTasks}
               members={demoProject.members}
             />
           )
