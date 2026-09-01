@@ -23,6 +23,10 @@ export function TaskCard({
   assignee,
   taskNumber,
 }: TaskCardProps) {
+  const assigneeInitials = assignee
+    ? getInitials(assignee.displayName)
+    : '?'
+
   return (
     <article className="task-card">
       <div className="task-card__top">
