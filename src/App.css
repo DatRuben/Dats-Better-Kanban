@@ -190,3 +190,26 @@
   font-size: 0.875rem;
   text-align: center;
 }
+
+.view-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.view-tabs button {
+  padding: 0.5rem 0.875rem;
+  border: 1px solid #303746;
+  border-radius: 0.5rem;
+  background: #1b1f27;
+  color: #c8d0df;
+  cursor: pointer;
+}
+
+.timeline-view {
+  min-height: 32rem;
+  padding: 1rem;
+  border: 1px solid #303746;
+  border-radius: 0.75rem;
+  background: #171a21;
+}

@@ -11,7 +11,8 @@ const priorityOrder = {
 }
 
 function App() {
-  const [tasks] = useState(demoProject.tasks)
+  const [tasks, setTasks] = useState(demoProject.tasks)
+  const [activeView, setActiveView] = useState<'board' | 'timeline'>('board')
   const orderedColumns = [...demoProject.columns].sort(
     (firstColumn, secondColumn) =>
       firstColumn.order - secondColumn.order,
@@ -27,6 +28,22 @@ function App() {
 
         <span className="demo-badge">Demo Mode</span>
       </header>
+
+      <nav className="view-tabs">
+        <button
+          type="button"
+          onClick={() => setActiveView('board')}
+        >
+          Board
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveView('timeline')}
+        >
+          Timeline
+        </button>
+      </nav>
 
       <section
         className="kanban-board"
@@ -73,6 +90,13 @@ function App() {
           )
         })}
       </section>
+
+      {activeView === 'timeline' && (
+        <section className="timeline-view">
+          <h2>Timeline</h2>
+          <p>Timeline view coming next.</p>
+        </section>
+      )}
     </main>
   )
 }
