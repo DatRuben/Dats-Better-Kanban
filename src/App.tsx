@@ -11,7 +11,7 @@ const priorityOrder = {
 }
 
 function App() {
-  const [tasks, setTasks] = useState(demoProject.tasks)
+  const [tasks] = useState(demoProject.tasks)
   const [activeView, setActiveView] = useState<'board' | 'timeline'>('board')
   const orderedColumns = [...demoProject.columns].sort(
     (firstColumn, secondColumn) =>
@@ -45,51 +45,53 @@ function App() {
         </button>
       </nav>
 
-      <section
-        className="kanban-board"
-        aria-label={`${demoProject.name} Kanban board`}
-      >
-        {orderedColumns.map((column) => {
-          const columnTasks = tasks.filter(
-            (task) => task.columnId === column.id,
-          )
+      {activeView === 'board' && (
+        <section
+          className="kanban-board"
+          aria-label={`${demoProject.name} Kanban board`}
+        >
+          {orderedColumns.map((column) => {
+            const columnTasks = tasks.filter(
+              (task) => task.columnId === column.id,
+            )
 
-          const sortedColumnTasks = [...columnTasks].sort(
-            (firstTask, secondTask) => {
-              const priorityDifference =
-                priorityOrder[firstTask.priority] -
-                priorityOrder[secondTask.priority]
+            const sortedColumnTasks = [...columnTasks].sort(
+              (firstTask, secondTask) => {
+                const priorityDifference =
+                  priorityOrder[firstTask.priority] -
+                  priorityOrder[secondTask.priority]
 
-              if (priorityDifference !== 0) {
-                return priorityDifference
-              }
+                if (priorityDifference !== 0) {
+                  return priorityDifference
+                }
 
-              if (firstTask.deadline && secondTask.deadline) {
-                return firstTask.deadline.localeCompare(secondTask.deadline)
-              }
+                if (firstTask.deadline && secondTask.deadline) {
+                  return firstTask.deadline.localeCompare(secondTask.deadline)
+                }
 
-              if (firstTask.deadline) {
-                return -1
-              }
+                if (firstTask.deadline) {
+                  return -1
+                }
 
-              if (secondTask.deadline) {
-                return 1
-              }
+                if (secondTask.deadline) {
+                  return 1
+                }
 
-              return 0
-            },
-          )
+                return 0
+              },
+            )
 
-          return (
-            <KanbanColumn
-              key={column.id}
-              column={column}
-              tasks={sortedColumnTasks}
-              members={demoProject.members}
-            />
-          )
-        })}
-      </section>
+            return (
+              <KanbanColumn
+                key={column.id}
+                column={column}
+                tasks={sortedColumnTasks}
+                members={demoProject.members}
+              />
+            )
+          })}
+        </section>
+      )}
 
       {activeView === 'timeline' && (
         <section className="timeline-view">
