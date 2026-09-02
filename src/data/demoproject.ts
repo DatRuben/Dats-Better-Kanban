@@ -151,7 +151,14 @@ export const demoProject: Project = {
       priority: 'low',
       assigneeId: 'ruben',
       deadline: null,
-      attachments: [],
+      attachments: [
+        {
+          id: 'nightcrawler',
+          fileName: 'Nightcrawler.png',
+          mimeType: 'image/png',
+          previewUrl: '/Nightcrawler.png',
+        },
+      ],
       createdAt: '2026-08-30',
     },
     {
