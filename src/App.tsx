@@ -1,4 +1,5 @@
 import './App.css'
+import { useState } from 'react'
 import { KanbanColumn } from './components/KanbanColumn'
 import { demoProject } from './data/demoProject'
 
@@ -10,6 +11,7 @@ const priorityOrder = {
 }
 
 function App() {
+  const [tasks] = useState(demoProject.tasks)
   const orderedColumns = [...demoProject.columns].sort(
     (firstColumn, secondColumn) =>
       firstColumn.order - secondColumn.order,
@@ -31,7 +33,7 @@ function App() {
         aria-label={`${demoProject.name} Kanban board`}
       >
         {orderedColumns.map((column) => {
-          const columnTasks = demoProject.tasks.filter(
+          const columnTasks = tasks.filter(
             (task) => task.columnId === column.id,
           )
 
