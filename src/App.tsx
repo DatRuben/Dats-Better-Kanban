@@ -36,9 +36,29 @@ function App() {
           )
 
           const sortedColumnTasks = [...columnTasks].sort(
-            (firstTask, secondTask) =>
-              priorityOrder[firstTask.priority] -
-              priorityOrder[secondTask.priority],
+            (firstTask, secondTask) => {
+              const priorityDifference =
+                priorityOrder[firstTask.priority] -
+                priorityOrder[secondTask.priority]
+
+              if (priorityDifference !== 0) {
+                return priorityDifference
+              }
+
+              if (firstTask.deadline && secondTask.deadline) {
+                return firstTask.deadline.localeCompare(secondTask.deadline)
+              }
+
+              if (firstTask.deadline) {
+                return -1
+              }
+
+              if (secondTask.deadline) {
+                return 1
+              }
+
+              return 0
+            },
           )
 
           return (
