@@ -2,12 +2,42 @@ import './App.css'
 import { useState } from 'react'
 import { KanbanColumn } from './components/KanbanColumn'
 import { demoProject } from './data/demoProject'
+import type { Task } from './types/board'
 
 const priorityOrder = {
   critical: 0,
   high: 1,
   medium: 2,
   low: 3,
+}
+
+function compareTasks(firstTask: Task, secondTask: Task) {
+  const priorityDifference =
+    priorityOrder[firstTask.priority] -
+    priorityOrder[secondTask.priority]
+
+  if (priorityDifference !== 0) {
+    return priorityDifference
+  }
+
+  if (firstTask.deadline && secondTask.deadline) {
+    const deadlineDifference =
+      firstTask.deadline.localeCompare(secondTask.deadline)
+
+    if (deadlineDifference !== 0) {
+      return deadlineDifference
+    }
+  }
+
+  if (firstTask.deadline && !secondTask.deadline) {
+    return -1
+  }
+
+  if (!firstTask.deadline && secondTask.deadline) {
+    return 1
+  }
+
+  return firstTask.createdAt.localeCompare(secondTask.createdAt)
 }
 
 function App() {
@@ -18,11 +48,15 @@ function App() {
       firstColumn.order - secondColumn.order,
   )
 
-  const timelineTasks = [...tasks]
-    .filter((task) => task.deadline)
-    .sort((firstTask, secondTask) =>
-      (firstTask.deadline ?? '').localeCompare(secondTask.deadline ?? ''),
-    )
+  const timelineTasks = tasks
+    .filter((task) => {
+      const taskColumn = demoProject.columns.find(
+        (column) => column.id === task.columnId,
+      )
+
+      return !taskColumn?.countsAsCompleted
+    })
+    .sort(compareTasks)
 
   return (
     <main className="app-shell">
@@ -61,31 +95,7 @@ function App() {
               (task) => task.columnId === column.id,
             )
 
-            const sortedColumnTasks = [...columnTasks].sort(
-              (firstTask, secondTask) => {
-                const priorityDifference =
-                  priorityOrder[firstTask.priority] -
-                  priorityOrder[secondTask.priority]
-
-                if (priorityDifference !== 0) {
-                  return priorityDifference
-                }
-
-                if (firstTask.deadline && secondTask.deadline) {
-                  return firstTask.deadline.localeCompare(secondTask.deadline)
-                }
-
-                if (firstTask.deadline) {
-                  return -1
-                }
-
-                if (secondTask.deadline) {
-                  return 1
-                }
-
-                return 0
-              },
-            )
+            const sortedColumnTasks = [...columnTasks].sort(compareTasks)
 
             return (
               <KanbanColumn
@@ -113,7 +123,7 @@ function App() {
 
                 <div className="timeline-item__content">
                   <p className="timeline-item__deadline">
-                    {task.deadline}
+                    {task.deadline ?? 'No deadline'}
                   </p>
 
                   <h3>{task.title}</h3>
