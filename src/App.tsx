@@ -119,15 +119,19 @@ function App() {
                 key={task.id}
                 className="timeline-item"
               >
-                <div className="timeline-item__marker" />
-
                 <div className="timeline-item__content">
                   <p className="timeline-item__deadline">
                     {task.deadline ?? 'No deadline'}
                   </p>
 
                   <h3>{task.title}</h3>
+
+                  <p className={`timeline-item__priority timeline-item__priority--${task.priority}`}>
+                    {task.priority}
+                  </p>
                 </div>
+
+                <div className="timeline-item__marker" />
               </article>
             ))}
           </div>
