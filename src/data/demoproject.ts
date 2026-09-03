@@ -9,26 +9,31 @@ export const demoProject: Project = {
       id: 'backlog',
       title: 'Backlog',
       order: 0,
+      countsAsCompleted: false,
     },
     {
       id: 'ready',
       title: 'Ready',
       order: 1,
+      countsAsCompleted: false,
     },
     {
       id: 'in-progress',
       title: 'In Progress',
       order: 2,
+      countsAsCompleted: false,
     },
     {
       id: 'review',
       title: 'Review',
       order: 3,
+      countsAsCompleted: false,
     },
     {
       id: 'complete',
       title: 'Complete',
       order: 4,
+      countsAsCompleted: true,
     },
   ],
 
@@ -43,6 +48,7 @@ export const demoProject: Project = {
       deadline: null,
       attachments: [],
       createdAt: '2026-08-27',
+      completedAt: null,
     },
     {
       id: 'attack-animation-rin',
@@ -54,6 +60,7 @@ export const demoProject: Project = {
       deadline: '2026-10-01',
       attachments: [],
       createdAt: '2026-08-28',
+      completedAt: null,
     },
     {
       id: 'gameplay-state-capabilities',
@@ -65,6 +72,7 @@ export const demoProject: Project = {
       deadline: null,
       attachments: [],
       createdAt: '2026-08-31',
+      completedAt: null,
     },
     {
       id: 'inventory-gameplay-capabilities',
@@ -76,6 +84,7 @@ export const demoProject: Project = {
       deadline: null,
       attachments: [],
       createdAt: '2026-08-31',
+      completedAt: null,
     },
     {
       id: 'container-gameplay-capabilities',
@@ -87,6 +96,7 @@ export const demoProject: Project = {
       deadline: null,
       attachments: [],
       createdAt: '2026-08-31',
+      completedAt: null,
     },
     {
       id: 'downed-held-item-cleanup',
@@ -98,6 +108,7 @@ export const demoProject: Project = {
       deadline: null,
       attachments: [],
       createdAt: '2026-08-31',
+      completedAt: null,
     },
     {
       id: 'downed-weapon-cleanup',
@@ -109,6 +120,7 @@ export const demoProject: Project = {
       deadline: null,
       attachments: [],
       createdAt: '2026-08-31',
+      completedAt: null,
     },
     {
       id: 'downed-regression-test',
@@ -120,6 +132,7 @@ export const demoProject: Project = {
       deadline: null,
       attachments: [],
       createdAt: '2026-08-31',
+      completedAt: null,
     },
     {
       id: 'nightcrawler-ai-attack',
@@ -131,6 +144,7 @@ export const demoProject: Project = {
       deadline: null,
       attachments: [],
       createdAt: '2026-08-30',
+      completedAt: null,
     },
     {
       id: 'nightcrawler-combat-hitbox',
@@ -142,6 +156,7 @@ export const demoProject: Project = {
       deadline: null,
       attachments: [],
       createdAt: '2026-08-29',
+      completedAt: null,
     },
     {
       id: 'nightcrawler-animator',
@@ -160,6 +175,7 @@ export const demoProject: Project = {
         },
       ],
       createdAt: '2026-08-30',
+      completedAt: null,
     },
     {
       id: 'review-playerinput-hardcoded-restrictions',
@@ -171,6 +187,7 @@ export const demoProject: Project = {
       deadline: null,
       attachments: [],
       createdAt: '2026-08-31',
+      completedAt: null,
     },
   ],
 

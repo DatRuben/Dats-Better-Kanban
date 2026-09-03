@@ -23,12 +23,14 @@ export interface Task {
   deadline: string | null
   attachments: Attachment[]
   createdAt: string
+  completedAt: string | null
 }
 
 export interface BoardColumn {
   id: string
   title: string
   order: number
+  countsAsCompleted: boolean
 }
 
 export interface Project {
