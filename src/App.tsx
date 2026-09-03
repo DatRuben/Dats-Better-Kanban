@@ -18,6 +18,12 @@ function App() {
       firstColumn.order - secondColumn.order,
   )
 
+  const timelineTasks = [...tasks]
+    .filter((task) => task.deadline)
+    .sort((firstTask, secondTask) =>
+      (firstTask.deadline ?? '').localeCompare(secondTask.deadline ?? ''),
+    )
+
   return (
     <main className="app-shell">
       <header className="app-header">
@@ -96,7 +102,21 @@ function App() {
       {activeView === 'timeline' && (
         <section className="timeline-view">
           <h2>Timeline</h2>
-          <p>Timeline view coming next.</p>
+
+          <div className="timeline-list">
+            {timelineTasks.map((task) => (
+              <article
+                key={task.id}
+                className="timeline-item"
+              >
+                <p className="timeline-item__deadline">
+                  {task.deadline}
+                </p>
+
+                <h3>{task.title}</h3>
+              </article>
+            ))}
+          </div>
         </section>
       )}
     </main>

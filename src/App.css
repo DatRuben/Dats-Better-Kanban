@@ -213,3 +213,27 @@
   border-radius: 0.75rem;
   background: #171a21;
 }
+
+.timeline-list {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.timeline-item {
+  padding: 0.875rem;
+  border: 1px solid #303746;
+  border-radius: 0.625rem;
+  background: #222630;
+}
+
+.timeline-item__deadline {
+  margin: 0 0 0.4rem;
+  color: #8f99aa;
+  font-size: 0.75rem;
+}
+
+.timeline-item h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
