@@ -215,16 +215,40 @@
 }
 
 .timeline-list {
+  position: relative;
   display: grid;
-  gap: 0.75rem;
+  gap: 1rem;
   margin-top: 1rem;
+  padding-left: 2rem;
+}
+
+.timeline-list::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0.45rem;
+  width: 2px;
+  background: #303746;
+  content: '';
 }
 
 .timeline-item {
+  position: relative;
   padding: 0.875rem;
   border: 1px solid #303746;
   border-radius: 0.625rem;
   background: #222630;
+}
+
+.timeline-item__marker {
+  position: absolute;
+  top: 1rem;
+  left: -1.95rem;
+  width: 0.75rem;
+  height: 0.75rem;
+  border: 2px solid #171a21;
+  border-radius: 50%;
+  background: #c8d0df;
 }
 
 .timeline-item__deadline {

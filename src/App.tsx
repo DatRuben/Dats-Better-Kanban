@@ -109,11 +109,15 @@ function App() {
                 key={task.id}
                 className="timeline-item"
               >
-                <p className="timeline-item__deadline">
-                  {task.deadline}
-                </p>
+                <div className="timeline-item__marker" />
 
-                <h3>{task.title}</h3>
+                <div className="timeline-item__content">
+                  <p className="timeline-item__deadline">
+                    {task.deadline}
+                  </p>
+
+                  <h3>{task.title}</h3>
+                </div>
               </article>
             ))}
           </div>
