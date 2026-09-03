@@ -242,20 +242,29 @@
   background: #171a21;
 }
 
-.timeline-item {
+.timeline-group {
   position: relative;
   width: 12rem;
   flex: 0 0 12rem;
 }
 
-.timeline-item:nth-child(odd) {
+.timeline-group:nth-child(odd) {
   align-self: flex-start;
   transform: translateY(-5rem);
 }
 
-.timeline-item:nth-child(even) {
+.timeline-group:nth-child(even) {
   align-self: flex-end;
   transform: translateY(5rem);
+}
+
+.timeline-group__cards {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.timeline-item {
+  width: 12rem;
 }
 
 .timeline-item__content {
@@ -265,7 +274,7 @@
   background: #222630;
 }
 
-.timeline-item__marker {
+.timeline-group__marker {
   position: absolute;
   left: 50%;
   width: 0.75rem;
@@ -276,11 +285,11 @@
   transform: translateX(-50%);
 }
 
-.timeline-item:nth-child(odd) .timeline-item__marker {
+.timeline-group:nth-child(odd) .timeline-group__marker {
   bottom: -5.4rem;
 }
 
-.timeline-item:nth-child(even) .timeline-item__marker {
+.timeline-group:nth-child(even) .timeline-group__marker {
   top: -5.4rem;
 }
 
