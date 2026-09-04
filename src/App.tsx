@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { KanbanColumn } from './components/KanbanColumn'
 import { demoProject } from './data/demoProject'
 import type { Task } from './types/board'
+import type { WheelEvent } from 'react'
 
 const priorityOrder = {
   critical: 0,
@@ -77,6 +78,29 @@ function App() {
     }
   }
 
+  function handleTimelineWheel(event: WheelEvent<HTMLElement>) {
+    const timeline = event.currentTarget
+
+    const scrollingRight = event.deltaY > 0
+    const scrollingLeft = event.deltaY < 0
+
+    const canScrollLeft = timeline.scrollLeft > 0
+    const canScrollRight =
+      timeline.scrollLeft <
+      timeline.scrollWidth - timeline.clientWidth
+
+    const shouldScrollTimeline =
+      (scrollingRight && canScrollRight) ||
+      (scrollingLeft && canScrollLeft)
+
+    if (!shouldScrollTimeline) {
+      return
+    }
+
+    event.preventDefault()
+    timeline.scrollLeft += event.deltaY
+  }
+
   return (
     <main className="app-shell">
       <header className="app-header">
@@ -129,7 +153,10 @@ function App() {
       )}
 
       {activeView === 'timeline' && (
-        <section className="timeline-view">
+        <section
+          className="timeline-view"
+          onWheel={handleTimelineWheel}
+        >
           <h2>Timeline</h2>
 
           <div className="timeline-list">
