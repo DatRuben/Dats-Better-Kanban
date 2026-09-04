@@ -249,6 +249,15 @@
   flex: 0 0 12rem;
 }
 
+.timeline-group::after {
+  position: absolute;
+  left: 50%;
+  width: 2px;
+  background: #596273;
+  content: '';
+  transform: translateX(-50%);
+}
+
 .timeline-group__cards {
   position: absolute;
   left: 0;
@@ -263,6 +272,16 @@
 
 .timeline-group:nth-child(even) .timeline-group__cards {
   top: calc(50% + 2rem);
+}
+
+.timeline-group:nth-child(odd)::after {
+  top: calc(50% - 2rem);
+  height: 2rem;
+}
+
+.timeline-group:nth-child(even)::after {
+  top: 50%;
+  height: 2rem;
 }
 
 .timeline-item {
