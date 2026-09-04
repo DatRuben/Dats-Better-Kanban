@@ -132,37 +132,39 @@ function App() {
         <section className="timeline-view">
           <h2>Timeline</h2>
 
-          {timelineGroups.map((group) => (
-            <div
-              key={group[0].id}
-              className="timeline-group"
-            >
-              <div className="timeline-group__cards">
-                {group.map((task) => (
-                  <article
-                    key={task.id}
-                    className="timeline-item"
-                  >
-                    <div className="timeline-item__content">
-                      <p className="timeline-item__deadline">
-                        {task.deadline ?? 'No deadline'}
-                      </p>
+          <div className="timeline-list">
+            {timelineGroups.map((group) => (
+              <div
+                key={group[0].id}
+                className="timeline-group"
+              >
+                <div className="timeline-group__cards">
+                  {group.map((task) => (
+                    <article
+                      key={task.id}
+                      className="timeline-item"
+                    >
+                      <div className="timeline-item__content">
+                        <p className="timeline-item__deadline">
+                          {task.deadline ?? 'No deadline'}
+                        </p>
 
-                      <h3>{task.title}</h3>
+                        <h3>{task.title}</h3>
 
-                      <p
-                        className={`timeline-item__priority timeline-item__priority--${task.priority}`}
-                      >
-                        {task.priority}
-                      </p>
-                    </div>
-                  </article>
-                ))}
+                        <p
+                          className={`timeline-item__priority timeline-item__priority--${task.priority}`}
+                        >
+                          {task.priority}
+                        </p>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+
+                <div className="timeline-group__marker" />
               </div>
-
-              <div className="timeline-group__marker" />
-            </div>
-          ))}
+            ))}
+          </div>
         </section>
       )}
     </main>
