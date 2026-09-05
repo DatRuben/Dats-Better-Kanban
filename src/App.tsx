@@ -41,6 +41,15 @@ function compareTasks(firstTask: Task, secondTask: Task) {
   return firstTask.createdAt.localeCompare(secondTask.createdAt)
 }
 
+function formatDeadline(deadline: string) {
+  const date = new Date(`${deadline}T00:00:00`)
+
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
 function App() {
   const [tasks] = useState(demoProject.tasks)
   const [activeView, setActiveView] = useState<'board' | 'timeline'>('board')
@@ -172,9 +181,11 @@ function App() {
                       className="timeline-item"
                     >
                       <div className="timeline-item__content">
-                        <p className="timeline-item__deadline">
-                          {task.deadline ?? 'No deadline'}
-                        </p>
+                        {task.deadline && (
+                          <p className="timeline-item__deadline">
+                            {formatDeadline(task.deadline)}
+                          </p>
+                        )}
 
                         <h3>{task.title}</h3>
 
