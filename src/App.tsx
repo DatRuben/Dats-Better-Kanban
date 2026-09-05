@@ -52,7 +52,8 @@ function formatDeadline(deadline: string) {
 
 function App() {
   const [tasks] = useState(demoProject.tasks)
-  const [activeView, setActiveView] = useState<'board' | 'timeline'>('board')
+  const [activeView, setActiveView] =
+    useState<'board' | 'timeline' | 'history'>('board')
   const orderedColumns = [...demoProject.columns].sort(
     (firstColumn, secondColumn) =>
       firstColumn.order - secondColumn.order,
@@ -70,6 +71,30 @@ function App() {
     .sort(compareTasks)
 
   const timelineGroups: Task[][] = []
+
+  const completedTasks = tasks
+    .filter((task) => {
+      const taskColumn = demoProject.columns.find(
+        (column) => column.id === task.columnId,
+      )
+
+      return taskColumn?.countsAsCompleted
+    })
+    .sort((firstTask, secondTask) => {
+      if (firstTask.completedAt && secondTask.completedAt) {
+        return secondTask.completedAt.localeCompare(firstTask.completedAt)
+      }
+
+      if (firstTask.completedAt) {
+        return -1
+      }
+
+      if (secondTask.completedAt) {
+        return 1
+      }
+
+      return 0
+    })
 
   for (const task of timelineTasks) {
     const lastGroup = timelineGroups[timelineGroups.length - 1]
@@ -134,6 +159,13 @@ function App() {
           onClick={() => setActiveView('timeline')}
         >
           Timeline
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveView('history')}
+        >
+          Completed History
         </button>
       </nav>
 
@@ -201,6 +233,35 @@ function App() {
 
                 <div className="timeline-group__marker" />
               </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {activeView === 'history' && (
+        <section className="history-view">
+          <h2>Completed History</h2>
+
+          <div className="history-list">
+            {completedTasks.map((task) => (
+              <article
+                key={task.id}
+                className="history-item"
+              >
+                <div>
+                  <h3>{task.title}</h3>
+
+                  <p className="history-item__completed-at">
+                    {task.completedAt ?? 'Completion time unknown'}
+                  </p>
+                </div>
+
+                <span
+                  className={`timeline-item__priority timeline-item__priority--${task.priority}`}
+                >
+                  {task.priority}
+                </span>
+              </article>
             ))}
           </div>
         </section>
