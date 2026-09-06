@@ -310,6 +310,20 @@ function App() {
       return
     }
 
+    const leavingCompleted =
+      currentColumn.countsAsCompleted &&
+      !targetColumn.countsAsCompleted
+
+    if (leavingCompleted) {
+      const confirmed = window.confirm(
+        'This task will be removed from Completed History. Continue?',
+      )
+
+      if (!confirmed) {
+        return
+      }
+    }
+
     const updatedTask = moveTaskToColumn(
       task,
       currentColumn,
