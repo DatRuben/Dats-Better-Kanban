@@ -1,3 +1,4 @@
+import { useDraggable } from '@dnd-kit/react'
 import type { DemoUser, Task } from '../types/board'
 
 interface TaskCardProps {
@@ -32,8 +33,15 @@ export function TaskCard({
       attachment.mimeType.startsWith('image/'),
   )
 
+  const { ref } = useDraggable({
+    id: task.id,
+  })
+
   return (
-    <article className="task-card">
+    <article
+      ref={ref}
+      className="task-card"
+    >
       <div className="task-card__top">
         <p
           className={`task-card__priority task-card__priority--${task.priority}`}

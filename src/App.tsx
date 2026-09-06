@@ -5,6 +5,7 @@ import { demoProject } from './data/demoProject'
 import type { Task } from './types/board'
 import type { WheelEvent } from 'react'
 import { moveTaskToColumn } from './utility/moveTask'
+import { DragDropProvider } from '@dnd-kit/react'
 
 const priorityOrder = {
   critical: 0,
@@ -171,28 +172,49 @@ function App() {
       </nav>
 
       {activeView === 'board' && (
-        <section
-          className="kanban-board"
-          aria-label={`${demoProject.name} Kanban board`}
+        <DragDropProvider
+          onDragEnd={(event) => {
+            if (event.canceled) {
+              return
+            }
+
+            const sourceId = event.operation.source?.id
+            const targetId = event.operation.target?.id
+
+            if (sourceId === undefined || targetId === undefined) {
+              return
+            }
+
+            handleMoveTask(
+              String(sourceId),
+              String(targetId),
+            )
+          }}
         >
-          {orderedColumns.map((column) => {
-            const columnTasks = tasks.filter(
-              (task) => task.columnId === column.id,
-            )
+          <section
+            className="kanban-board"
+            aria-label={`${demoProject.name} Kanban board`}
+          >
+            {orderedColumns.map((column) => {
+              const columnTasks = tasks.filter(
+                (task) => task.columnId === column.id,
+              )
 
-            const sortedColumnTasks = [...columnTasks].sort(compareTasks)
+              const sortedColumnTasks = [...columnTasks].sort(compareTasks)
 
-            return (
-              <KanbanColumn
-                key={column.id}
-                column={column}
-                tasks={sortedColumnTasks}
-                members={demoProject.members}
-              />
-            )
-          })}
-        </section>
+              return (
+                <KanbanColumn
+                  key={column.id}
+                  column={column}
+                  tasks={sortedColumnTasks}
+                  members={demoProject.members}
+                />
+              )
+            })}
+          </section>
+        </DragDropProvider>
       )}
+
 
       {activeView === 'timeline' && (
         <section

@@ -1,3 +1,4 @@
+import { useDroppable } from '@dnd-kit/react'
 import type { BoardColumn, DemoUser, Task } from '../types/board'
 import { TaskCard } from './TaskCard'
 
@@ -12,8 +13,15 @@ export function KanbanColumn({
   tasks,
   members,
 }: KanbanColumnProps) {
+  const { ref } = useDroppable({
+    id: column.id,
+  })
+
   return (
-    <section className="kanban-column">
+    <section
+      ref={ref}
+      className="kanban-column"
+    >
       <header className="kanban-column__header">
         <h2>{column.title}</h2>
         <span className="kanban-column__count">{tasks.length}</span>
@@ -23,9 +31,12 @@ export function KanbanColumn({
         {tasks.length === 0 && (
           <p className="kanban-column__empty">No tasks</p>
         )}
-        
+
         {tasks.map((task, index) => {
-          const assignee = members.find((member) => member.id === task.assigneeId) ?? null
+          const assignee =
+            members.find(
+              (member) => member.id === task.assigneeId,
+            ) ?? null
 
           return (
             <TaskCard
