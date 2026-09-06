@@ -4,6 +4,7 @@ import { KanbanColumn } from './components/KanbanColumn'
 import { demoProject } from './data/demoProject'
 import type { Task } from './types/board'
 import type { WheelEvent } from 'react'
+import { moveTaskToColumn } from './utility/moveTask'
 
 const priorityOrder = {
   critical: 0,
@@ -51,7 +52,7 @@ function formatDeadline(deadline: string) {
 }
 
 function App() {
-  const [tasks] = useState(demoProject.tasks)
+  const [tasks, setTasks] = useState(demoProject.tasks)
   const [activeView, setActiveView] =
     useState<'board' | 'timeline' | 'history'>('board')
   const orderedColumns = [...demoProject.columns].sort(
@@ -268,6 +269,40 @@ function App() {
       )}
     </main>
   )
+
+  function handleMoveTask(taskId: string, targetColumnId: string) {
+    const task = tasks.find((task) => task.id === taskId)
+    const targetColumn = demoProject.columns.find(
+      (column) => column.id === targetColumnId,
+    )
+
+    if (!task || !targetColumn) {
+      return
+    }
+
+    const currentColumn = demoProject.columns.find(
+      (column) => column.id === task.columnId,
+    )
+
+    if (!currentColumn) {
+      return
+    }
+
+    const updatedTask = moveTaskToColumn(
+      task,
+      currentColumn,
+      targetColumn,
+      new Date().toISOString(),
+    )
+
+    setTasks((currentTasks) =>
+      currentTasks.map((currentTask) =>
+        currentTask.id === taskId
+          ? updatedTask
+          : currentTask,
+      ),
+    )
+  }
 }
 
 export default App

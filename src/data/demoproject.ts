@@ -1,6 +1,6 @@
 import type { Project } from '../types/board'
 
-export const demoproject: Project = {
+export const demoProject: Project = {
   id: 'storygame-development',
   name: 'StoryGame Development',
 
