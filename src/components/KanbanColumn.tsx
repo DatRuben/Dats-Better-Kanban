@@ -11,6 +11,10 @@ interface KanbanColumnProps {
     columnId: string,
     title: string,
   ) => void
+  onColumnCompletionChange: (
+    columnId: string,
+    countsAsCompleted: boolean,
+  ) => void
 }
 
 export function KanbanColumn({
@@ -19,6 +23,7 @@ export function KanbanColumn({
   members,
   isPipelineEditing,
   onColumnTitleChange,
+  onColumnCompletionChange,
 }: KanbanColumnProps) {
   const { ref } = useDroppable({
     id: column.id,
@@ -31,16 +36,33 @@ export function KanbanColumn({
     >
       <header className="kanban-column__header">
         {isPipelineEditing ? (
-          <input
-            type="text"
-            value={column.title}
-            onChange={(event) =>
-              onColumnTitleChange(
-                column.id,
-                event.target.value,
-              )
-            }
-          />
+          <div>
+            <input
+              type="text"
+              value={column.title}
+              onChange={(event) =>
+                onColumnTitleChange(
+                  column.id,
+                  event.target.value,
+                )
+              }
+            />
+
+            <label>
+              <input
+                type="checkbox"
+                checked={column.countsAsCompleted}
+                disabled={tasks.length > 0}
+                onChange={(event) =>
+                  onColumnCompletionChange(
+                    column.id,
+                    event.target.checked,
+                  )
+                }
+              />
+              Count Tasks As Completed?
+            </label>
+          </div>
         ) : (
           <h2>{column.title}</h2>
         )}

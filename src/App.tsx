@@ -192,6 +192,22 @@ function App() {
     )
   }
 
+  function handleColumnCompletionChange(
+    columnId: string,
+    countsAsCompleted: boolean,
+  ) {
+    setColumns((currentColumns) =>
+      currentColumns.map((column) =>
+        column.id === columnId
+          ? {
+            ...column,
+            countsAsCompleted,
+          }
+          : column,
+      ),
+    )
+  }
+
   return (
     <main className="app-shell">
       <header className="app-header">
@@ -265,6 +281,7 @@ function App() {
                   members={demoProject.members}
                   isPipelineEditing={isPipelineEditing}
                   onColumnTitleChange={handleColumnTitleChange}
+                  onColumnCompletionChange={handleColumnCompletionChange}
                 />
               )
             })}
