@@ -65,10 +65,11 @@ function formatCompletedAt(completedAt: string) {
 }
 
 function App() {
+  const [columns] = useState(demoProject.columns)
   const [tasks, setTasks] = useState(demoProject.tasks)
   const [activeView, setActiveView] =
     useState<'board' | 'timeline' | 'history'>('board')
-  const orderedColumns = [...demoProject.columns].sort(
+  const orderedColumns = [...columns].sort(
     (firstColumn, secondColumn) =>
       firstColumn.order - secondColumn.order,
   )
@@ -77,7 +78,7 @@ function App() {
 
   const timelineTasks = tasks
     .filter((task) => {
-      const taskColumn = demoProject.columns.find(
+      const taskColumn = columns.find(
         (column) => column.id === task.columnId,
       )
 
@@ -90,7 +91,7 @@ function App() {
 
   const completedTasks = tasks
     .filter((task) => {
-      const taskColumn = demoProject.columns.find(
+      const taskColumn = columns.find(
         (column) => column.id === task.columnId,
       )
 
@@ -323,7 +324,7 @@ function App() {
 
   function handleMoveTask(taskId: string, targetColumnId: string) {
     const task = tasks.find((task) => task.id === taskId)
-    const targetColumn = demoProject.columns.find(
+    const targetColumn = columns.find(
       (column) => column.id === targetColumnId,
     )
 
@@ -331,7 +332,7 @@ function App() {
       return
     }
 
-    const currentColumn = demoProject.columns.find(
+    const currentColumn = columns.find(
       (column) => column.id === task.columnId,
     )
 
