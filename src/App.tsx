@@ -188,7 +188,7 @@ function App() {
       {activeView === 'board' && (
         <DragDropProvider
           onDragEnd={(event) => {
-            if (event.canceled) {
+            if (isPipelineEditing || event.canceled) {
               return
             }
 
