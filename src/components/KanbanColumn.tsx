@@ -36,7 +36,7 @@ export function KanbanColumn({
     >
       <header className="kanban-column__header">
         {isPipelineEditing ? (
-          <div>
+          <div className="pipeline-controls">
             <input
               type="text"
               value={column.title}

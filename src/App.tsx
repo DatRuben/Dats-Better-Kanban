@@ -367,9 +367,13 @@ function App() {
       )}
 
       {activeView === 'board' && (
-        <div>
+        <div className="pipeline-controls">
           <button
             type="button"
+            className={`pipeline-controls__button ${isPipelineEditing
+                ? 'pipeline-controls__button--active'
+                : ''
+              }`}
             onClick={() =>
               setIsPipelineEditing((currentValue) => !currentValue)
             }
@@ -382,10 +386,11 @@ function App() {
           {isPipelineEditing && (
             <button
               type="button"
+              className="pipeline-controls__button pipeline-controls__button--secondary"
               onClick={handleAddColumn}
               disabled={columns.length >= 100}
             >
-              Add Section
+              + Add Section
             </button>
           )}
         </div>
