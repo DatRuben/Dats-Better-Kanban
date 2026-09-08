@@ -73,8 +73,8 @@ function App() {
     (firstColumn, secondColumn) =>
       firstColumn.order - secondColumn.order,
   )
-
   const [isPipelineEditing, setIsPipelineEditing] = useState(false)
+  const [newColumnTitle, setNewColumnTitle] = useState('')
 
   const timelineTasks = tasks
     .filter((task) => {
@@ -153,7 +153,14 @@ function App() {
   }
 
   function handleAddColumn() {
+    const trimmedTitle = newColumnTitle.trim()
+
+    if (!trimmedTitle) {
+      return
+    }
+
     setColumns((currentColumns) => {
+
       if (currentColumns.length >= 100) {
         return currentColumns
       }
@@ -169,12 +176,14 @@ function App() {
         ...currentColumns,
         {
           id: crypto.randomUUID(),
-          title: 'New Section',
+          title: trimmedTitle,
           order: nextOrder,
           countsAsCompleted: false,
         },
       ]
     })
+
+    setNewColumnTitle('')
   }
 
   return (
@@ -351,6 +360,15 @@ function App() {
               onClick={handleAddColumn}
               disabled={columns.length >= 100}
             >
+              <input
+                type="text"
+                value={newColumnTitle}
+                onChange={(event) =>
+                  setNewColumnTitle(event.target.value)
+                }
+                placeholder="Section name"
+              />
+              
               Add Section
             </button>
           )}
