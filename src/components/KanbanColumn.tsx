@@ -35,7 +35,12 @@ export function KanbanColumn({
       className="kanban-column"
     >
 
-      <header className="kanban-column__header">
+      <header
+        className={`kanban-column__header ${isPipelineEditing
+            ? 'kanban-column__header--editing'
+            : ''
+          }`}
+      >
         {isPipelineEditing ? (
           <div className="kanban-column__editor">
             <input
