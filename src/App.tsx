@@ -65,7 +65,7 @@ function formatCompletedAt(completedAt: string) {
 }
 
 function App() {
-  const [columns] = useState(demoProject.columns)
+  const [columns, setColumns] = useState(demoProject.columns)
   const [tasks, setTasks] = useState(demoProject.tasks)
   const [activeView, setActiveView] =
     useState<'board' | 'timeline' | 'history'>('board')
@@ -150,6 +150,31 @@ function App() {
 
     event.preventDefault()
     timeline.scrollLeft += event.deltaY
+  }
+
+  function handleAddColumn() {
+    setColumns((currentColumns) => {
+      if (currentColumns.length >= 100) {
+        return currentColumns
+      }
+
+      const nextOrder =
+        currentColumns.length === 0
+          ? 0
+          : Math.max(
+            ...currentColumns.map((column) => column.order),
+          ) + 1
+
+      return [
+        ...currentColumns,
+        {
+          id: crypto.randomUUID(),
+          title: 'New Section',
+          order: nextOrder,
+          countsAsCompleted: false,
+        },
+      ]
+    })
   }
 
   return (
@@ -308,16 +333,28 @@ function App() {
       )}
 
       {activeView === 'board' && (
-        <button
-          type="button"
-          onClick={() =>
-            setIsPipelineEditing((currentValue) => !currentValue)
-          }
-        >
-          {isPipelineEditing
-            ? 'Exit Pipeline Edit Mode'
-            : 'Edit Pipeline'}
-        </button>
+        <div>
+          <button
+            type="button"
+            onClick={() =>
+              setIsPipelineEditing((currentValue) => !currentValue)
+            }
+          >
+            {isPipelineEditing
+              ? 'Exit Pipeline Edit Mode'
+              : 'Edit Pipeline'}
+          </button>
+
+          {isPipelineEditing && (
+            <button
+              type="button"
+              onClick={handleAddColumn}
+              disabled={columns.length >= 100}
+            >
+              Add Section
+            </button>
+          )}
+        </div>
       )}
     </main>
   )
