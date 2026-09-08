@@ -52,6 +52,18 @@ function formatDeadline(deadline: string) {
   })
 }
 
+function formatCompletedAt(completedAt: string) {
+  const date = new Date(completedAt)
+
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}
+
 function App() {
   const [tasks, setTasks] = useState(demoProject.tasks)
   const [activeView, setActiveView] =
@@ -275,7 +287,9 @@ function App() {
                   <h3>{task.title}</h3>
 
                   <p className="history-item__completed-at">
-                    {task.completedAt ?? 'Completion time unknown'}
+                    {task.completedAt
+                      ? formatCompletedAt(task.completedAt)
+                      : 'Completion time unknown'}
                   </p>
                 </div>
 
