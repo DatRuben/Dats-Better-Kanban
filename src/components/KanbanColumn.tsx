@@ -6,12 +6,19 @@ interface KanbanColumnProps {
   column: BoardColumn
   tasks: Task[]
   members: DemoUser[]
+  isPipelineEditing: boolean
+  onColumnTitleChange: (
+    columnId: string,
+    title: string,
+  ) => void
 }
 
 export function KanbanColumn({
   column,
   tasks,
   members,
+  isPipelineEditing,
+  onColumnTitleChange,
 }: KanbanColumnProps) {
   const { ref } = useDroppable({
     id: column.id,
@@ -23,7 +30,20 @@ export function KanbanColumn({
       className="kanban-column"
     >
       <header className="kanban-column__header">
-        <h2>{column.title}</h2>
+        {isPipelineEditing ? (
+          <input
+            type="text"
+            value={column.title}
+            onChange={(event) =>
+              onColumnTitleChange(
+                column.id,
+                event.target.value,
+              )
+            }
+          />
+        ) : (
+          <h2>{column.title}</h2>
+        )}
         <span className="kanban-column__count">{tasks.length}</span>
       </header>
 

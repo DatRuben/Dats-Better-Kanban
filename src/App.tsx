@@ -186,6 +186,22 @@ function App() {
     setNewColumnTitle('')
   }
 
+  function handleColumnTitleChange(
+    columnId: string,
+    title: string,
+  ) {
+    setColumns((currentColumns) =>
+      currentColumns.map((column) =>
+        column.id === columnId
+          ? {
+            ...column,
+            title,
+          }
+          : column,
+      ),
+    )
+  }
+
   return (
     <main className="app-shell">
       <header className="app-header">
@@ -257,6 +273,8 @@ function App() {
                   column={column}
                   tasks={sortedColumnTasks}
                   members={demoProject.members}
+                  isPipelineEditing={isPipelineEditing}
+                  onColumnTitleChange={handleColumnTitleChange}
                 />
               )
             })}
@@ -368,7 +386,7 @@ function App() {
                 }
                 placeholder="Section name"
               />
-              
+
               Add Section
             </button>
           )}
