@@ -34,10 +34,12 @@ export function KanbanColumn({
       ref={ref}
       className="kanban-column"
     >
+
       <header className="kanban-column__header">
         {isPipelineEditing ? (
-          <div className="pipeline-controls">
+          <div className="kanban-column__editor">
             <input
+              className="kanban-column__title-input"
               type="text"
               value={column.title}
               onChange={(event) =>
@@ -48,7 +50,7 @@ export function KanbanColumn({
               }
             />
 
-            <label>
+            <label className="kanban-column__completion-setting">
               <input
                 type="checkbox"
                 checked={column.countsAsCompleted}
