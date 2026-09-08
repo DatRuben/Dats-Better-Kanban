@@ -73,6 +73,8 @@ function App() {
       firstColumn.order - secondColumn.order,
   )
 
+  const [isPipelineEditing, setIsPipelineEditing] = useState(false)
+
   const timelineTasks = tasks
     .filter((task) => {
       const taskColumn = demoProject.columns.find(
@@ -302,6 +304,19 @@ function App() {
             ))}
           </div>
         </section>
+      )}
+
+      {activeView === 'board' && (
+        <button
+          type="button"
+          onClick={() =>
+            setIsPipelineEditing((currentValue) => !currentValue)
+          }
+        >
+          {isPipelineEditing
+            ? 'Exit Pipeline Edit Mode'
+            : 'Edit Pipeline'}
+        </button>
       )}
     </main>
   )
