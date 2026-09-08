@@ -51,7 +51,7 @@
 }
 
 .kanban-column {
-  min-height: 34rem;
+  min-height: 32rem;
   border: 1px solid #292f3b;
   border-radius: 0.75rem;
   background: #191c23;
@@ -61,6 +61,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  min-height: 4.75rem;
+  box-sizing: border-box;
   padding: 1rem;
   border-bottom: 1px solid #292f3b;
 }
@@ -218,7 +220,7 @@
   position: relative;
   display: flex;
   min-width: max-content;
-  min-height: 34rem;
+  min-height: 32rem;
   gap: 3rem;
   margin-top: 2rem;
   padding: 0 2rem;
@@ -441,9 +443,4 @@
   gap: 0.5rem;
   font-size: 0.75rem;
   line-height: 1.3;
-}
-
-.kanban-column__header--editing {
-  min-height: 4.75rem;
-  box-sizing: border-box;
 }
