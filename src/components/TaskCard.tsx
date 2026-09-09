@@ -5,6 +5,7 @@ interface TaskCardProps {
   task: Task
   assignee: DemoUser | null
   taskNumber: number
+  isPipelineEditing: boolean
 }
 
 function getInitials(displayName: string) {
@@ -23,6 +24,7 @@ export function TaskCard({
   task,
   assignee,
   taskNumber,
+  isPipelineEditing,
 }: TaskCardProps) {
   const assigneeInitials = assignee
     ? getInitials(assignee.displayName)
@@ -35,6 +37,7 @@ export function TaskCard({
 
   const { ref } = useDraggable({
     id: task.id,
+    disabled: isPipelineEditing,
   })
 
   return (

@@ -106,6 +106,7 @@ export function KanbanColumn({
               task={task}
               assignee={assignee}
               taskNumber={index + 1}
+              isPipelineEditing={isPipelineEditing}
             />
           )
         })}
