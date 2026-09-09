@@ -441,7 +441,8 @@
 
 .kanban-column__title-input {
   box-sizing: border-box;
-  width: 100%;
+  width: auto;
+  flex: 1;
   height: 2rem;
   min-width: 0;
   padding: 0.35rem 0.5rem;
@@ -510,4 +511,41 @@
 .kanban-column__delete-button:disabled {
   opacity: 0.35;
   cursor: not-allowed;
+}
+
+.kanban-column__title-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.kanban-column__drag-handle {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 2rem;
+  padding: 0;
+  place-items: center;
+  border: 1px solid #384155;
+  border-radius: 0.5rem;
+  color: #8f99aa;
+  background: #222630;
+  font-size: 1rem;
+  cursor: grab;
+}
+
+.kanban-column__drag-handle:hover {
+  border-color: #6d86b8;
+  color: #e7eaf0;
+  background: #2a303c;
+}
+
+.kanban-column__drag-handle:active {
+  cursor: grabbing;
+}
+
+.kanban-column--dragging {
+  border-color: #6d86b8;
+  opacity: 0.65;
 }

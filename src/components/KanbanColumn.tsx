@@ -1,4 +1,4 @@
-import { useDroppable } from '@dnd-kit/react'
+import { useSortable } from '@dnd-kit/react/sortable'
 import type { BoardColumn, DemoUser, Task } from '../types/board'
 import { TaskCard } from './TaskCard'
 
@@ -27,8 +27,17 @@ export function KanbanColumn({
   onColumnCompletionChange,
   onDeleteColumn,
 }: KanbanColumnProps) {
-  const { ref } = useDroppable({
+  const {
+    ref,
+    handleRef,
+    isDragging,
+  } = useSortable({
     id: column.id,
+    index: column.order,
+    disabled: {
+      draggable: !isPipelineEditing,
+      droppable: false,
+    },
   })
 
   return (
@@ -37,22 +46,37 @@ export function KanbanColumn({
       className={`kanban-column ${isPipelineEditing
         ? 'kanban-column--editing'
         : ''
+        } ${isDragging
+          ? 'kanban-column--dragging'
+          : ''
         }`}
     >
       <header className="kanban-column__header">
         {isPipelineEditing ? (
           <div className="kanban-column__editor">
-            <input
-              className="kanban-column__title-input"
-              type="text"
-              value={column.title}
-              onChange={(event) =>
-                onColumnTitleChange(
-                  column.id,
-                  event.target.value,
-                )
-              }
-            />
+            <div className="kanban-column__title-row">
+              <button
+                ref={handleRef}
+                type="button"
+                className="kanban-column__drag-handle"
+                aria-label={`Reorder ${column.title}`}
+                title="Drag to reorder section"
+              >
+                ⠿
+              </button>
+
+              <input
+                className="kanban-column__title-input"
+                type="text"
+                value={column.title}
+                onChange={(event) =>
+                  onColumnTitleChange(
+                    column.id,
+                    event.target.value,
+                  )
+                }
+              />
+            </div>
             <div className="kanban-column__editor-options">
               <label className="kanban-column__completion-setting">
                 <input

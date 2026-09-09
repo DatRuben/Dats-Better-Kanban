@@ -6,6 +6,7 @@ import type { Task } from './types/board'
 import type { WheelEvent } from 'react'
 import { moveTaskToColumn } from './utility/moveTask'
 import { DragDropProvider } from '@dnd-kit/react'
+import { isSortable } from '@dnd-kit/react/sortable'
 
 const priorityOrder = {
   critical: 0,
@@ -284,6 +285,42 @@ function App() {
     )
   }
 
+  function handleMoveColumn(
+    initialIndex: number,
+    targetIndex: number,
+  ) {
+    if (initialIndex === targetIndex) {
+      return
+    }
+
+    setColumns((currentColumns) => {
+      const reorderedColumns = [...currentColumns].sort(
+        (firstColumn, secondColumn) =>
+          firstColumn.order - secondColumn.order,
+      )
+
+      const [movedColumn] = reorderedColumns.splice(
+        initialIndex,
+        1,
+      )
+
+      if (!movedColumn) {
+        return currentColumns
+      }
+
+      reorderedColumns.splice(
+        targetIndex,
+        0,
+        movedColumn,
+      )
+
+      return reorderedColumns.map((column, index) => ({
+        ...column,
+        order: index,
+      }))
+    })
+  }
+
   return (
     <main className="app-shell">
       <header className="app-header">
@@ -321,7 +358,22 @@ function App() {
       {activeView === 'board' && (
         <DragDropProvider
           onDragEnd={(event) => {
-            if (isPipelineEditing || event.canceled) {
+            if (event.canceled) {
+              return
+            }
+
+            if (isPipelineEditing) {
+              const source = event.operation.source
+
+              if (!isSortable(source)) {
+                return
+              }
+
+              handleMoveColumn(
+                source.initialIndex,
+                source.index,
+              )
+
               return
             }
 
