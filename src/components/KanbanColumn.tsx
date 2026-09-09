@@ -32,9 +32,11 @@ export function KanbanColumn({
   return (
     <section
       ref={ref}
-      className="kanban-column"
+      className={`kanban-column ${isPipelineEditing
+          ? 'kanban-column--editing'
+          : ''
+        }`}
     >
-
       <header className="kanban-column__header">
         {isPipelineEditing ? (
           <div className="kanban-column__editor">
