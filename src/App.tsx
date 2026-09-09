@@ -76,6 +76,8 @@ function App() {
   )
   const [isPipelineEditing, setIsPipelineEditing] = useState(false)
 
+  const [creatingTaskColumnId, setCreatingTaskColumnId] = useState<string | null>(null)
+
   const timelineTasks = tasks
     .filter((task) => {
       const taskColumn = columns.find(
@@ -411,6 +413,10 @@ function App() {
                   onColumnTitleChange={handleColumnTitleChange}
                   onColumnCompletionChange={handleColumnCompletionChange}
                   onDeleteColumn={handleDeleteColumn}
+                  isCreatingTask={creatingTaskColumnId === column.id}
+                  onStartCreatingTask={() =>
+                    setCreatingTaskColumnId(column.id)
+                  }
                 />
               )
             })}

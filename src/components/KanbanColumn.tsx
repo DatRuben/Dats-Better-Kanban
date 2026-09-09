@@ -16,6 +16,8 @@ interface KanbanColumnProps {
     countsAsCompleted: boolean,
   ) => void
   onDeleteColumn: (columnId: string) => void
+  isCreatingTask: boolean
+  onStartCreatingTask: () => void
 }
 
 export function KanbanColumn({
