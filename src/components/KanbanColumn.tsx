@@ -54,7 +54,6 @@ export function KanbanColumn({
               <input
                 type="checkbox"
                 checked={column.countsAsCompleted}
-                disabled={tasks.length > 0}
                 onChange={(event) =>
                   onColumnCompletionChange(
                     column.id,

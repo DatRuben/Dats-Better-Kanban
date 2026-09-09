@@ -196,15 +196,56 @@ function App() {
     columnId: string,
     countsAsCompleted: boolean,
   ) {
+    const column = columns.find(
+      (column) => column.id === columnId,
+    )
+
+    if (!column) {
+      return
+    }
+
+    const columnTasks = tasks.filter(
+      (task) => task.columnId === columnId,
+    )
+
+    if (columnTasks.length > 0) {
+      const message = countsAsCompleted
+        ? 'All tasks in this section will be marked as completed. Continue?'
+        : 'All tasks in this section will be removed from Completed History. Continue?'
+
+      const confirmed = window.confirm(message)
+
+      if (!confirmed) {
+        return
+      }
+    }
+
+    const completionTime = new Date().toISOString()
+
     setColumns((currentColumns) =>
-      currentColumns.map((column) =>
-        column.id === columnId
+      currentColumns.map((currentColumn) =>
+        currentColumn.id === columnId
           ? {
-            ...column,
+            ...currentColumn,
             countsAsCompleted,
           }
-          : column,
+          : currentColumn,
       ),
+    )
+
+    setTasks((currentTasks) =>
+      currentTasks.map((task) => {
+        if (task.columnId !== columnId) {
+          return task
+        }
+
+        return {
+          ...task,
+          completedAt: countsAsCompleted
+            ? completionTime
+            : null,
+        }
+      }),
     )
   }
 
@@ -371,8 +412,8 @@ function App() {
           <button
             type="button"
             className={`pipeline-controls__button ${isPipelineEditing
-                ? 'pipeline-controls__button--active'
-                : ''
+              ? 'pipeline-controls__button--active'
+              : ''
               }`}
             onClick={() =>
               setIsPipelineEditing((currentValue) => !currentValue)
