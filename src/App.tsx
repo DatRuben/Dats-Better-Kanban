@@ -249,6 +249,41 @@ function App() {
     )
   }
 
+  function handleDeleteColumn(columnId: string) {
+    const column = columns.find(
+      (column) => column.id === columnId,
+    )
+
+    if (!column) {
+      return
+    }
+
+    const hasTasks = tasks.some(
+      (task) => task.columnId === columnId,
+    )
+
+    if (hasTasks) {
+      return
+    }
+
+    const confirmed = window.confirm(
+      `Delete "${column.title}"? This cannot be undone.`,
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    setColumns((currentColumns) =>
+      currentColumns
+        .filter((column) => column.id !== columnId)
+        .map((column, index) => ({
+          ...column,
+          order: index,
+        })),
+    )
+  }
+
   return (
     <main className="app-shell">
       <header className="app-header">
@@ -323,6 +358,7 @@ function App() {
                   isPipelineEditing={isPipelineEditing}
                   onColumnTitleChange={handleColumnTitleChange}
                   onColumnCompletionChange={handleColumnCompletionChange}
+                  onDeleteColumn={handleDeleteColumn}
                 />
               )
             })}

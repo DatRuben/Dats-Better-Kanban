@@ -481,3 +481,33 @@
   accent-color: #6d86b8;
   cursor: pointer;
 }
+
+.kanban-column__editor-options {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.kanban-column__delete-button {
+  padding: 0.25rem 0.45rem;
+  border: 1px solid #634047;
+  border-radius: 0.4rem;
+  color: #ff8b8b;
+  background: #222630;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.kanban-column__delete-button:hover:not(:disabled) {
+  border-color: #ff6b6b;
+  color: #ffb0b0;
+  background: #2a303c;
+}
+
+.kanban-column__delete-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}

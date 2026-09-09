@@ -15,6 +15,7 @@ interface KanbanColumnProps {
     columnId: string,
     countsAsCompleted: boolean,
   ) => void
+  onDeleteColumn: (columnId: string) => void
 }
 
 export function KanbanColumn({
@@ -24,6 +25,7 @@ export function KanbanColumn({
   isPipelineEditing,
   onColumnTitleChange,
   onColumnCompletionChange,
+  onDeleteColumn,
 }: KanbanColumnProps) {
   const { ref } = useDroppable({
     id: column.id,
@@ -33,8 +35,8 @@ export function KanbanColumn({
     <section
       ref={ref}
       className={`kanban-column ${isPipelineEditing
-          ? 'kanban-column--editing'
-          : ''
+        ? 'kanban-column--editing'
+        : ''
         }`}
     >
       <header className="kanban-column__header">
@@ -51,20 +53,35 @@ export function KanbanColumn({
                 )
               }
             />
+            <div className="kanban-column__editor-options">
+              <label className="kanban-column__completion-setting">
+                <input
+                  type="checkbox"
+                  checked={column.countsAsCompleted}
+                  onChange={(event) =>
+                    onColumnCompletionChange(
+                      column.id,
+                      event.target.checked,
+                    )
+                  }
+                />
+                Counts as completed
+              </label>
 
-            <label className="kanban-column__completion-setting">
-              <input
-                type="checkbox"
-                checked={column.countsAsCompleted}
-                onChange={(event) =>
-                  onColumnCompletionChange(
-                    column.id,
-                    event.target.checked,
-                  )
+              <button
+                type="button"
+                className="kanban-column__delete-button"
+                disabled={tasks.length > 0}
+                title={
+                  tasks.length > 0
+                    ? 'Move all tasks out before deleting this section.'
+                    : `Delete ${column.title}`
                 }
-              />
-              Count Tasks As Completed?
-            </label>
+                onClick={() => onDeleteColumn(column.id)}
+              >
+                Delete
+              </button>
+            </div>
           </div>
         ) : (
           <h2>{column.title}</h2>
