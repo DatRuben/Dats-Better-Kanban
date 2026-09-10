@@ -363,6 +363,28 @@ function App() {
     setCreatingTaskColumnId(null)
   }
 
+  function handleUpdateTask(
+    taskId: string,
+    taskInput: NewTaskInput,
+  ) {
+    setTasks((currentTasks) =>
+      currentTasks.map((task) =>
+        task.id === taskId
+          ? {
+            ...task,
+            title: taskInput.title,
+            description: taskInput.description,
+            priority: taskInput.priority,
+            assigneeId: taskInput.assigneeId,
+            deadline: taskInput.deadline,
+          }
+          : task,
+      ),
+    )
+
+    setEditingTaskId(null)
+  }
+
   return (
     <main className="app-shell">
       <header className="app-header">
@@ -454,9 +476,10 @@ function App() {
                   onColumnCompletionChange={handleColumnCompletionChange}
                   onDeleteColumn={handleDeleteColumn}
                   isCreatingTask={creatingTaskColumnId === column.id}
-                  onStartCreatingTask={() =>
+                  onStartCreatingTask={() => {
+                    setEditingTaskId(null)
                     setCreatingTaskColumnId(column.id)
-                  }
+                  }}
                   onCreateTask={(taskInput) =>
                     handleCreateTask(column.id, taskInput)
                   }
@@ -468,6 +491,12 @@ function App() {
                     setCreatingTaskColumnId(null)
                     setEditingTaskId(taskId)
                   }}
+                  onUpdateTask={(taskId, taskInput) =>
+                    handleUpdateTask(taskId, taskInput)
+                  }
+                  onCancelEditingTask={() =>
+                    setEditingTaskId(null)
+                  }
                 />
               )
             })}
