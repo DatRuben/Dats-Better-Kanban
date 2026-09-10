@@ -21,6 +21,8 @@ interface KanbanColumnProps {
   onStartCreatingTask: () => void
   onCreateTask: (task: NewTaskInput) => void
   onCancelCreatingTask: () => void
+  editingTaskId: string | null
+  onStartEditingTask: (taskId: string) => void
 }
 
 export function KanbanColumn({
@@ -35,6 +37,8 @@ export function KanbanColumn({
   onStartCreatingTask,
   onCreateTask,
   onCancelCreatingTask,
+  editingTaskId,
+  onStartEditingTask
 }: KanbanColumnProps) {
   const {
     ref,
@@ -140,6 +144,8 @@ export function KanbanColumn({
               assignee={assignee}
               taskNumber={index + 1}
               isPipelineEditing={isPipelineEditing}
+              isEditing={editingTaskId === task.id}
+              onEdit={() => onStartEditingTask(task.id)}
             />
           )
         })}

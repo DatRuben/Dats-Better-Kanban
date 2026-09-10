@@ -6,6 +6,8 @@ interface TaskCardProps {
   assignee: DemoUser | null
   taskNumber: number
   isPipelineEditing: boolean
+  isEditing: boolean
+  onEdit: () => void
 }
 
 function getInitials(displayName: string) {
@@ -25,6 +27,8 @@ export function TaskCard({
   assignee,
   taskNumber,
   isPipelineEditing,
+  isEditing,
+  onEdit,
 }: TaskCardProps) {
   const assigneeInitials = assignee
     ? getInitials(assignee.displayName)
@@ -45,6 +49,19 @@ export function TaskCard({
       ref={ref}
       className="task-card"
     >
+      {!isPipelineEditing && (
+        <button
+          type="button"
+          className={`task-card__edit-button ${isEditing
+              ? 'task-card__edit-button--active'
+              : ''
+            }`}
+          onClick={onEdit}
+        >
+          {isEditing ? 'Editing' : 'Edit'}
+        </button>
+      )}
+
       <div className="task-card__top">
         <p
           className={`task-card__priority task-card__priority--${task.priority}`}

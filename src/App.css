@@ -686,3 +686,34 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+.task-card {
+  position: relative;
+}
+
+.task-card__edit-button {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid #384155;
+  border-radius: 0.4rem;
+  color: #8f99aa;
+  background: #1b1f27;
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.task-card__edit-button:hover {
+  border-color: #6d86b8;
+  color: #e7eaf0;
+  background: #2a303c;
+}
+
+.task-card__edit-button--active {
+  border-color: #6d86b8;
+  color: #e7eaf0;
+  background: #2a3447;
+}

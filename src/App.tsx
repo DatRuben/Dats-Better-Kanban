@@ -78,6 +78,9 @@ function App() {
 
   const [creatingTaskColumnId, setCreatingTaskColumnId] = useState<string | null>(null)
 
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
+
+
   const timelineTasks = tasks
     .filter((task) => {
       const taskColumn = columns.find(
@@ -460,6 +463,11 @@ function App() {
                   onCancelCreatingTask={() =>
                     setCreatingTaskColumnId(null)
                   }
+                  editingTaskId={editingTaskId}
+                  onStartEditingTask={(taskId) => {
+                    setCreatingTaskColumnId(null)
+                    setEditingTaskId(taskId)
+                  }}
                 />
               )
             })}
