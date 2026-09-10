@@ -163,30 +163,35 @@ export function TaskCreator({
             </label>
 
             <div className="task-creator__actions">
-                {initialTask && onDelete && (
+                <div>
+                    {initialTask && onDelete && (
+                        <button
+                            type="button"
+                            className="task-creator__delete"
+                            onClick={onDelete}
+                        >
+                            Delete
+                        </button>
+                    )}
+                </div>
+
+                <div className="task-creator__actions-right">
                     <button
                         type="button"
-                        className="task-creator__delete"
-                        onClick={onDelete}
+                        className="task-creator__cancel"
+                        onClick={onCancel}
                     >
-                        Delete
+                        Cancel
                     </button>
-                )}
-                <button
-                    type="button"
-                    className="task-creator__cancel"
-                    onClick={onCancel}
-                >
-                    Cancel
-                </button>
 
-                <button
-                    type="submit"
-                    className="task-creator__create"
-                    disabled={!title.trim()}
-                >
-                    {initialTask ? 'Save Changes' : 'Create Task'}
-                </button>
+                    <button
+                        type="submit"
+                        className="task-creator__create"
+                        disabled={!title.trim()}
+                    >
+                        {initialTask ? 'Save Changes' : 'Create Task'}
+                    </button>
+                </div>
             </div>
         </form>
     )

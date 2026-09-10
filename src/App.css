@@ -647,7 +647,13 @@
 
 .task-creator__actions {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.task-creator__actions-right {
+  display: flex;
   gap: 0.5rem;
 }
 
