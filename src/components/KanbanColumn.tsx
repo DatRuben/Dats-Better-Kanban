@@ -28,6 +28,7 @@ interface KanbanColumnProps {
     task: NewTaskInput,
   ) => void
   onCancelEditingTask: () => void
+  onDeleteTask: (taskId: string) => void
 }
 
 export function KanbanColumn({
@@ -45,7 +46,9 @@ export function KanbanColumn({
   editingTaskId,
   onStartEditingTask,
   onUpdateTask,
-  onCancelEditingTask
+  onCancelEditingTask,
+  onDeleteTask
+
 }: KanbanColumnProps) {
   const {
     ref,
@@ -155,6 +158,7 @@ export function KanbanColumn({
                   onUpdateTask(task.id, taskInput)
                 }
                 onCancel={onCancelEditingTask}
+                onDelete={() => onDeleteTask(task.id)}
               />
             )
           }

@@ -385,6 +385,32 @@ function App() {
     setEditingTaskId(null)
   }
 
+  function handleDeleteTask(taskId: string) {
+    const task = tasks.find(
+      (task) => task.id === taskId,
+    )
+
+    if (!task) {
+      return
+    }
+
+    const confirmed = window.confirm(
+      `Delete "${task.title}"? This cannot be undone.`,
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    setTasks((currentTasks) =>
+      currentTasks.filter(
+        (task) => task.id !== taskId,
+      ),
+    )
+
+    setEditingTaskId(null)
+  }
+
   return (
     <main className="app-shell">
       <header className="app-header">
@@ -496,6 +522,9 @@ function App() {
                   }
                   onCancelEditingTask={() =>
                     setEditingTaskId(null)
+                  }
+                  onDeleteTask={(taskId) =>
+                    handleDeleteTask(taskId)
                   }
                 />
               )
