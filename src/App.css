@@ -549,3 +549,42 @@
   border-color: #6d86b8;
   opacity: 0.65;
 }
+
+.kanban-column__add-task {
+  width: 100%;
+  padding: 0.7rem;
+  border: 1px dashed #384155;
+  border-radius: 0.5rem;
+  color: #8f99aa;
+  background: transparent;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.kanban-column__add-task:hover {
+  border-color: #6d86b8;
+  color: #e7eaf0;
+  background: #1d222b;
+}
+
+.task-creator {
+  padding: 0.875rem;
+  border: 1px solid #384155;
+  border-radius: 0.625rem;
+  background: #1d212a;
+}
+
+.task-creator__heading {
+  margin: 0;
+  color: #e7eaf0;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.task-creator__hint {
+  margin: 0.25rem 0 0;
+  color: #8f99aa;
+  font-size: 0.75rem;
+}

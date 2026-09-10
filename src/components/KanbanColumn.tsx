@@ -28,6 +28,8 @@ export function KanbanColumn({
   onColumnTitleChange,
   onColumnCompletionChange,
   onDeleteColumn,
+  isCreatingTask,
+  onStartCreatingTask,
 }: KanbanColumnProps) {
   const {
     ref,
@@ -136,6 +138,28 @@ export function KanbanColumn({
             />
           )
         })}
+
+        {!isPipelineEditing && !isCreatingTask && (
+          <button
+            type="button"
+            className="kanban-column__add-task"
+            onClick={onStartCreatingTask}
+          >
+            + Add Task
+          </button>
+        )}
+
+        {!isPipelineEditing && isCreatingTask && (
+          <div className="task-creator">
+            <p className="task-creator__heading">
+              New task
+            </p>
+
+            <p className="task-creator__hint">
+              Creating in {column.title}
+            </p>
+          </div>
+        )}
       </div>
     </section>
   )
