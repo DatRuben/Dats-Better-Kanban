@@ -717,3 +717,21 @@
   color: #e7eaf0;
   background: #2a3447;
 }
+
+.task-creator__delete {
+  padding: 0.5rem 0.7rem;
+  border: 1px solid #634047;
+  border-radius: 0.45rem;
+  color: #ff8b8b;
+  background: transparent;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.task-creator__delete:hover {
+  border-color: #ff6b6b;
+  color: #ffb0b0;
+  background: #2a2024;
+}

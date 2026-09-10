@@ -13,6 +13,7 @@ interface TaskCreatorProps {
     initialTask?: Task
     onCreate: (task: NewTaskInput) => void
     onCancel: () => void
+    onDelete?: () => void
 }
 
 export function TaskCreator({
@@ -21,6 +22,7 @@ export function TaskCreator({
     initialTask,
     onCreate,
     onCancel,
+    onDelete,
 }: TaskCreatorProps) {
     const [title, setTitle] = useState(
         initialTask?.title ?? '',
@@ -161,6 +163,15 @@ export function TaskCreator({
             </label>
 
             <div className="task-creator__actions">
+                {initialTask && onDelete && (
+                    <button
+                        type="button"
+                        className="task-creator__delete"
+                        onClick={onDelete}
+                    >
+                        Delete
+                    </button>
+                )}
                 <button
                     type="button"
                     className="task-creator__cancel"
