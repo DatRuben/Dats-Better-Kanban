@@ -1,6 +1,7 @@
 import { useSortable } from '@dnd-kit/react/sortable'
-import type { BoardColumn, DemoUser, Task } from '../types/board'
+import type { BoardColumn, DemoUser, NewTaskInput, Task } from '../types/board'
 import { TaskCard } from './TaskCard'
+import { TaskCreator } from './TaskCreator'
 
 interface KanbanColumnProps {
   column: BoardColumn
@@ -18,6 +19,8 @@ interface KanbanColumnProps {
   onDeleteColumn: (columnId: string) => void
   isCreatingTask: boolean
   onStartCreatingTask: () => void
+  onCreateTask: (task: NewTaskInput) => void
+  onCancelCreatingTask: () => void
 }
 
 export function KanbanColumn({
@@ -30,6 +33,8 @@ export function KanbanColumn({
   onDeleteColumn,
   isCreatingTask,
   onStartCreatingTask,
+  onCreateTask,
+  onCancelCreatingTask,
 }: KanbanColumnProps) {
   const {
     ref,
@@ -150,15 +155,12 @@ export function KanbanColumn({
         )}
 
         {!isPipelineEditing && isCreatingTask && (
-          <div className="task-creator">
-            <p className="task-creator__heading">
-              New task
-            </p>
-
-            <p className="task-creator__hint">
-              Creating in {column.title}
-            </p>
-          </div>
+          <TaskCreator
+            columnTitle={column.title}
+            members={members}
+            onCreate={onCreateTask}
+            onCancel={onCancelCreatingTask}
+          />
         )}
       </div>
     </section>

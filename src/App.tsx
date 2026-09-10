@@ -2,7 +2,7 @@ import './App.css'
 import { useState } from 'react'
 import { KanbanColumn } from './components/KanbanColumn'
 import { demoProject } from './data/demoProject'
-import type { Task } from './types/board'
+import type { NewTaskInput, Task } from './types/board'
 import type { WheelEvent } from 'react'
 import { moveTaskToColumn } from './utility/moveTask'
 import { DragDropProvider } from '@dnd-kit/react'
@@ -323,6 +323,43 @@ function App() {
     })
   }
 
+  function handleCreateTask(
+    columnId: string,
+    taskInput: NewTaskInput,
+  ) {
+    const column = columns.find(
+      (column) => column.id === columnId,
+    )
+
+    if (!column) {
+      return
+    }
+
+    const createdAt = new Date().toISOString()
+
+    const newTask: Task = {
+      id: crypto.randomUUID(),
+      title: taskInput.title,
+      description: taskInput.description,
+      columnId,
+      priority: taskInput.priority,
+      assigneeId: taskInput.assigneeId,
+      deadline: taskInput.deadline,
+      attachments: [],
+      createdAt,
+      completedAt: column.countsAsCompleted
+        ? createdAt
+        : null,
+    }
+
+    setTasks((currentTasks) => [
+      ...currentTasks,
+      newTask,
+    ])
+
+    setCreatingTaskColumnId(null)
+  }
+
   return (
     <main className="app-shell">
       <header className="app-header">
@@ -416,6 +453,12 @@ function App() {
                   isCreatingTask={creatingTaskColumnId === column.id}
                   onStartCreatingTask={() =>
                     setCreatingTaskColumnId(column.id)
+                  }
+                  onCreateTask={(taskInput) =>
+                    handleCreateTask(column.id, taskInput)
+                  }
+                  onCancelCreatingTask={() =>
+                    setCreatingTaskColumnId(null)
                   }
                 />
               )

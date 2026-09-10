@@ -26,6 +26,14 @@ export interface Task {
   completedAt: string | null
 }
 
+export interface NewTaskInput {
+  title: string
+  description: string
+  priority: Priority
+  assigneeId: string | null
+  deadline: string | null
+}
+
 export interface BoardColumn {
   id: string
   title: string
