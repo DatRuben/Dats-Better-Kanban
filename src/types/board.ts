@@ -23,7 +23,9 @@ export interface Task {
   deadline: string | null
   attachments: Attachment[]
   createdAt: string
+  updatedAt: string
   completedAt: string | null
+  revision: number
 }
 
 export interface NewTaskInput {

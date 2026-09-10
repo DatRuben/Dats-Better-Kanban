@@ -250,6 +250,8 @@ function App() {
           completedAt: countsAsCompleted
             ? completionTime
             : null,
+          updatedAt: completionTime,
+          revision: task.revision + 1,
         }
       }),
     )
@@ -353,6 +355,8 @@ function App() {
       completedAt: column.countsAsCompleted
         ? createdAt
         : null,
+      updatedAt: createdAt,
+      revision: 1,
     }
 
     setTasks((currentTasks) => [
@@ -367,6 +371,7 @@ function App() {
     taskId: string,
     taskInput: NewTaskInput,
   ) {
+    const updatedAt = new Date().toISOString()
     setTasks((currentTasks) =>
       currentTasks.map((task) =>
         task.id === taskId
@@ -377,6 +382,8 @@ function App() {
             priority: taskInput.priority,
             assigneeId: taskInput.assigneeId,
             deadline: taskInput.deadline,
+            updatedAt,
+            revision: task.revision + 1,
           }
           : task,
       ),

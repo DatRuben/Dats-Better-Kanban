@@ -28,5 +28,7 @@ export function moveTaskToColumn(
     ...task,
     columnId: targetColumn.id,
     completedAt: nextCompletedAt,
+    updatedAt: completionTime,
+    revision: task.revision + 1,
   }
 }
