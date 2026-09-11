@@ -7,6 +7,7 @@ import type { WheelEvent } from 'react'
 import { moveTaskToColumn } from './utility/moveTask'
 import { DragDropProvider } from '@dnd-kit/react'
 import { isSortable } from '@dnd-kit/react/sortable'
+import { createProjectSnapshot } from './storage/projectSnapshot'
 
 const priorityOrder = {
   critical: 0,
@@ -68,6 +69,13 @@ function formatCompletedAt(completedAt: string) {
 function App() {
   const [columns, setColumns] = useState(demoProject.columns)
   const [tasks, setTasks] = useState(demoProject.tasks)
+
+  const currentProject = createProjectSnapshot(
+    demoProject,
+    columns,
+    tasks,
+  )
+
   const [activeView, setActiveView] =
     useState<'board' | 'timeline' | 'history'>('board')
   const orderedColumns = [...columns].sort(
@@ -423,7 +431,7 @@ function App() {
       <header className="app-header">
         <div>
           <p className="product-name">Dat&apos;s: Better Kanban</p>
-          <h1>{demoProject.name}</h1>
+          <h1>{currentProject.name}</h1>
         </div>
 
         <span className="demo-badge">Demo Mode</span>
@@ -489,7 +497,7 @@ function App() {
         >
           <section
             className="kanban-board"
-            aria-label={`${demoProject.name} Kanban board`}
+            aria-label={`${currentProject.name} Kanban board`}
           >
             {orderedColumns.map((column) => {
               const columnTasks = tasks.filter(
@@ -503,7 +511,7 @@ function App() {
                   key={column.id}
                   column={column}
                   tasks={sortedColumnTasks}
-                  members={demoProject.members}
+                  members={currentProject.members}
                   isPipelineEditing={isPipelineEditing}
                   onColumnTitleChange={handleColumnTitleChange}
                   onColumnCompletionChange={handleColumnCompletionChange}
