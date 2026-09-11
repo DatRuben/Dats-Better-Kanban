@@ -44,6 +44,7 @@ export interface BoardColumn {
 }
 
 export interface Project {
+  schemaVersion: number
   id: string
   name: string
   columns: BoardColumn[]

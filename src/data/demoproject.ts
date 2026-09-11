@@ -1,6 +1,7 @@
 import type { Project } from '../types/board'
 
 export const demoProject: Project = {
+  schemaVersion: 1,
   id: 'storygame-development',
   name: 'StoryGame Development',
 
