@@ -8,6 +8,7 @@ import { moveTaskToColumn } from './utility/moveTask'
 import { DragDropProvider } from '@dnd-kit/react'
 import { isSortable } from '@dnd-kit/react/sortable'
 import { createProjectSnapshot } from './storage/projectSnapshot'
+import { requestGoogleAccessToken } from './auth/googleAuth'
 
 const priorityOrder = {
   critical: 0,
@@ -69,6 +70,15 @@ function formatCompletedAt(completedAt: string) {
 function App() {
   const [columns, setColumns] = useState(demoProject.columns)
   const [tasks, setTasks] = useState(demoProject.tasks)
+
+  const [googleAccessToken, setGoogleAccessToken] =
+    useState<string | null>(null)
+
+  const [isGoogleConnecting, setIsGoogleConnecting] =
+    useState(false)
+
+  const [googleAuthError, setGoogleAuthError] =
+    useState<string | null>(null)
 
   const currentProject = createProjectSnapshot(
     demoProject,
@@ -426,6 +436,28 @@ function App() {
     setEditingTaskId(null)
   }
 
+  async function handleConnectGoogle() {
+    setIsGoogleConnecting(true)
+    setGoogleAuthError(null)
+
+    try {
+      const accessToken =
+        await requestGoogleAccessToken()
+
+      setGoogleAccessToken(accessToken)
+    } catch (error) {
+      setGoogleAccessToken(null)
+
+      setGoogleAuthError(
+        error instanceof Error
+          ? error.message
+          : 'Google authorization failed.',
+      )
+    } finally {
+      setIsGoogleConnecting(false)
+    }
+  }
+
   return (
     <main className="app-shell">
       <header className="app-header">
@@ -434,8 +466,32 @@ function App() {
           <h1>{currentProject.name}</h1>
         </div>
 
-        <span className="demo-badge">Demo Mode</span>
+        <div className="app-header__actions">
+          <button
+            type="button"
+            className="google-connect-button"
+            onClick={handleConnectGoogle}
+            disabled={
+              isGoogleConnecting ||
+              googleAccessToken !== null
+            }
+          >
+            {isGoogleConnecting
+              ? 'Connecting...'
+              : googleAccessToken
+                ? 'Google Drive Connected'
+                : 'Connect Google Drive'}
+          </button>
+
+          <span className="demo-badge">Demo Mode</span>
+        </div>
       </header>
+
+      {googleAuthError && (
+        <p className="google-auth-error">
+          {googleAuthError}
+        </p>
+      )}
 
       <nav className="view-tabs">
         <button

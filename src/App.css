@@ -31,6 +31,39 @@
   text-transform: uppercase;
 }
 
+.app-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.google-connect-button {
+  padding: 0.55rem 0.85rem;
+  border: 1px solid #384155;
+  border-radius: 0.5rem;
+  color: #dce3ef;
+  background: #252a35;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.google-connect-button:hover:not(:disabled) {
+  background: #303746;
+}
+
+.google-connect-button:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.google-auth-error {
+  margin: -1.25rem 0 1.5rem;
+  color: #ff8a8a;
+  font-size: 0.8rem;
+}
+
 .demo-badge {
   padding: 0.5rem 0.75rem;
   border: 1px solid #384155;
