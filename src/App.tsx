@@ -486,7 +486,16 @@ function App() {
           <span className="demo-badge">Demo Mode</span>
         </div>
       </header>
+      <div className="app-info">
+        <p>
+          A customizable Kanban project-management tool for organizing
+          tasks, timelines, and project workflows.
+        </p>
 
+        <a href="/privacy.html">
+          Privacy Policy
+        </a>
+      </div>
       {googleAuthError && (
         <p className="google-auth-error">
           {googleAuthError}

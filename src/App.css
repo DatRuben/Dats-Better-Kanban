@@ -22,6 +22,36 @@
   font-size: 1.75rem;
 }
 
+.app-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: -1rem 0 1.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #292f3b;
+  border-radius: 0.625rem;
+  background: #191c23;
+}
+
+.app-info p {
+  margin: 0;
+  color: #8d96a8;
+  font-size: 0.8rem;
+}
+
+.app-info a {
+  flex-shrink: 0;
+  color: #b8c4dc;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.app-info a:hover {
+  color: #e7eaf0;
+}
+
 .product-name {
   margin: 0;
   color: #8d96a8;
