@@ -1,3 +1,5 @@
+import type { Project } from '../types/board'
+
 const GOOGLE_DRIVE_FILES_URL =
   'https://www.googleapis.com/drive/v3/files'
 
@@ -9,6 +11,9 @@ const DATS_FOLDER_NAME =
 
 const PROJECTS_FOLDER_NAME =
   'Projects'
+
+const PROJECT_FILE_NAME =
+  'project.json'
 
 export async function verifyGoogleDriveAccess(
   accessToken: string,
@@ -175,4 +180,68 @@ export async function ensureProjectsDriveFolder(
     PROJECTS_FOLDER_NAME,
     datsFolderId,
   )
+}
+
+export async function createProjectOnDrive(
+  accessToken: string,
+  projectsFolderId: string,
+  project: Project,
+): Promise<void> {
+  const projectFolderId =
+    await createFolder(
+      accessToken,
+      project.id,
+      projectsFolderId,
+    )
+
+  const fileResponse = await fetch(
+    GOOGLE_DRIVE_FILES_URL,
+    {
+      method: 'POST',
+
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+
+      body: JSON.stringify({
+        name: PROJECT_FILE_NAME,
+        mimeType: 'application/json',
+        parents: [projectFolderId],
+      }),
+    },
+  )
+
+  if (!fileResponse.ok) {
+    throw new Error(
+      `Google Drive project file creation failed with status ${fileResponse.status}.`,
+    )
+  }
+
+  const file = await fileResponse.json() as {
+    id: string
+  }
+
+  const uploadUrl =
+    `https://www.googleapis.com/upload/drive/v3/files/${file.id}?uploadType=media`
+
+  const uploadResponse = await fetch(
+    uploadUrl,
+    {
+      method: 'PATCH',
+
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+
+      body: JSON.stringify(project, null, 2),
+    },
+  )
+
+  if (!uploadResponse.ok) {
+    throw new Error(
+      `Google Drive project upload failed with status ${uploadResponse.status}.`,
+    )
+  }
 }

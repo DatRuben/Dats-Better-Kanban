@@ -11,6 +11,7 @@ import { createProjectSnapshot } from './storage/projectSnapshot'
 import { requestGoogleAccessToken } from './auth/googleAuth'
 import { createBlankProject } from './data/createBlankProject'
 import {
+  createProjectOnDrive,
   ensureDatsDriveFolder,
   ensureProjectsDriveFolder,
   verifyGoogleDriveAccess,
@@ -461,13 +462,20 @@ function App() {
       const datsFolderId =
         await ensureDatsDriveFolder(accessToken)
 
-      await ensureProjectsDriveFolder(
-        accessToken,
-        datsFolderId,
-      )
+      const projectsFolderId =
+        await ensureProjectsDriveFolder(
+          accessToken,
+          datsFolderId,
+        )
 
       const blankProject =
         createBlankProject()
+
+      await createProjectOnDrive(
+        accessToken,
+        projectsFolderId,
+        blankProject,
+      )
 
       setProject(blankProject)
       setColumns(blankProject.columns)
