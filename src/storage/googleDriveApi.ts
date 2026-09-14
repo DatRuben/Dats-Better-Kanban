@@ -7,11 +7,14 @@ const GOOGLE_DRIVE_FOLDER_MIME_TYPE =
 const DATS_FOLDER_NAME =
   "Dat's: Better Kanban"
 
+const PROJECTS_FOLDER_NAME =
+  'Projects'
+
 export async function verifyGoogleDriveAccess(
   accessToken: string,
 ): Promise<void> {
   const url = new URL(GOOGLE_DRIVE_FILES_URL)
-  
+
   url.searchParams.set('pageSize', '1')
   url.searchParams.set('fields', 'files(id)')
 
@@ -37,19 +40,28 @@ function escapeDriveQueryValue(value: string) {
 async function findFolder(
   accessToken: string,
   folderName: string,
+  parentFolderId?: string,
 ): Promise<string | null> {
   const url = new URL(GOOGLE_DRIVE_FILES_URL)
 
   const escapedFolderName =
     escapeDriveQueryValue(folderName)
 
+  const queryParts = [
+    `name = '${escapedFolderName}'`,
+    `mimeType = '${GOOGLE_DRIVE_FOLDER_MIME_TYPE}'`,
+    'trashed = false',
+  ]
+
+  if (parentFolderId) {
+    queryParts.push(
+      `'${parentFolderId}' in parents`,
+    )
+  }
+
   url.searchParams.set(
     'q',
-    [
-      `name = '${escapedFolderName}'`,
-      `mimeType = '${GOOGLE_DRIVE_FOLDER_MIME_TYPE}'`,
-      'trashed = false',
-    ].join(' and '),
+    queryParts.join(' and '),
   )
 
   url.searchParams.set(
@@ -82,7 +94,21 @@ async function findFolder(
 async function createFolder(
   accessToken: string,
   folderName: string,
+  parentFolderId?: string,
 ): Promise<string> {
+  const folderMetadata: {
+    name: string
+    mimeType: string
+    parents?: string[]
+  } = {
+    name: folderName,
+    mimeType: GOOGLE_DRIVE_FOLDER_MIME_TYPE,
+  }
+
+  if (parentFolderId) {
+    folderMetadata.parents = [parentFolderId]
+  }
+
   const response = await fetch(
     GOOGLE_DRIVE_FILES_URL,
     {
@@ -93,10 +119,7 @@ async function createFolder(
         'Content-Type': 'application/json',
       },
 
-      body: JSON.stringify({
-        name: folderName,
-        mimeType: GOOGLE_DRIVE_FOLDER_MIME_TYPE,
-      }),
+      body: JSON.stringify(folderMetadata),
     },
   )
 
@@ -129,5 +152,27 @@ export async function ensureDatsDriveFolder(
   return createFolder(
     accessToken,
     DATS_FOLDER_NAME,
+  )
+}
+
+export async function ensureProjectsDriveFolder(
+  accessToken: string,
+  datsFolderId: string,
+): Promise<string> {
+  const existingFolderId =
+    await findFolder(
+      accessToken,
+      PROJECTS_FOLDER_NAME,
+      datsFolderId,
+    )
+
+  if (existingFolderId) {
+    return existingFolderId
+  }
+
+  return createFolder(
+    accessToken,
+    PROJECTS_FOLDER_NAME,
+    datsFolderId,
   )
 }

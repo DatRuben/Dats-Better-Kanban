@@ -9,7 +9,11 @@ import { DragDropProvider } from '@dnd-kit/react'
 import { isSortable } from '@dnd-kit/react/sortable'
 import { createProjectSnapshot } from './storage/projectSnapshot'
 import { requestGoogleAccessToken } from './auth/googleAuth'
-import { ensureDatsDriveFolder, verifyGoogleDriveAccess } from './storage/googleDriveApi'
+import {
+  ensureDatsDriveFolder,
+  ensureProjectsDriveFolder,
+  verifyGoogleDriveAccess,
+} from './storage/googleDriveApi'
 
 const priorityOrder = {
   critical: 0,
@@ -447,7 +451,13 @@ function App() {
 
       await verifyGoogleDriveAccess(accessToken)
 
-      await ensureDatsDriveFolder(accessToken)
+      const datsFolderId =
+        await ensureDatsDriveFolder(accessToken)
+
+      await ensureProjectsDriveFolder(
+        accessToken,
+        datsFolderId,
+      )
 
       setGoogleAccessToken(accessToken)
     } catch (error) {
