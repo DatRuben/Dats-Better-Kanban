@@ -676,16 +676,6 @@ function App() {
       setGoogleTasksFolderId(
         loadedDriveProject.tasksFolderId,
       )
-
-      setProject(activeProject)
-      setColumns(activeProject.columns)
-      setTasks(activeProject.tasks)
-
-      setActiveView('board')
-      setIsDemoMode(false)
-
-      setGoogleAccessToken(accessToken)
-
       setProject(activeProject)
       setColumns(activeProject.columns)
       setTasks(activeProject.tasks)

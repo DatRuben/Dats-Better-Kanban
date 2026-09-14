@@ -209,42 +209,6 @@ export async function ensureProjectsDriveFolder(
   )
 }
 
-export async function ensureProjectTasksFolder(
-  accessToken: string,
-  projectsFolderId: string,
-  projectId: string,
-): Promise<string> {
-  const projectFolderId =
-    await findFolder(
-      accessToken,
-      projectId,
-      projectsFolderId,
-    )
-
-  if (!projectFolderId) {
-    throw new Error(
-      'Google Drive project folder could not be found.',
-    )
-  }
-
-  const existingTasksFolderId =
-    await findFolder(
-      accessToken,
-      TASKS_FOLDER_NAME,
-      projectFolderId,
-    )
-
-  if (existingTasksFolderId) {
-    return existingTasksFolderId
-  }
-
-  return createFolder(
-    accessToken,
-    TASKS_FOLDER_NAME,
-    projectFolderId,
-  )
-}
-
 export async function createProjectOnDrive(
   accessToken: string,
   projectsFolderId: string,
