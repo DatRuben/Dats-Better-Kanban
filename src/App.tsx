@@ -9,6 +9,7 @@ import { DragDropProvider } from '@dnd-kit/react'
 import { isSortable } from '@dnd-kit/react/sortable'
 import { createProjectSnapshot } from './storage/projectSnapshot'
 import { requestGoogleAccessToken } from './auth/googleAuth'
+import { createBlankProject } from './data/createBlankProject'
 import {
   ensureDatsDriveFolder,
   ensureProjectsDriveFolder,
@@ -73,8 +74,14 @@ function formatCompletedAt(completedAt: string) {
 }
 
 function App() {
-  const [columns, setColumns] = useState(demoProject.columns)
-  const [tasks, setTasks] = useState(demoProject.tasks)
+  const [project, setProject] =
+    useState(demoProject)
+  const [isDemoMode, setIsDemoMode] =
+    useState(true)
+  const [columns, setColumns] =
+    useState(project.columns)
+  const [tasks, setTasks] =
+    useState(project.tasks)
 
   const [googleAccessToken, setGoogleAccessToken] =
     useState<string | null>(null)
@@ -86,7 +93,7 @@ function App() {
     useState<string | null>(null)
 
   const currentProject = createProjectSnapshot(
-    demoProject,
+    project,
     columns,
     tasks,
   )
@@ -459,6 +466,16 @@ function App() {
         datsFolderId,
       )
 
+      const blankProject =
+        createBlankProject()
+
+      setProject(blankProject)
+      setColumns(blankProject.columns)
+      setTasks(blankProject.tasks)
+
+      setActiveView('board')
+      setIsDemoMode(false)
+
       setGoogleAccessToken(accessToken)
     } catch (error) {
       setGoogleAccessToken(null)
@@ -513,7 +530,11 @@ function App() {
                 : 'Connect Google Drive'}
           </button>
 
-          <span className="demo-badge">Demo Mode</span>
+          {isDemoMode && (
+            <span className="demo-badge">
+              Demo Mode
+            </span>
+          )}
         </div>
       </header>
       {googleAuthError && (
