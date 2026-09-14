@@ -16,6 +16,7 @@ import { createBlankProject } from './data/createBlankProject'
 import {
   createProjectOnDrive,
   ensureDatsDriveFolder,
+  ensureProjectTasksFolder,
   ensureProjectsDriveFolder,
   loadFirstProjectFromDrive,
   saveProjectToDrive,
@@ -539,6 +540,12 @@ function App() {
           activeProject,
         )
       }
+
+      await ensureProjectTasksFolder(
+        accessToken,
+        projectsFolderId,
+        activeProject.id,
+      )
 
       setProject(activeProject)
       setColumns(activeProject.columns)

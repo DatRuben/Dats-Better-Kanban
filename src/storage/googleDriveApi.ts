@@ -15,6 +15,9 @@ const PROJECTS_FOLDER_NAME =
 const PROJECT_FILE_NAME =
   'project.json'
 
+const TASKS_FOLDER_NAME =
+  'tasks'
+
 export async function verifyGoogleDriveAccess(
   accessToken: string,
 ): Promise<void> {
@@ -179,6 +182,42 @@ export async function ensureProjectsDriveFolder(
     accessToken,
     PROJECTS_FOLDER_NAME,
     datsFolderId,
+  )
+}
+
+export async function ensureProjectTasksFolder(
+  accessToken: string,
+  projectsFolderId: string,
+  projectId: string,
+): Promise<string> {
+  const projectFolderId =
+    await findFolder(
+      accessToken,
+      projectId,
+      projectsFolderId,
+    )
+
+  if (!projectFolderId) {
+    throw new Error(
+      'Google Drive project folder could not be found.',
+    )
+  }
+
+  const existingTasksFolderId =
+    await findFolder(
+      accessToken,
+      TASKS_FOLDER_NAME,
+      projectFolderId,
+    )
+
+  if (existingTasksFolderId) {
+    return existingTasksFolderId
+  }
+
+  return createFolder(
+    accessToken,
+    TASKS_FOLDER_NAME,
+    projectFolderId,
   )
 }
 
