@@ -366,3 +366,94 @@ export async function loadFirstProjectFromDrive(
 
   return await downloadResponse.json() as Project
 }
+
+export async function saveProjectToDrive(
+  accessToken: string,
+  projectsFolderId: string,
+  project: Project,
+): Promise<void> {
+  const projectFolderId =
+    await findFolder(
+      accessToken,
+      project.id,
+      projectsFolderId,
+    )
+
+  if (!projectFolderId) {
+    throw new Error(
+      'Google Drive project folder could not be found.',
+    )
+  }
+
+  const filesUrl =
+    new URL(GOOGLE_DRIVE_FILES_URL)
+
+  filesUrl.searchParams.set(
+    'q',
+    [
+      `name = '${PROJECT_FILE_NAME}'`,
+      `'${projectFolderId}' in parents`,
+      'trashed = false',
+    ].join(' and '),
+  )
+
+  filesUrl.searchParams.set(
+    'fields',
+    'files(id)',
+  )
+
+  filesUrl.searchParams.set(
+    'pageSize',
+    '1',
+  )
+
+  const filesResponse =
+    await fetch(filesUrl, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+
+  if (!filesResponse.ok) {
+    throw new Error(
+      `Google Drive project file search failed with status ${filesResponse.status}.`,
+    )
+  }
+
+  const filesData =
+    await filesResponse.json() as {
+      files: Array<{
+        id: string
+      }>
+    }
+
+  const projectFileId =
+    filesData.files[0]?.id
+
+  if (!projectFileId) {
+    throw new Error(
+      'Google Drive project file could not be found.',
+    )
+  }
+
+  const uploadUrl =
+    `https://www.googleapis.com/upload/drive/v3/files/${projectFileId}?uploadType=media`
+
+  const uploadResponse =
+    await fetch(uploadUrl, {
+      method: 'PATCH',
+
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+
+      body: JSON.stringify(project, null, 2),
+    })
+
+  if (!uploadResponse.ok) {
+    throw new Error(
+      `Google Drive project save failed with status ${uploadResponse.status}.`,
+    )
+  }
+}

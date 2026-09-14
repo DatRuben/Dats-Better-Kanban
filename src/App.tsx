@@ -1,5 +1,8 @@
 import './App.css'
-import { useState } from 'react'
+import {
+  useEffect,
+  useState,
+} from 'react'
 import { KanbanColumn } from './components/KanbanColumn'
 import { demoProject } from './data/demoProject'
 import type { NewTaskInput, Task } from './types/board'
@@ -15,6 +18,7 @@ import {
   ensureDatsDriveFolder,
   ensureProjectsDriveFolder,
   loadFirstProjectFromDrive,
+  saveProjectToDrive,
   verifyGoogleDriveAccess,
 } from './storage/googleDriveApi'
 
@@ -88,6 +92,9 @@ function App() {
   const [googleAccessToken, setGoogleAccessToken] =
     useState<string | null>(null)
 
+  const [googleProjectsFolderId, setGoogleProjectsFolderId] =
+    useState<string | null>(null)
+
   const [isGoogleConnecting, setIsGoogleConnecting] =
     useState(false)
 
@@ -99,6 +106,49 @@ function App() {
     columns,
     tasks,
   )
+
+  useEffect(() => {
+    if (
+      isDemoMode ||
+      !googleAccessToken ||
+      !googleProjectsFolderId
+    ) {
+      return
+    }
+
+    const saveTimeout =
+      window.setTimeout(() => {
+        const projectToSave =
+          createProjectSnapshot(
+            project,
+            columns,
+            tasks,
+          )
+
+        void saveProjectToDrive(
+          googleAccessToken,
+          googleProjectsFolderId,
+          projectToSave,
+        ).catch((error) => {
+          setGoogleAuthError(
+            error instanceof Error
+              ? error.message
+              : 'Project save failed.',
+          )
+        })
+      }, 1000)
+
+    return () => {
+      window.clearTimeout(saveTimeout)
+    }
+  }, [
+    project,
+    columns,
+    tasks,
+    isDemoMode,
+    googleAccessToken,
+    googleProjectsFolderId,
+  ])
 
   const [activeView, setActiveView] =
     useState<'board' | 'timeline' | 'history'>('board')
@@ -468,6 +518,10 @@ function App() {
           accessToken,
           datsFolderId,
         )
+
+      setGoogleProjectsFolderId(
+        projectsFolderId,
+      )
 
       let activeProject =
         await loadFirstProjectFromDrive(
