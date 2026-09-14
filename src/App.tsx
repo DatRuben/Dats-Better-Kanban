@@ -462,11 +462,26 @@ function App() {
     <main className="app-shell">
       <header className="app-header">
         <div>
-          <p className="product-name">Dat&apos;s: Better Kanban</p>
+          <p className="product-name">
+            Dat&apos;s: Better Kanban
+          </p>
+
           <h1>{currentProject.name}</h1>
+
+          <p className="app-description">
+            A customizable Kanban project-management tool for organizing
+            tasks, timelines, and project workflows.
+          </p>
         </div>
 
         <div className="app-header__actions">
+          <a
+            className="privacy-policy-button"
+            href="/privacy.html"
+          >
+            Privacy Policy
+          </a>
+
           <button
             type="button"
             className="google-connect-button"
@@ -486,16 +501,6 @@ function App() {
           <span className="demo-badge">Demo Mode</span>
         </div>
       </header>
-      <div className="app-info">
-        <p>
-          A customizable Kanban project-management tool for organizing
-          tasks, timelines, and project workflows.
-        </p>
-
-        <a href="/privacy.html">
-          Privacy Policy
-        </a>
-      </div>
       {googleAuthError && (
         <p className="google-auth-error">
           {googleAuthError}
