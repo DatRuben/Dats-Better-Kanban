@@ -245,3 +245,124 @@ export async function createProjectOnDrive(
     )
   }
 }
+
+export async function loadFirstProjectFromDrive(
+  accessToken: string,
+  projectsFolderId: string,
+): Promise<Project | null> {
+  const foldersUrl =
+    new URL(GOOGLE_DRIVE_FILES_URL)
+
+  foldersUrl.searchParams.set(
+    'q',
+    [
+      `'${projectsFolderId}' in parents`,
+      `mimeType = '${GOOGLE_DRIVE_FOLDER_MIME_TYPE}'`,
+      'trashed = false',
+    ].join(' and '),
+  )
+
+  foldersUrl.searchParams.set(
+    'fields',
+    'files(id)',
+  )
+
+  foldersUrl.searchParams.set(
+    'pageSize',
+    '1',
+  )
+
+  const foldersResponse =
+    await fetch(foldersUrl, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+
+  if (!foldersResponse.ok) {
+    throw new Error(
+      `Google Drive project search failed with status ${foldersResponse.status}.`,
+    )
+  }
+
+  const foldersData =
+    await foldersResponse.json() as {
+      files: Array<{
+        id: string
+      }>
+    }
+
+  const projectFolderId =
+    foldersData.files[0]?.id
+
+  if (!projectFolderId) {
+    return null
+  }
+
+  const filesUrl =
+    new URL(GOOGLE_DRIVE_FILES_URL)
+
+  filesUrl.searchParams.set(
+    'q',
+    [
+      `name = '${PROJECT_FILE_NAME}'`,
+      `'${projectFolderId}' in parents`,
+      'trashed = false',
+    ].join(' and '),
+  )
+
+  filesUrl.searchParams.set(
+    'fields',
+    'files(id)',
+  )
+
+  filesUrl.searchParams.set(
+    'pageSize',
+    '1',
+  )
+
+  const filesResponse =
+    await fetch(filesUrl, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+
+  if (!filesResponse.ok) {
+    throw new Error(
+      `Google Drive project file search failed with status ${filesResponse.status}.`,
+    )
+  }
+
+  const filesData =
+    await filesResponse.json() as {
+      files: Array<{
+        id: string
+      }>
+    }
+
+  const projectFileId =
+    filesData.files[0]?.id
+
+  if (!projectFileId) {
+    return null
+  }
+
+  const downloadResponse =
+    await fetch(
+      `${GOOGLE_DRIVE_FILES_URL}/${projectFileId}?alt=media`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    )
+
+  if (!downloadResponse.ok) {
+    throw new Error(
+      `Google Drive project download failed with status ${downloadResponse.status}.`,
+    )
+  }
+
+  return await downloadResponse.json() as Project
+}

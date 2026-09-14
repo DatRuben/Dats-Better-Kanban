@@ -14,6 +14,7 @@ import {
   createProjectOnDrive,
   ensureDatsDriveFolder,
   ensureProjectsDriveFolder,
+  loadFirstProjectFromDrive,
   verifyGoogleDriveAccess,
 } from './storage/googleDriveApi'
 
@@ -468,18 +469,26 @@ function App() {
           datsFolderId,
         )
 
-      const blankProject =
-        createBlankProject()
+      let activeProject =
+        await loadFirstProjectFromDrive(
+          accessToken,
+          projectsFolderId,
+        )
 
-      await createProjectOnDrive(
-        accessToken,
-        projectsFolderId,
-        blankProject,
-      )
+      if (!activeProject) {
+        activeProject =
+          createBlankProject()
 
-      setProject(blankProject)
-      setColumns(blankProject.columns)
-      setTasks(blankProject.tasks)
+        await createProjectOnDrive(
+          accessToken,
+          projectsFolderId,
+          activeProject,
+        )
+      }
+
+      setProject(activeProject)
+      setColumns(activeProject.columns)
+      setTasks(activeProject.tasks)
 
       setActiveView('board')
       setIsDemoMode(false)
