@@ -795,3 +795,27 @@
   color: #ffb0b0;
   background: #2a2024;
 }
+
+.project-title-input {
+  width: 100%;
+  max-width: 32rem;
+  margin: 0;
+  padding: 0.15rem 0.3rem;
+  border: 1px solid transparent;
+  border-radius: 0.35rem;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.project-title-input:hover,
+.project-title-input:focus {
+  border-color: #384155;
+  background: #191c23;
+}
+
+.project-title-input:focus {
+  outline: none;
+}

@@ -569,7 +569,18 @@ function App() {
             Dat&apos;s: Better Kanban
           </p>
 
-          <h1>{currentProject.name}</h1>
+          <input
+            className="project-title-input"
+            type="text"
+            value={project.name}
+            onChange={(event) => {
+              setProject((currentProject) => ({
+                ...currentProject,
+                name: event.target.value,
+              }))
+            }}
+            aria-label="Project name"
+          />
 
           <p className="app-description">
             A customizable Kanban project-management tool for organizing
