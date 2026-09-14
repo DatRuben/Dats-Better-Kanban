@@ -16,11 +16,13 @@ import { requestGoogleAccessToken } from './auth/googleAuth'
 import { createBlankProject } from './data/createBlankProject'
 import {
   createProjectOnDrive,
+  deleteTaskFromDrive,
   ensureDatsDriveFolder,
-  ensureProjectTasksFolder,
   ensureProjectsDriveFolder,
   loadFirstProjectFromDrive,
-  saveProjectToDrive,
+  saveColumnsToDrive,
+  saveProjectMetadataToDrive,
+  saveTaskToDrive,
   verifyGoogleDriveAccess,
 } from './storage/googleDriveApi'
 
@@ -119,24 +121,17 @@ function App() {
     if (
       isDemoMode ||
       !googleAccessToken ||
-      !googleProjectsFolderId
+      !googleProjectFolderId
     ) {
       return
     }
 
-    const saveTimeout =
+    const timeout =
       window.setTimeout(() => {
-        const projectToSave =
-          createProjectSnapshot(
-            project,
-            columns,
-            tasks,
-          )
-
-        void saveProjectToDrive(
+        void saveProjectMetadataToDrive(
           googleAccessToken,
-          googleProjectsFolderId,
-          projectToSave,
+          googleProjectFolderId,
+          project,
         ).catch((error) => {
           setGoogleAuthError(
             error instanceof Error
@@ -147,15 +142,133 @@ function App() {
       }, 1000)
 
     return () => {
-      window.clearTimeout(saveTimeout)
+      window.clearTimeout(timeout)
     }
   }, [
     project,
+    isDemoMode,
+    googleAccessToken,
+    googleProjectFolderId,
+  ])
+
+  useEffect(() => {
+    if (
+      isDemoMode ||
+      !googleAccessToken ||
+      !googleProjectFolderId
+    ) {
+      return
+    }
+
+    const timeout =
+      window.setTimeout(() => {
+        void saveColumnsToDrive(
+          googleAccessToken,
+          googleProjectFolderId,
+          columns,
+        ).catch((error) => {
+          setGoogleAuthError(
+            error instanceof Error
+              ? error.message
+              : 'Column save failed.',
+          )
+        })
+      }, 1000)
+
+    return () => {
+      window.clearTimeout(timeout)
+    }
+  }, [
     columns,
+    isDemoMode,
+    googleAccessToken,
+    googleProjectFolderId,
+  ])
+
+  useEffect(() => {
+    if (
+      isDemoMode ||
+      !googleAccessToken ||
+      !googleTasksFolderId
+    ) {
+      return
+    }
+
+    const timeout =
+      window.setTimeout(() => {
+        const previousTasks =
+          lastSavedTasksRef.current
+
+        const previousById =
+          new Map(
+            previousTasks.map(
+              (task) => [task.id, task],
+            ),
+          )
+
+        const currentIds =
+          new Set(
+            tasks.map((task) => task.id),
+          )
+
+        const changedTasks =
+          tasks.filter((task) => {
+            const previousTask =
+              previousById.get(task.id)
+
+            return (
+              !previousTask ||
+              JSON.stringify(previousTask) !==
+              JSON.stringify(task)
+            )
+          })
+
+        const deletedTaskIds =
+          previousTasks
+            .filter(
+              (task) =>
+                !currentIds.has(task.id),
+            )
+            .map((task) => task.id)
+
+        void Promise.all([
+          ...changedTasks.map((task) =>
+            saveTaskToDrive(
+              googleAccessToken,
+              googleTasksFolderId,
+              task,
+            ),
+          ),
+
+          ...deletedTaskIds.map((taskId) =>
+            deleteTaskFromDrive(
+              googleAccessToken,
+              googleTasksFolderId,
+              taskId,
+            ),
+          ),
+        ])
+          .then(() => {
+            lastSavedTasksRef.current =
+              tasks
+          })
+          .catch((error) => {
+            setGoogleAuthError(
+              error instanceof Error
+                ? error.message
+                : 'Task save failed.',
+            )
+          })
+      }, 1000)
+
+    return () => {
+      window.clearTimeout(timeout)
+    }
+  }, [
     tasks,
     isDemoMode,
     googleAccessToken,
-    googleProjectsFolderId,
+    googleTasksFolderId,
   ])
 
   const [activeView, setActiveView] =
@@ -527,32 +640,51 @@ function App() {
           datsFolderId,
         )
 
-      setGoogleProjectsFolderId(
-        projectsFolderId,
-      )
-
-      let activeProject =
+      let loadedDriveProject =
         await loadFirstProjectFromDrive(
           accessToken,
           projectsFolderId,
         )
 
-      if (!activeProject) {
-        activeProject =
+      if (!loadedDriveProject) {
+        const blankProject =
           createBlankProject()
 
-        await createProjectOnDrive(
-          accessToken,
-          projectsFolderId,
-          activeProject,
-        )
+        const location =
+          await createProjectOnDrive(
+            accessToken,
+            projectsFolderId,
+            blankProject,
+          )
+
+        loadedDriveProject = {
+          project: blankProject,
+          ...location,
+        }
       }
 
-      await ensureProjectTasksFolder(
-        accessToken,
-        projectsFolderId,
-        activeProject.id,
+      const activeProject =
+        loadedDriveProject.project
+
+      lastSavedTasksRef.current =
+        activeProject.tasks
+
+      setGoogleProjectFolderId(
+        loadedDriveProject.projectFolderId,
       )
+
+      setGoogleTasksFolderId(
+        loadedDriveProject.tasksFolderId,
+      )
+
+      setProject(activeProject)
+      setColumns(activeProject.columns)
+      setTasks(activeProject.tasks)
+
+      setActiveView('board')
+      setIsDemoMode(false)
+
+      setGoogleAccessToken(accessToken)
 
       setProject(activeProject)
       setColumns(activeProject.columns)

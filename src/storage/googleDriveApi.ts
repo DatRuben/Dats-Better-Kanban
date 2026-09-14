@@ -302,7 +302,7 @@ export async function createProjectOnDrive(
 export async function loadFirstProjectFromDrive(
   accessToken: string,
   projectsFolderId: string,
-): Promise<Project | null> {
+): Promise<LoadedDriveProject | null> {
   const foldersUrl =
     new URL(GOOGLE_DRIVE_FILES_URL)
 
@@ -322,7 +322,7 @@ export async function loadFirstProjectFromDrive(
 
   foldersUrl.searchParams.set(
     'pageSize',
-    '1',
+    '100',
   )
 
   const foldersResponse =
@@ -345,183 +345,67 @@ export async function loadFirstProjectFromDrive(
       }>
     }
 
-  const projectFolderId =
-    foldersData.files[0]?.id
+  for (const folder of foldersData.files) {
+    const storedProject =
+      await readJsonFile<StoredProjectMetadata>(
+        accessToken,
+        folder.id,
+        PROJECT_FILE_NAME,
+      )
 
-  const storedProject =
-    await readJsonFile<
-      StoredProjectMetadata | Project
-    >(
-      accessToken,
-      projectFolderId,
-      PROJECT_FILE_NAME,
-    )
-
-  if (!projectFolderId) {
-    return null
-  }
-
-  if (!storedProject) {
-    return null
-  }
-
-  const filesUrl =
-    new URL(GOOGLE_DRIVE_FILES_URL)
-
-  filesUrl.searchParams.set(
-    'q',
-    [
-      `name = '${PROJECT_FILE_NAME}'`,
-      `'${projectFolderId}' in parents`,
-      'trashed = false',
-    ].join(' and '),
-  )
-
-  filesUrl.searchParams.set(
-    'fields',
-    'files(id)',
-  )
-
-  filesUrl.searchParams.set(
-    'pageSize',
-    '1',
-  )
-
-  const filesResponse =
-    await fetch(filesUrl, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    })
-
-  if (!filesResponse.ok) {
-    throw new Error(
-      `Google Drive project file search failed with status ${filesResponse.status}.`,
-    )
-  }
-
-  const filesData =
-    await filesResponse.json() as {
-      files: Array<{
-        id: string
-      }>
+    if (!storedProject) {
+      continue
     }
 
-  const projectFileId =
-    filesData.files[0]?.id
+    const columns =
+      await readJsonFile<BoardColumn[]>(
+        accessToken,
+        folder.id,
+        COLUMNS_FILE_NAME,
+      )
 
-  if (!projectFileId) {
-    return null
-  }
-
-  const downloadResponse =
-    await fetch(
-      `${GOOGLE_DRIVE_FILES_URL}/${projectFileId}?alt=media`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      },
-    )
-
-  if (!downloadResponse.ok) {
-    throw new Error(
-      `Google Drive project download failed with status ${downloadResponse.status}.`,
-    )
-  }
-
-  return await downloadResponse.json() as Project
-}
-
-export async function saveProjectToDrive(
-  accessToken: string,
-  projectsFolderId: string,
-  project: Project,
-): Promise<void> {
-  const projectFolderId =
-    await findFolder(
-      accessToken,
-      project.id,
-      projectsFolderId,
-    )
-
-  if (!projectFolderId) {
-    throw new Error(
-      'Google Drive project folder could not be found.',
-    )
-  }
-
-  const filesUrl =
-    new URL(GOOGLE_DRIVE_FILES_URL)
-
-  filesUrl.searchParams.set(
-    'q',
-    [
-      `name = '${PROJECT_FILE_NAME}'`,
-      `'${projectFolderId}' in parents`,
-      'trashed = false',
-    ].join(' and '),
-  )
-
-  filesUrl.searchParams.set(
-    'fields',
-    'files(id)',
-  )
-
-  filesUrl.searchParams.set(
-    'pageSize',
-    '1',
-  )
-
-  const filesResponse =
-    await fetch(filesUrl, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    })
-
-  if (!filesResponse.ok) {
-    throw new Error(
-      `Google Drive project file search failed with status ${filesResponse.status}.`,
-    )
-  }
-
-  const filesData =
-    await filesResponse.json() as {
-      files: Array<{
-        id: string
-      }>
+    if (!columns) {
+      throw new Error(
+        'Google Drive columns file could not be found.',
+      )
     }
 
-  const projectFileId =
-    filesData.files[0]?.id
+    let tasksFolderId =
+      await findFolder(
+        accessToken,
+        TASKS_FOLDER_NAME,
+        folder.id,
+      )
 
-  if (!projectFileId) {
-    throw new Error(
-      'Google Drive project file could not be found.',
-    )
+    if (!tasksFolderId) {
+      tasksFolderId =
+        await createFolder(
+          accessToken,
+          TASKS_FOLDER_NAME,
+          folder.id,
+        )
+    }
+
+    const tasks =
+      await loadTasksFromDrive(
+        accessToken,
+        tasksFolderId,
+      )
+
+    const project: Project = {
+      ...storedProject,
+      columns,
+      tasks,
+    }
+
+    return {
+      project,
+      projectFolderId: folder.id,
+      tasksFolderId,
+    }
   }
 
-  const uploadUrl =
-    `https://www.googleapis.com/upload/drive/v3/files/${projectFileId}?uploadType=media`
-
-  const uploadResponse =
-    await fetch(uploadUrl, {
-      method: 'PATCH',
-
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-
-      body: JSON.stringify(project, null, 2),
-    })
-
-  if (!uploadResponse.ok) {
-    throw new Error(
-      `Google Drive project save failed with status ${uploadResponse.status}.`,
-    )
-  }
+  return null
 }
 
 async function findFile(
