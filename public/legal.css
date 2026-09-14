@@ -1,0 +1,81 @@
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  background: #111318;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  color: #e7eaf0;
+  background: #111318;
+  font-family:
+    Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+.legal-shell {
+  width: min(900px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 3rem 0 5rem;
+}
+
+.legal-header {
+  margin-bottom: 2rem;
+}
+
+.product-name {
+  margin: 0 0 0.5rem;
+  color: #8d96a8;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.legal-header h1 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.legal-card {
+  padding: 2rem;
+  border: 1px solid #292f3b;
+  border-radius: 0.75rem;
+  background: #191c23;
+}
+
+.legal-card section + section {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #292f3b;
+}
+
+.legal-card h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.legal-card p {
+  margin: 0.75rem 0 0;
+  color: #c3cad6;
+  line-height: 1.7;
+}
+
+.legal-back-link {
+  display: inline-block;
+  margin-top: 1.5rem;
+  color: #b8c4dc;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.legal-back-link:hover {
+  color: #e7eaf0;
+}
