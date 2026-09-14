@@ -1,4 +1,9 @@
-import type { Project } from '../types/board'
+import type {
+  BoardColumn,
+  DemoUser,
+  Project,
+  Task,
+} from '../types/board'
 
 const GOOGLE_DRIVE_FILES_URL =
   'https://www.googleapis.com/drive/v3/files'
@@ -17,6 +22,25 @@ const PROJECT_FILE_NAME =
 
 const TASKS_FOLDER_NAME =
   'tasks'
+
+const COLUMNS_FILE_NAME =
+  'columns.json'
+
+const CURRENT_SCHEMA_VERSION =
+  2
+
+interface StoredProjectMetadata {
+  schemaVersion: number
+  id: string
+  name: string
+  members: DemoUser[]
+}
+
+export interface LoadedDriveProject {
+  project: Project
+  projectFolderId: string
+  tasksFolderId: string
+}
 
 export async function verifyGoogleDriveAccess(
   accessToken: string,
@@ -225,7 +249,10 @@ export async function createProjectOnDrive(
   accessToken: string,
   projectsFolderId: string,
   project: Project,
-): Promise<void> {
+): Promise<{
+  projectFolderId: string
+  tasksFolderId: string
+}> {
   const projectFolderId =
     await createFolder(
       accessToken,
@@ -233,55 +260,42 @@ export async function createProjectOnDrive(
       projectsFolderId,
     )
 
-  const fileResponse = await fetch(
-    GOOGLE_DRIVE_FILES_URL,
+  const tasksFolderId =
+    await createFolder(
+      accessToken,
+      TASKS_FOLDER_NAME,
+      projectFolderId,
+    )
+
+  await saveColumnsToDrive(
+    accessToken,
+    projectFolderId,
+    project.columns,
+  )
+
+  await Promise.all(
+    project.tasks.map((task) =>
+      saveTaskToDrive(
+        accessToken,
+        tasksFolderId,
+        task,
+      ),
+    ),
+  )
+
+  await saveProjectMetadataToDrive(
+    accessToken,
+    projectFolderId,
     {
-      method: 'POST',
-
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-
-      body: JSON.stringify({
-        name: PROJECT_FILE_NAME,
-        mimeType: 'application/json',
-        parents: [projectFolderId],
-      }),
+      ...project,
+      schemaVersion:
+        CURRENT_SCHEMA_VERSION,
     },
   )
 
-  if (!fileResponse.ok) {
-    throw new Error(
-      `Google Drive project file creation failed with status ${fileResponse.status}.`,
-    )
-  }
-
-  const file = await fileResponse.json() as {
-    id: string
-  }
-
-  const uploadUrl =
-    `https://www.googleapis.com/upload/drive/v3/files/${file.id}?uploadType=media`
-
-  const uploadResponse = await fetch(
-    uploadUrl,
-    {
-      method: 'PATCH',
-
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-
-      body: JSON.stringify(project, null, 2),
-    },
-  )
-
-  if (!uploadResponse.ok) {
-    throw new Error(
-      `Google Drive project upload failed with status ${uploadResponse.status}.`,
-    )
+  return {
+    projectFolderId,
+    tasksFolderId,
   }
 }
 
@@ -334,7 +348,20 @@ export async function loadFirstProjectFromDrive(
   const projectFolderId =
     foldersData.files[0]?.id
 
+  const storedProject =
+    await readJsonFile<
+      StoredProjectMetadata | Project
+    >(
+      accessToken,
+      projectFolderId,
+      PROJECT_FILE_NAME,
+    )
+
   if (!projectFolderId) {
+    return null
+  }
+
+  if (!storedProject) {
     return null
   }
 
@@ -495,4 +522,327 @@ export async function saveProjectToDrive(
       `Google Drive project save failed with status ${uploadResponse.status}.`,
     )
   }
+}
+
+async function findFile(
+  accessToken: string,
+  fileName: string,
+  parentFolderId: string,
+): Promise<string | null> {
+  const url =
+    new URL(GOOGLE_DRIVE_FILES_URL)
+
+  const escapedFileName =
+    escapeDriveQueryValue(fileName)
+
+  url.searchParams.set(
+    'q',
+    [
+      `name = '${escapedFileName}'`,
+      `'${parentFolderId}' in parents`,
+      'trashed = false',
+    ].join(' and '),
+  )
+
+  url.searchParams.set(
+    'fields',
+    'files(id)',
+  )
+
+  url.searchParams.set(
+    'pageSize',
+    '1',
+  )
+
+  const response =
+    await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+
+  if (!response.ok) {
+    throw new Error(
+      `Google Drive file search failed with status ${response.status}.`,
+    )
+  }
+
+  const data =
+    await response.json() as {
+      files: Array<{
+        id: string
+      }>
+    }
+
+  return data.files[0]?.id ?? null
+}
+
+async function writeJsonFile(
+  accessToken: string,
+  parentFolderId: string,
+  fileName: string,
+  value: unknown,
+): Promise<void> {
+  let fileId =
+    await findFile(
+      accessToken,
+      fileName,
+      parentFolderId,
+    )
+
+  if (!fileId) {
+    const createResponse =
+      await fetch(
+        GOOGLE_DRIVE_FILES_URL,
+        {
+          method: 'POST',
+
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+
+          body: JSON.stringify({
+            name: fileName,
+            mimeType: 'application/json',
+            parents: [parentFolderId],
+          }),
+        },
+      )
+
+    if (!createResponse.ok) {
+      throw new Error(
+        `Google Drive file creation failed with status ${createResponse.status}.`,
+      )
+    }
+
+    const createdFile =
+      await createResponse.json() as {
+        id: string
+      }
+
+    fileId = createdFile.id
+  }
+
+  const uploadResponse =
+    await fetch(
+      `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,
+      {
+        method: 'PATCH',
+
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+
+        body: JSON.stringify(
+          value,
+          null,
+          2,
+        ),
+      },
+    )
+
+  if (!uploadResponse.ok) {
+    throw new Error(
+      `Google Drive file save failed with status ${uploadResponse.status}.`,
+    )
+  }
+}
+
+async function readJsonFile<T>(
+  accessToken: string,
+  parentFolderId: string,
+  fileName: string,
+): Promise<T | null> {
+  const fileId =
+    await findFile(
+      accessToken,
+      fileName,
+      parentFolderId,
+    )
+
+  if (!fileId) {
+    return null
+  }
+
+  const response =
+    await fetch(
+      `${GOOGLE_DRIVE_FILES_URL}/${fileId}?alt=media`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    )
+
+  if (!response.ok) {
+    throw new Error(
+      `Google Drive file download failed with status ${response.status}.`,
+    )
+  }
+
+  return await response.json() as T
+}
+
+function createStoredProjectMetadata(
+  project: Project,
+): StoredProjectMetadata {
+  return {
+    schemaVersion:
+      CURRENT_SCHEMA_VERSION,
+
+    id: project.id,
+    name: project.name,
+    members: project.members,
+  }
+}
+
+export async function saveProjectMetadataToDrive(
+  accessToken: string,
+  projectFolderId: string,
+  project: Project,
+): Promise<void> {
+  await writeJsonFile(
+    accessToken,
+    projectFolderId,
+    PROJECT_FILE_NAME,
+    createStoredProjectMetadata(project),
+  )
+}
+
+export async function saveColumnsToDrive(
+  accessToken: string,
+  projectFolderId: string,
+  columns: BoardColumn[],
+): Promise<void> {
+  await writeJsonFile(
+    accessToken,
+    projectFolderId,
+    COLUMNS_FILE_NAME,
+    columns,
+  )
+}
+
+export async function saveTaskToDrive(
+  accessToken: string,
+  tasksFolderId: string,
+  task: Task,
+): Promise<void> {
+  await writeJsonFile(
+    accessToken,
+    tasksFolderId,
+    `${task.id}.json`,
+    task,
+  )
+}
+
+export async function deleteTaskFromDrive(
+  accessToken: string,
+  tasksFolderId: string,
+  taskId: string,
+): Promise<void> {
+  const fileId =
+    await findFile(
+      accessToken,
+      `${taskId}.json`,
+      tasksFolderId,
+    )
+
+  if (!fileId) {
+    return
+  }
+
+  const response =
+    await fetch(
+      `${GOOGLE_DRIVE_FILES_URL}/${fileId}`,
+      {
+        method: 'DELETE',
+
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    )
+
+  if (!response.ok) {
+    throw new Error(
+      `Google Drive task deletion failed with status ${response.status}.`,
+    )
+  }
+}
+
+async function loadTasksFromDrive(
+  accessToken: string,
+  tasksFolderId: string,
+): Promise<Task[]> {
+  const url =
+    new URL(GOOGLE_DRIVE_FILES_URL)
+
+  url.searchParams.set(
+    'q',
+    [
+      `'${tasksFolderId}' in parents`,
+      'trashed = false',
+    ].join(' and '),
+  )
+
+  url.searchParams.set(
+    'fields',
+    'files(id,name)',
+  )
+
+  url.searchParams.set(
+    'pageSize',
+    '1000',
+  )
+
+  const response =
+    await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+
+  if (!response.ok) {
+    throw new Error(
+      `Google Drive task list failed with status ${response.status}.`,
+    )
+  }
+
+  const data =
+    await response.json() as {
+      files: Array<{
+        id: string
+        name: string
+      }>
+    }
+
+  const taskFiles =
+    data.files.filter(
+      (file) =>
+        file.name.endsWith('.json'),
+    )
+
+  return Promise.all(
+    taskFiles.map(async (file) => {
+      const taskResponse =
+        await fetch(
+          `${GOOGLE_DRIVE_FILES_URL}/${file.id}?alt=media`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          },
+        )
+
+      if (!taskResponse.ok) {
+        throw new Error(
+          `Google Drive task download failed with status ${taskResponse.status}.`,
+        )
+      }
+
+      return await taskResponse.json() as Task
+    }),
+  )
 }

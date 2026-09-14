@@ -1,6 +1,7 @@
 import './App.css'
 import {
   useEffect,
+  useRef,
   useState,
 } from 'react'
 import { KanbanColumn } from './components/KanbanColumn'
@@ -93,8 +94,14 @@ function App() {
   const [googleAccessToken, setGoogleAccessToken] =
     useState<string | null>(null)
 
-  const [googleProjectsFolderId, setGoogleProjectsFolderId] =
+  const [googleProjectFolderId, setGoogleProjectFolderId] =
     useState<string | null>(null)
+
+  const [googleTasksFolderId, setGoogleTasksFolderId] =
+    useState<string | null>(null)
+
+  const lastSavedTasksRef =
+    useRef<Task[]>([])
 
   const [isGoogleConnecting, setIsGoogleConnecting] =
     useState(false)

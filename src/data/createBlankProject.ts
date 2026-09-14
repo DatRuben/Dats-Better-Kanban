@@ -2,7 +2,7 @@ import type { Project } from '../types/board'
 
 export function createBlankProject(): Project {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     id: crypto.randomUUID(),
     name: 'Untitled Project',
 
