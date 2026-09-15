@@ -9,6 +9,17 @@ const GOOGLE_TOKEN_STORAGE_KEY =
 const GOOGLE_TOKEN_EXPIRATION_KEY =
   'datsGoogleAccessTokenExpiresAt'
 
+export function clearStoredGoogleAccessToken():
+  void {
+  sessionStorage.removeItem(
+    GOOGLE_TOKEN_STORAGE_KEY,
+  )
+
+  sessionStorage.removeItem(
+    GOOGLE_TOKEN_EXPIRATION_KEY,
+  )
+}
+
 export function getStoredGoogleAccessToken():
   string | null {
   const accessToken =
@@ -32,13 +43,7 @@ export function getStoredGoogleAccessToken():
     !Number.isFinite(expiresAt) ||
     Date.now() >= expiresAt
   ) {
-    sessionStorage.removeItem(
-      GOOGLE_TOKEN_STORAGE_KEY,
-    )
-
-    sessionStorage.removeItem(
-      GOOGLE_TOKEN_EXPIRATION_KEY,
-    )
+    clearStoredGoogleAccessToken()
 
     return null
   }

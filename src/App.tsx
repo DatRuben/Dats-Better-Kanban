@@ -13,6 +13,7 @@ import { DragDropProvider } from '@dnd-kit/react'
 import { isSortable } from '@dnd-kit/react/sortable'
 import { createProjectSnapshot } from './storage/projectSnapshot'
 import {
+  clearStoredGoogleAccessToken,
   getStoredGoogleAccessToken,
   requestGoogleAccessToken,
 } from './auth/googleAuth'
@@ -143,11 +144,21 @@ function App() {
   const [googleProjectsFolderId, setGoogleProjectsFolderId] =
     useState<string | null>(null)
 
-  function beginSave() {
+  function beginSave(): boolean {
+    const storedAccessToken =
+      getStoredGoogleAccessToken()
+
+    if (!storedAccessToken) {
+      expireGoogleSession()
+      return false
+    }
+
     pendingSavesRef.current += 1
 
     setSaveStatus('saving')
     setSaveError(null)
+
+    return true
   }
 
   function completeSave() {
@@ -167,6 +178,11 @@ function App() {
   }
 
   function failSave(error: unknown) {
+    if (isGoogleUnauthorizedError(error)) {
+      expireGoogleSession()
+      return
+    }
+
     pendingSavesRef.current =
       Math.max(
         0,
@@ -194,7 +210,9 @@ function App() {
 
     const timeout =
       window.setTimeout(() => {
-        beginSave()
+        if (!beginSave()) {
+          return
+        }
 
         void saveProjectMetadataToDrive(
           googleAccessToken,
@@ -232,7 +250,9 @@ function App() {
 
     const timeout =
       window.setTimeout(() => {
-        beginSave()
+        if (!beginSave()) {
+          return
+        }
 
         void saveColumnsToDrive(
           googleAccessToken,
@@ -303,7 +323,9 @@ function App() {
             )
             .map((task) => task.id)
 
-        beginSave()
+        if (!beginSave()) {
+          return
+        }
 
         void Promise.all([
           ...changedTasks.map((task) =>
@@ -796,9 +818,22 @@ function App() {
         storedAccessToken ??
         await requestGoogleAccessToken()
 
-      await connectGoogleWithToken(
-        accessToken,
-      )
+      if (isDemoMode) {
+        await connectGoogleWithToken(
+          accessToken,
+        )
+      } else {
+        await verifyGoogleDriveAccess(
+          accessToken,
+        )
+
+        setGoogleAccessToken(
+          accessToken,
+        )
+
+        setSaveError(null)
+        setSaveStatus('idle')
+      }
     } catch (error) {
       setGoogleAccessToken(null)
 
@@ -828,6 +863,29 @@ function App() {
           </div>
         </div>
       </main>
+    )
+  }
+
+  function isGoogleUnauthorizedError(
+    error: unknown,
+  ) {
+    return (
+      error instanceof Error &&
+      error.message.includes('status 401')
+    )
+  }
+
+  function expireGoogleSession() {
+    clearStoredGoogleAccessToken()
+
+    setGoogleAccessToken(null)
+
+    pendingSavesRef.current = 0
+
+    setSaveStatus('error')
+
+    setSaveError(
+      'Google Drive session expired. Reconnect to continue saving.',
     )
   }
 
@@ -879,7 +937,9 @@ function App() {
               ? 'Connecting...'
               : googleAccessToken
                 ? 'Google Drive Connected'
-                : 'Connect Google Drive'}
+                : isDemoMode
+                  ? 'Connect Google Drive'
+                  : 'Reconnect Google Drive'}
           </button>
 
           {!isDemoMode && (
