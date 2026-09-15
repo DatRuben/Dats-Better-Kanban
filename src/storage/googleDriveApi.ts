@@ -1101,3 +1101,27 @@ export async function uploadAttachmentToDrive(
 
   return createdFile.id
 }
+
+export async function downloadAttachmentFromDrive(
+  accessToken: string,
+  fileId: string,
+): Promise<Blob> {
+  const response =
+    await fetch(
+      `${GOOGLE_DRIVE_FILES_URL}/${fileId}?alt=media`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${accessToken}`,
+        },
+      },
+    )
+
+  if (!response.ok) {
+    throw new Error(
+      `Google Drive attachment download failed with status ${response.status}.`,
+    )
+  }
+
+  return await response.blob()
+}
