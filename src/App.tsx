@@ -519,32 +519,6 @@ function App() {
         })().catch((error) => {
           failSave(error)
         })
-          .then(() => {
-            const nextSavedTasksById =
-              new Map(
-                previousTasks.map(
-                  (task) => [task.id, task],
-                ),
-              )
-
-            for (const task of changedTasks) {
-              nextSavedTasksById.set(
-                task.id,
-                task,
-              )
-            }
-
-            for (const taskId of deletedTaskIds) {
-              nextSavedTasksById.delete(
-                taskId,
-              )
-            }
-
-            lastSavedTasksRef.current =
-              [...nextSavedTasksById.values()]
-
-            completeSave()
-          })
           .catch((error) => {
             failSave(error)
           })
