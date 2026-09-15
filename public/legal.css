@@ -49,7 +49,7 @@ body {
   background: #191c23;
 }
 
-.legal-card section + section {
+.legal-card section+section {
   margin-top: 2rem;
   padding-top: 2rem;
   border-top: 1px solid #292f3b;
@@ -77,5 +77,13 @@ body {
 }
 
 .legal-back-link:hover {
+  color: #e7eaf0;
+}
+
+.legal-card a {
+  color: #b8c4dc;
+}
+
+.legal-card a:hover {
   color: #e7eaf0;
 }
