@@ -82,11 +82,13 @@ export function TaskCreator({
                     await onUploadImage(imageFile)
 
                 attachments = [
-                    ...attachments,
+                    ...attachments.filter(
+                        (attachment) =>
+                            !attachment.mimeType.startsWith('image/'),
+                    ),
                     uploadedAttachment,
                 ]
             }
-
             onCreate({
                 title: trimmedTitle,
                 description: description.trim(),
