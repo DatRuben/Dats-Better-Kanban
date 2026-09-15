@@ -868,3 +868,13 @@
     transform: translateX(350%);
   }
 }
+
+.save-status {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.save-error {
+  margin: 8px 0;
+  color: #e7eaf0;
+}

@@ -119,6 +119,21 @@ function App() {
   const [googleAuthError, setGoogleAuthError] =
     useState<string | null>(null)
 
+  type SaveStatus =
+    | 'idle'
+    | 'saving'
+    | 'saved'
+    | 'error'
+
+  const [saveStatus, setSaveStatus] =
+    useState<SaveStatus>('idle')
+
+  const [saveError, setSaveError] =
+    useState<string | null>(null)
+
+  const pendingSavesRef =
+    useRef(0)
+
   const currentProject = createProjectSnapshot(
     project,
     columns,
@@ -127,6 +142,45 @@ function App() {
 
   const [googleProjectsFolderId, setGoogleProjectsFolderId] =
     useState<string | null>(null)
+
+  function beginSave() {
+    pendingSavesRef.current += 1
+
+    setSaveStatus('saving')
+    setSaveError(null)
+  }
+
+  function completeSave() {
+    pendingSavesRef.current =
+      Math.max(
+        0,
+        pendingSavesRef.current - 1,
+      )
+
+    if (pendingSavesRef.current === 0) {
+      setSaveStatus((currentStatus) =>
+        currentStatus === 'error'
+          ? 'error'
+          : 'saved',
+      )
+    }
+  }
+
+  function failSave(error: unknown) {
+    pendingSavesRef.current =
+      Math.max(
+        0,
+        pendingSavesRef.current - 1,
+      )
+
+    setSaveStatus('error')
+
+    setSaveError(
+      error instanceof Error
+        ? error.message
+        : 'Save failed.',
+    )
+  }
 
   useEffect(() => {
     if (
@@ -140,18 +194,20 @@ function App() {
 
     const timeout =
       window.setTimeout(() => {
+        beginSave()
+
         void saveProjectMetadataToDrive(
           googleAccessToken,
           googleProjectsFolderId,
           googleProjectFolderId,
           project,
-        ).catch((error) => {
-          setGoogleAuthError(
-            error instanceof Error
-              ? error.message
-              : 'Project save failed.',
-          )
-        })
+        )
+          .then(() => {
+            completeSave()
+          })
+          .catch((error) => {
+            failSave(error)
+          })
       }, 1000)
 
     return () => {
@@ -180,13 +236,13 @@ function App() {
           googleAccessToken,
           googleProjectFolderId,
           columns,
-        ).catch((error) => {
-          setGoogleAuthError(
-            error instanceof Error
-              ? error.message
-              : 'Column save failed.',
-          )
-        })
+        )
+          .then(() => {
+            completeSave()
+          })
+          .catch((error) => {
+            failSave(error)
+          })
       }, 1000)
 
     return () => {
@@ -245,6 +301,8 @@ function App() {
             )
             .map((task) => task.id)
 
+        beginSave()
+
         void Promise.all([
           ...changedTasks.map((task) =>
             saveTaskToDrive(
@@ -265,13 +323,11 @@ function App() {
           .then(() => {
             lastSavedTasksRef.current =
               tasks
+
+            completeSave()
           })
           .catch((error) => {
-            setGoogleAuthError(
-              error instanceof Error
-                ? error.message
-                : 'Task save failed.',
-            )
+            failSave(error)
           })
       }, 1000)
 
@@ -824,6 +880,14 @@ function App() {
                 : 'Connect Google Drive'}
           </button>
 
+          {!isDemoMode && (
+            <span className="save-status">
+              {saveStatus === 'saving' && 'Saving…'}
+              {saveStatus === 'saved' && 'Saved'}
+              {saveStatus === 'error' && 'Save failed'}
+            </span>
+          )}
+
           {isDemoMode && (
             <span className="demo-badge">
               Demo Mode
@@ -834,6 +898,12 @@ function App() {
       {googleAuthError && (
         <p className="google-auth-error">
           {googleAuthError}
+        </p>
+      )}
+
+      {saveError && (
+        <p className="save-error">
+          {saveError}
         </p>
       )}
 
