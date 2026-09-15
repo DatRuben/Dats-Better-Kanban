@@ -153,6 +153,7 @@ function App() {
     project,
     isDemoMode,
     googleAccessToken,
+    googleProjectsFolderId,
     googleProjectFolderId,
   ])
 
