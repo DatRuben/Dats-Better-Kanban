@@ -18,6 +18,7 @@ import {
   requestGoogleAccessToken,
 } from './auth/googleAuth'
 import { createBlankProject } from './data/createBlankProject'
+import { APP_VERSION } from './config/app'
 import {
   createProjectOnDrive,
   deleteTaskFromDrive,
@@ -1261,7 +1262,12 @@ function App() {
     return (
       <main className="app-loading">
         <div className="app-loading__content">
-          <h1>Dat's: Better Kanban</h1>
+          <h1>
+            Dat&apos;s: Better Kanban
+            <span className="app-version">
+              v{APP_VERSION}
+            </span>
+          </h1>
           <p>Loading your project from Google Drive…</p>
 
           <div
@@ -1305,6 +1311,9 @@ function App() {
         <div>
           <p className="product-name">
             Dat&apos;s: Better Kanban
+            <span className="app-version">
+              v{APP_VERSION}
+            </span>
           </p>
 
           <input
