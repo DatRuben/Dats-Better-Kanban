@@ -51,6 +51,27 @@ export function getStoredGoogleAccessToken():
   return accessToken
 }
 
+export function getStoredGoogleAccessTokenExpiresAt():
+  number | null {
+  const expiresAtText =
+    sessionStorage.getItem(
+      GOOGLE_TOKEN_EXPIRATION_KEY,
+    )
+
+  if (!expiresAtText) {
+    return null
+  }
+
+  const expiresAt =
+    Number(expiresAtText)
+
+  if (!Number.isFinite(expiresAt)) {
+    return null
+  }
+
+  return expiresAt
+}
+
 export function requestGoogleAccessToken(): Promise<string> {
   return new Promise((resolve, reject) => {
     if (!GOOGLE_CLIENT_ID) {
