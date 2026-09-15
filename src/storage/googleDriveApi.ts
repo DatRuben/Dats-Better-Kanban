@@ -812,7 +812,7 @@ export async function deleteTaskFromDrive(
   }
 }
 
-async function loadTasksFromDrive(
+export async function loadTasksFromDrive(
   accessToken: string,
   tasksFolderId: string,
 ): Promise<Task[]> {

@@ -24,6 +24,7 @@ import {
   ensureDatsDriveFolder,
   ensureProjectsDriveFolder,
   loadFirstProjectFromDrive,
+  loadTasksFromDrive,
   saveColumnsToDrive,
   saveProjectMetadataToDrive,
   saveTaskToDrive,
@@ -113,6 +114,9 @@ function App() {
 
   const lastSavedTasksRef =
     useRef<Task[]>([])
+
+  const tasksRef =
+    useRef<Task[]>(tasks)
 
   const [isGoogleConnecting, setIsGoogleConnecting] =
     useState(false)
@@ -322,6 +326,13 @@ function App() {
                 !currentIds.has(task.id),
             )
             .map((task) => task.id)
+
+        if (
+          changedTasks.length === 0 &&
+          deletedTaskIds.length === 0
+        ) {
+          return
+        }
 
         if (!beginSave()) {
           return
@@ -806,6 +817,105 @@ function App() {
       })
   }, [])
 
+  useEffect(() => {
+    tasksRef.current = tasks
+  }, [tasks])
+
+  useEffect(() => {
+    if (
+      isDemoMode ||
+      !googleAccessToken ||
+      !googleTasksFolderId
+    ) {
+      return
+    }
+
+    let isChecking = false
+    let isCancelled = false
+
+    async function syncRemoteTasks() {
+      if (
+        isChecking ||
+        pendingSavesRef.current > 0
+      ) {
+        return
+      }
+
+      const localTasks =
+        tasksRef.current
+
+      const lastSyncedTasks =
+        lastSavedTasksRef.current
+
+      const hasUnsavedLocalChanges =
+        !taskListsMatch(
+          localTasks,
+          lastSyncedTasks,
+        )
+
+      if (hasUnsavedLocalChanges) {
+        return
+      }
+
+      isChecking = true
+
+      try {
+        const remoteTasks =
+          await loadTasksFromDrive(
+            googleAccessToken,
+            googleTasksFolderId,
+          )
+
+        if (isCancelled) {
+          return
+        }
+
+        const remoteChanged =
+          !taskListsMatch(
+            remoteTasks,
+            lastSyncedTasks,
+          )
+
+        if (!remoteChanged) {
+          return
+        }
+
+        lastSavedTasksRef.current =
+          remoteTasks
+
+        tasksRef.current =
+          remoteTasks
+
+        setTasks(remoteTasks)
+      } catch (error) {
+        if (
+          !isCancelled &&
+          isGoogleUnauthorizedError(error)
+        ) {
+          expireGoogleSession()
+        }
+      } finally {
+        isChecking = false
+      }
+    }
+
+    void syncRemoteTasks()
+
+    const interval =
+      window.setInterval(() => {
+        void syncRemoteTasks()
+      }, 3000)
+
+    return () => {
+      isCancelled = true
+      window.clearInterval(interval)
+    }
+  }, [
+    isDemoMode,
+    googleAccessToken,
+    googleTasksFolderId,
+  ])
+
   async function handleConnectGoogle() {
     setIsGoogleConnecting(true)
     setGoogleAuthError(null)
@@ -1235,6 +1345,36 @@ function App() {
           : currentTask,
       ),
     )
+  }
+
+  function taskListsMatch(
+    firstTasks: Task[],
+    secondTasks: Task[],
+  ) {
+    if (
+      firstTasks.length !==
+      secondTasks.length
+    ) {
+      return false
+    }
+
+    const secondTasksById =
+      new Map(
+        secondTasks.map(
+          (task) => [task.id, task],
+        ),
+      )
+
+    return firstTasks.every((task) => {
+      const matchingTask =
+        secondTasksById.get(task.id)
+
+      return (
+        matchingTask !== undefined &&
+        JSON.stringify(task) ===
+        JSON.stringify(matchingTask)
+      )
+    })
   }
 }
 
