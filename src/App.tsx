@@ -1325,74 +1325,9 @@ function App() {
         </section>
       </main>
     )
-  } if (!hasChosenMode) {
-    return (
-      <main className="welcome-screen">
-        <section className="welcome-screen__content">
-          <p className="product-name">
-            Dat&apos;s: Better Kanban
-            <span className="app-version">
-              v{APP_VERSION}
-            </span>
-          </p>
-
-          <h1>
-            Project management,
-            built around your workflow.
-          </h1>
-
-          <p className="welcome-screen__description">
-            Dat&apos;s: Better Kanban is a customizable
-            project-management tool for organizing tasks,
-            priorities, deadlines, pipelines, timelines,
-            and completed work.
-          </p>
-
-          <div className="welcome-screen__choices">
-            <button
-              className="welcome-choice"
-              type="button"
-              onClick={handleEnterDemo}
-            >
-              <strong>Try Demo</strong>
-
-              <span>
-                Explore Dat&apos;s with a sample project.
-                Demo changes are not saved.
-              </span>
-            </button>
-
-            <button
-              className="welcome-choice"
-              type="button"
-              onClick={() => {
-                void handleConnectGoogle()
-              }}
-            >
-              <strong>Connect Google Drive</strong>
-
-              <span>
-                Load and save your project using your
-                own Google Drive.
-              </span>
-            </button>
-          </div>
-
-          <p className="welcome-screen__storage-note">
-            Your project files are stored in your Google Drive,
-            not in a central Dat&apos;s project database.
-          </p>
-
-          {googleAuthError && (
-            <p className="google-auth-error">
-              {googleAuthError}
-            </p>
-          )}
-        </section>
-      </main>
-    )
+    
   }
-  
+
   function isGoogleUnauthorizedError(
     error: unknown,
   ) {
