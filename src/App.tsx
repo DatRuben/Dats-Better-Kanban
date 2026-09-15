@@ -171,6 +171,27 @@ function App() {
   const [googleProjectsFolderId, setGoogleProjectsFolderId] =
     useState<string | null>(null)
 
+
+  const handleLoadAttachment =
+    useCallback(
+      async (
+        attachment: Attachment,
+      ): Promise<Blob | null> => {
+        if (
+          !googleAccessToken ||
+          !attachment.driveFileId
+        ) {
+          return null
+        }
+
+        return downloadAttachmentFromDrive(
+          googleAccessToken,
+          attachment.driveFileId,
+        )
+      },
+      [googleAccessToken],
+    )
+
   function beginSave(): boolean {
     const storedAccessToken =
       getStoredGoogleAccessToken()
@@ -1406,26 +1427,6 @@ function App() {
       driveFileId,
     }
   }
-
-  const handleLoadAttachment =
-    useCallback(
-      async (
-        attachment: Attachment,
-      ): Promise<Blob | null> => {
-        if (
-          !googleAccessToken ||
-          !attachment.driveFileId
-        ) {
-          return null
-        }
-
-        return downloadAttachmentFromDrive(
-          googleAccessToken,
-          attachment.driveFileId,
-        )
-      },
-      [googleAccessToken],
-    )
 
   return (
     <main className="app-shell">
