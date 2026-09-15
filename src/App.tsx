@@ -1257,7 +1257,10 @@ function App() {
     }
   }
 
-  if (isRestoringGoogle) {
+  if (
+    isRestoringGoogle ||
+    (isGoogleConnecting && isDemoMode)
+  ) {
     return (
       <main className="app-loading">
         <div className="app-loading__content">
