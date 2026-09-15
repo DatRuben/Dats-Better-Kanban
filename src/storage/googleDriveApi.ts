@@ -1125,3 +1125,30 @@ export async function downloadAttachmentFromDrive(
 
   return await response.blob()
 }
+
+export async function deleteAttachmentFromDrive(
+  accessToken: string,
+  fileId: string,
+): Promise<void> {
+  const response =
+    await fetch(
+      `${GOOGLE_DRIVE_FILES_URL}/${fileId}`,
+      {
+        method: 'DELETE',
+
+        headers: {
+          Authorization:
+            `Bearer ${accessToken}`,
+        },
+      },
+    )
+
+  if (
+    !response.ok &&
+    response.status !== 404
+  ) {
+    throw new Error(
+      `Google Drive attachment deletion failed with status ${response.status}.`,
+    )
+  }
+}
