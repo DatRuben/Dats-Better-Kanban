@@ -705,27 +705,6 @@ function App() {
       getStoredGoogleAccessToken()
 
     if (!storedAccessToken) {
-      return
-    }
-
-    void connectGoogleWithToken(
-      storedAccessToken,
-    ).catch((error) => {
-      setGoogleAccessToken(null)
-
-      setGoogleAuthError(
-        error instanceof Error
-          ? error.message
-          : 'Google session restore failed.',
-      )
-    })
-  }, [])
-
-  useEffect(() => {
-    const storedAccessToken =
-      getStoredGoogleAccessToken()
-
-    if (!storedAccessToken) {
       setIsRestoringGoogle(false)
       return
     }
@@ -781,6 +760,14 @@ function App() {
         <div className="app-loading__content">
           <h1>Dat's: Better Kanban</h1>
           <p>Loading your project from Google Drive…</p>
+
+          <div
+            className="app-loading__bar"
+            role="progressbar"
+            aria-label="Loading project"
+          >
+            <div className="app-loading__bar-fill" />
+          </div>
         </div>
       </main>
     )
