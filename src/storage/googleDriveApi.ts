@@ -23,6 +23,9 @@ const PROJECT_FILE_NAME =
 const TASKS_FOLDER_NAME =
   'tasks'
 
+const ATTACHMENTS_FOLDER_NAME =
+  'attachments'
+
 const COLUMNS_FILE_NAME =
   'columns.json'
 
@@ -43,6 +46,7 @@ export interface LoadedDriveProject {
   project: Project
   projectFolderId: string
   tasksFolderId: string
+  attachmentsFolderId: string
 }
 
 export async function verifyGoogleDriveAccess(
@@ -275,6 +279,7 @@ export async function createProjectOnDrive(
 ): Promise<{
   projectFolderId: string
   tasksFolderId: string
+  attachmentsFolderId: string
 }> {
   const projectFolderName =
     await getProjectFolderName(
@@ -295,6 +300,13 @@ export async function createProjectOnDrive(
     await createFolder(
       accessToken,
       TASKS_FOLDER_NAME,
+      projectFolderId,
+    )
+
+  const attachmentsFolderId =
+    await createFolder(
+      accessToken,
+      ATTACHMENTS_FOLDER_NAME,
       projectFolderId,
     )
 
@@ -328,6 +340,7 @@ export async function createProjectOnDrive(
   return {
     projectFolderId,
     tasksFolderId,
+    attachmentsFolderId,
   }
 }
 
@@ -418,6 +431,22 @@ export async function loadFirstProjectFromDrive(
         )
     }
 
+    let attachmentsFolderId =
+      await findFolder(
+        accessToken,
+        ATTACHMENTS_FOLDER_NAME,
+        folder.id,
+      )
+
+    if (!attachmentsFolderId) {
+      attachmentsFolderId =
+        await createFolder(
+          accessToken,
+          ATTACHMENTS_FOLDER_NAME,
+          folder.id,
+        )
+    }
+
     const tasks =
       await loadTasksFromDrive(
         accessToken,
@@ -434,6 +463,7 @@ export async function loadFirstProjectFromDrive(
       project,
       projectFolderId: folder.id,
       tasksFolderId,
+      attachmentsFolderId,
     }
   }
 
