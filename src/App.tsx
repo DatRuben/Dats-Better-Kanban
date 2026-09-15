@@ -24,6 +24,7 @@ import {
   ensureDatsDriveFolder,
   ensureProjectsDriveFolder,
   loadFirstProjectFromDrive,
+  loadTaskFromDrive,
   loadTasksFromDrive,
   saveColumnsToDrive,
   saveProjectMetadataToDrive,
@@ -404,6 +405,9 @@ function App() {
 
             completeSave()
           })
+          .catch((error) => {
+            failSave(error)
+          })
       }, 1000)
 
     return () => {
@@ -740,6 +744,21 @@ function App() {
     setEditingTaskId(null)
   }
 
+  function taskVersionsMatch(
+    firstTask: Task | null | undefined,
+    secondTask: Task | null | undefined,
+  ) {
+    if (!firstTask || !secondTask) {
+      return firstTask == null &&
+        secondTask == null
+    }
+
+    return (
+      JSON.stringify(firstTask) ===
+      JSON.stringify(secondTask)
+    )
+  }
+
   function handleDeleteTask(taskId: string) {
     const task = tasks.find(
       (task) => task.id === taskId,
@@ -885,20 +904,6 @@ function App() {
         pendingSavesRef.current > 0
       ) {
         return
-      }
-
-      function taskVersionsMatch(
-        firstTask: Task | undefined,
-        secondTask: Task | undefined,
-      ) {
-        if (!firstTask || !secondTask) {
-          return firstTask === secondTask
-        }
-
-        return (
-          JSON.stringify(firstTask) ===
-          JSON.stringify(secondTask)
-        )
       }
 
       isChecking = true

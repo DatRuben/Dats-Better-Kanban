@@ -941,6 +941,42 @@ async function findTaskFileById(
   return data.files[0]?.id ?? null
 }
 
+export async function loadTaskFromDrive(
+  accessToken: string,
+  tasksFolderId: string,
+  taskId: string,
+): Promise<Task | null> {
+  const fileId =
+    await findTaskFileById(
+      accessToken,
+      tasksFolderId,
+      taskId,
+    )
+
+  if (!fileId) {
+    return null
+  }
+
+  const response =
+    await fetch(
+      `${GOOGLE_DRIVE_FILES_URL}/${fileId}?alt=media`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${accessToken}`,
+        },
+      },
+    )
+
+  if (!response.ok) {
+    throw new Error(
+      `Google Drive task download failed with status ${response.status}.`,
+    )
+  }
+
+  return await response.json() as Task
+}
+
 async function getTaskFileName(
   accessToken: string,
   tasksFolderId: string,
