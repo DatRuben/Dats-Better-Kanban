@@ -1352,6 +1352,12 @@ function App() {
   async function handleConnectGoogle(
     forceNewToken = false,
   ) {
+    const previousAccessToken =
+      googleAccessToken
+
+    const previousExpiresAt =
+      googleTokenExpiresAt
+
     setIsGoogleConnecting(true)
     setGoogleAuthError(null)
 
@@ -1388,7 +1394,25 @@ function App() {
         setSaveStatus('idle')
       }
     } catch (error) {
-      setGoogleAccessToken(null)
+      const previousTokenStillValid =
+        forceNewToken &&
+        previousAccessToken !== null &&
+        previousExpiresAt !== null &&
+        Date.now() < previousExpiresAt
+
+      if (previousTokenStillValid) {
+        setGoogleAccessToken(
+          previousAccessToken,
+        )
+
+        setGoogleTokenExpiresAt(
+          previousExpiresAt,
+        )
+      } else {
+        setGoogleAccessToken(null)
+        setGoogleTokenExpiresAt(null)
+        setGoogleTokenMinutesRemaining(null)
+      }
 
       setGoogleAuthError(
         error instanceof Error
