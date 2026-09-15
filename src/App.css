@@ -819,3 +819,25 @@
 .project-title-input:focus {
   outline: none;
 }
+
+.app-loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #e7eaf0;
+  background: #111318;
+}
+
+.app-loading__content {
+  text-align: center;
+}
+
+.app-loading__content h1 {
+  margin: 0 0 8px;
+}
+
+.app-loading__content p {
+  margin: 0;
+  color: #9ca3af;
+}

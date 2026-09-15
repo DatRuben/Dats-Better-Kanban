@@ -91,6 +91,11 @@ function App() {
     useState(demoProject)
   const [isDemoMode, setIsDemoMode] =
     useState(true)
+  const [isRestoringGoogle, setIsRestoringGoogle] =
+    useState(
+      () =>
+        getStoredGoogleAccessToken() !== null,
+    )
   const [columns, setColumns] =
     useState(project.columns)
   const [tasks, setTasks] =
@@ -716,6 +721,32 @@ function App() {
     })
   }, [])
 
+  useEffect(() => {
+    const storedAccessToken =
+      getStoredGoogleAccessToken()
+
+    if (!storedAccessToken) {
+      setIsRestoringGoogle(false)
+      return
+    }
+
+    void connectGoogleWithToken(
+      storedAccessToken,
+    )
+      .catch((error) => {
+        setGoogleAccessToken(null)
+
+        setGoogleAuthError(
+          error instanceof Error
+            ? error.message
+            : 'Google session restore failed.',
+        )
+      })
+      .finally(() => {
+        setIsRestoringGoogle(false)
+      })
+  }, [])
+
   async function handleConnectGoogle() {
     setIsGoogleConnecting(true)
     setGoogleAuthError(null)
@@ -742,6 +773,17 @@ function App() {
     } finally {
       setIsGoogleConnecting(false)
     }
+  }
+
+  if (isRestoringGoogle) {
+    return (
+      <main className="app-loading">
+        <div className="app-loading__content">
+          <h1>Dat's: Better Kanban</h1>
+          <p>Loading your project from Google Drive…</p>
+        </div>
+      </main>
+    )
   }
 
   return (
