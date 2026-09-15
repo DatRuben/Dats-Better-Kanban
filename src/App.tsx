@@ -21,6 +21,7 @@ import {
   clearStoredGoogleAccessToken,
   getStoredGoogleAccessToken,
   requestGoogleAccessToken,
+  getStoredGoogleAccessTokenExpiresAt,
 } from './auth/googleAuth'
 import { createBlankProject } from './data/createBlankProject'
 import { APP_VERSION } from './config/app'
@@ -118,6 +119,16 @@ function App() {
 
   const [googleAccessToken, setGoogleAccessToken] =
     useState<string | null>(null)
+
+  const [
+    googleTokenExpiresAt,
+    setGoogleTokenExpiresAt,
+  ] = useState<number | null>(null)
+
+  const [
+    googleTokenMinutesRemaining,
+    setGoogleTokenMinutesRemaining,
+  ] = useState<number | null>(null)
 
   const [googleProjectFolderId, setGoogleProjectFolderId] =
     useState<string | null>(null)
@@ -286,6 +297,51 @@ function App() {
     googleAccessToken,
     googleProjectsFolderId,
     googleProjectFolderId,
+  ])
+
+  useEffect(() => {
+    if (
+      !googleAccessToken ||
+      !googleTokenExpiresAt
+    ) {
+      setGoogleTokenMinutesRemaining(null)
+      return
+    }
+
+    const tokenExpiresAt =
+      googleTokenExpiresAt
+
+    function updateTokenTimeRemaining() {
+      const millisecondsRemaining =
+        tokenExpiresAt - Date.now()
+
+      if (millisecondsRemaining <= 0) {
+        setGoogleTokenMinutesRemaining(0)
+        expireGoogleSession()
+        return
+      }
+
+      setGoogleTokenMinutesRemaining(
+        Math.ceil(
+          millisecondsRemaining / 60000,
+        ),
+      )
+    }
+
+    updateTokenTimeRemaining()
+
+    const interval =
+      window.setInterval(
+        updateTokenTimeRemaining,
+        30000,
+      )
+
+    return () => {
+      window.clearInterval(interval)
+    }
+  }, [
+    googleAccessToken,
+    googleTokenExpiresAt,
   ])
 
   useEffect(() => {
@@ -1293,17 +1349,25 @@ function App() {
     googleTasksFolderId,
   ])
 
-  async function handleConnectGoogle() {
+  async function handleConnectGoogle(
+    forceNewToken = false,
+  ) {
     setIsGoogleConnecting(true)
     setGoogleAuthError(null)
 
     try {
       const storedAccessToken =
-        getStoredGoogleAccessToken()
+        forceNewToken
+          ? null
+          : getStoredGoogleAccessToken()
 
       const accessToken =
         storedAccessToken ??
         await requestGoogleAccessToken()
+
+      setGoogleTokenExpiresAt(
+        getStoredGoogleAccessTokenExpiresAt(),
+      )
 
       if (isDemoMode) {
         await connectGoogleWithToken(
@@ -1450,6 +1514,9 @@ function App() {
 
     setGoogleAccessToken(null)
 
+    setGoogleTokenExpiresAt(null)
+    setGoogleTokenMinutesRemaining(0)
+
     pendingSavesRef.current = 0
 
     setSaveStatus('error')
@@ -1539,7 +1606,9 @@ function App() {
           <button
             type="button"
             className="google-connect-button"
-            onClick={handleConnectGoogle}
+            onClick={() => {
+              void handleConnectGoogle()
+            }}
             disabled={
               isGoogleConnecting ||
               googleAccessToken !== null
@@ -1569,6 +1638,34 @@ function App() {
           )}
         </div>
       </header>
+
+      {!isDemoMode &&
+        googleAccessToken &&
+        googleTokenMinutesRemaining !== null &&
+        googleTokenMinutesRemaining <= 10 && (
+          <div className="google-session-warning">
+            <span>
+              Google Drive session expires in{' '}
+              <strong>
+                {googleTokenMinutesRemaining} min
+              </strong>
+              . Reconnect to keep saving uninterrupted.
+            </span>
+
+            <button
+              type="button"
+              onClick={() => {
+                void handleConnectGoogle(true)
+              }}
+              disabled={isGoogleConnecting}
+            >
+              {isGoogleConnecting
+                ? 'Reconnecting...'
+                : 'Reconnect'}
+            </button>
+          </div>
+        )}
+
       {googleAuthError && (
         <p className="google-auth-error">
           {googleAuthError}
