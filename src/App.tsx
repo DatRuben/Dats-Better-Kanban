@@ -362,23 +362,163 @@ function App() {
           return
         }
 
-        void Promise.all([
-          ...changedTasks.map((task) =>
-            saveTaskToDrive(
-              googleAccessToken,
-              googleTasksFolderId,
-              task,
-            ),
-          ),
+        void (async () => {
+          const safeChangedTasks: Task[] = []
+          const safeDeletedTaskIds: string[] = []
 
-          ...deletedTaskIds.map((taskId) =>
-            deleteTaskFromDrive(
-              googleAccessToken,
-              googleTasksFolderId,
-              taskId,
+          const detectedConflicts: TaskSyncConflict[] = []
+
+          for (const task of changedTasks) {
+            const previousTask =
+              previousById.get(task.id) ?? null
+
+            const remoteTask =
+              await loadTaskFromDrive(
+                googleAccessToken,
+                googleTasksFolderId,
+                task.id,
+              )
+
+            const remoteMatchesBaseline =
+              taskVersionsMatch(
+                remoteTask,
+                previousTask,
+              )
+
+            const remoteAlreadyMatchesLocal =
+              taskVersionsMatch(
+                remoteTask,
+                task,
+              )
+
+            if (remoteAlreadyMatchesLocal) {
+              continue
+            }
+
+            if (!remoteMatchesBaseline) {
+              detectedConflicts.push({
+                taskId: task.id,
+                localTask: task,
+                remoteTask,
+              })
+
+              continue
+            }
+
+            safeChangedTasks.push(task)
+          }
+
+          for (const taskId of deletedTaskIds) {
+            const previousTask =
+              previousById.get(taskId)
+
+            if (!previousTask) {
+              continue
+            }
+
+            const remoteTask =
+              await loadTaskFromDrive(
+                googleAccessToken,
+                googleTasksFolderId,
+                taskId,
+              )
+
+            if (remoteTask === null) {
+              continue
+            }
+
+            if (
+              !taskVersionsMatch(
+                remoteTask,
+                previousTask,
+              )
+            ) {
+              detectedConflicts.push({
+                taskId,
+                localTask: null,
+                remoteTask,
+              })
+
+              continue
+            }
+
+            safeDeletedTaskIds.push(taskId)
+          }
+
+          for (const conflict of detectedConflicts) {
+            taskSyncConflictIdsRef.current.add(
+              conflict.taskId,
+            )
+          }
+
+          setTaskSyncConflicts(
+            (currentConflicts) => {
+              const conflictsById =
+                new Map(
+                  currentConflicts.map(
+                    (conflict) => [
+                      conflict.taskId,
+                      conflict,
+                    ],
+                  ),
+                )
+
+              for (const conflict of detectedConflicts) {
+                conflictsById.set(
+                  conflict.taskId,
+                  conflict,
+                )
+              }
+
+              return [...conflictsById.values()]
+            },
+          )
+
+          await Promise.all([
+            ...safeChangedTasks.map((task) =>
+              saveTaskToDrive(
+                googleAccessToken,
+                googleTasksFolderId,
+                task,
+              ),
             ),
-          ),
-        ])
+
+            ...safeDeletedTaskIds.map((taskId) =>
+              deleteTaskFromDrive(
+                googleAccessToken,
+                googleTasksFolderId,
+                taskId,
+              ),
+            ),
+          ])
+
+          const nextSavedTasksById =
+            new Map(
+              previousTasks.map(
+                (task) => [task.id, task],
+              ),
+            )
+
+          for (const task of safeChangedTasks) {
+            nextSavedTasksById.set(
+              task.id,
+              task,
+            )
+          }
+
+          for (const taskId of safeDeletedTaskIds) {
+            nextSavedTasksById.delete(
+              taskId,
+            )
+          }
+
+          lastSavedTasksRef.current =
+            [...nextSavedTasksById.values()]
+
+          completeSave()
+        })().catch((error) => {
+          failSave(error)
+        })
           .then(() => {
             const nextSavedTasksById =
               new Map(
