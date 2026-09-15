@@ -519,9 +519,6 @@ function App() {
         })().catch((error) => {
           failSave(error)
         })
-          .catch((error) => {
-            failSave(error)
-          })
       }, 1000)
 
     return () => {
