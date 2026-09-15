@@ -74,16 +74,23 @@ export function TaskCard({
 
     void onLoadAttachment(
       imageAttachment,
-    ).then((blob) => {
-      if (!blob || isCancelled) {
-        return
-      }
+    )
+      .then((blob) => {
+        if (!blob || isCancelled) {
+          return
+        }
 
-      objectUrl =
-        URL.createObjectURL(blob)
+        objectUrl =
+          URL.createObjectURL(blob)
 
-      setImagePreviewUrl(objectUrl)
-    })
+        setImagePreviewUrl(objectUrl)
+      })
+      .catch((error) => {
+        console.error(
+          'Failed to load attachment preview:',
+          error,
+        )
+      })
 
     return () => {
       isCancelled = true
