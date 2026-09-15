@@ -117,6 +117,11 @@ function App() {
   const [googleTasksFolderId, setGoogleTasksFolderId] =
     useState<string | null>(null)
 
+  const [
+    googleAttachmentsFolderId,
+    setGoogleAttachmentsFolderId,
+  ] = useState<string | null>(null)
+
   const lastSavedTasksRef =
     useRef<Task[]>([])
 
@@ -949,6 +954,10 @@ function App() {
       loadedDriveProject.tasksFolderId,
     )
 
+    setGoogleAttachmentsFolderId(
+      loadedDriveProject.attachmentsFolderId,
+    )
+
     setProject(activeProject)
     setColumns(activeProject.columns)
     setTasks(activeProject.tasks)
@@ -1325,7 +1334,7 @@ function App() {
         </section>
       </main>
     )
-    
+
   }
 
   function isGoogleUnauthorizedError(
