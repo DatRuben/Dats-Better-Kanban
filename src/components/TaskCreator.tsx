@@ -52,11 +52,20 @@ export function TaskCreator({
     const [imageFile, setImageFile] =
         useState<File | null>(null)
 
+    const [removeImage, setRemoveImage] =
+        useState(false)
+
     const [isUploadingImage, setIsUploadingImage] =
         useState(false)
 
     const [imageUploadError, setImageUploadError] =
         useState<string | null>(null)
+
+    const existingImage =
+        initialTask?.attachments.find(
+            (attachment) =>
+                attachment.mimeType.startsWith('image/'),
+        ) ?? null
 
     async function handleSubmit(
         event: SubmitEvent<HTMLFormElement>,
@@ -71,6 +80,14 @@ export function TaskCreator({
 
         let attachments =
             initialTask?.attachments ?? []
+
+        if (removeImage) {
+            attachments =
+                attachments.filter(
+                    (attachment) =>
+                        !attachment.mimeType.startsWith('image/'),
+                )
+        }
 
         try {
             setImageUploadError(null)
@@ -210,6 +227,40 @@ export function TaskCreator({
 
             <label className="task-creator__field">
                 <span>Image</span>
+                {removeImage && !imageFile && (
+                    <div>
+                        <small>
+                            Image will be removed when you save.
+                        </small>
+
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setRemoveImage(false)
+                            }
+                        >
+                            Keep Image
+                        </button>
+                    </div>
+                )}
+
+                {existingImage && !removeImage && !imageFile && (
+                    <div>
+                        <small>
+                            Current: {existingImage.fileName}
+                        </small>
+
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setRemoveImage(true)
+                                setImageFile(null)
+                            }}
+                        >
+                            Delete Image
+                        </button>
+                    </div>
+                )}
 
                 <input
                     type="file"
@@ -219,6 +270,7 @@ export function TaskCreator({
                             event.target.files?.[0] ?? null
 
                         setImageFile(file)
+                        setRemoveImage(false)
                         setImageUploadError(null)
                     }}
                 />
