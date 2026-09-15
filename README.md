@@ -47,3 +47,39 @@ Dat's: Better Kanban
         │   └── Task Name.json
         └── attachments
             └── image.png
+
+```
+
+## Tech Stack
+
+- React
+- TypeScript
+- Vite
+- CSS
+- dnd-kit
+- Google Identity Services
+- Google Drive API
+
+## Running Locally
+
+Clone the repository and install the dependencies:
+
+```bash
+npm install
+```
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+Then open the local address shown by Vite in your browser.
+
+## Current Status
+
+Dat's: Better Kanban is under active development.
+
+The current version demonstrates the core Kanban workflow, customizable pipelines, timeline/history views, Google Drive persistence, synchronization, and task attachments.
+
+Additional project-management features and further UI improvements are planned for future versions.
