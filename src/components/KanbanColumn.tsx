@@ -38,6 +38,9 @@ interface KanbanColumnProps {
   onUploadImage: (
     file: File,
   ) => Promise<Attachment>
+  onLoadAttachment: (
+    attachment: Attachment,
+  ) => Promise<Blob | null>
 }
 
 export function KanbanColumn({
@@ -58,6 +61,7 @@ export function KanbanColumn({
   onCancelEditingTask,
   onDeleteTask,
   onUploadImage,
+  onLoadAttachment,
 }: KanbanColumnProps) {
   const {
     ref,
@@ -182,6 +186,8 @@ export function KanbanColumn({
               isPipelineEditing={isPipelineEditing}
               isEditing={false}
               onEdit={() => onStartEditingTask(task.id)}
+              onLoadAttachment={onLoadAttachment}
+
             />
           )
         })}

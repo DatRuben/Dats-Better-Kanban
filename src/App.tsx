@@ -1,5 +1,6 @@
 import './App.css'
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -26,6 +27,7 @@ import { APP_VERSION } from './config/app'
 import {
   createProjectOnDrive,
   deleteTaskFromDrive,
+  downloadAttachmentFromDrive,
   ensureDatsDriveFolder,
   ensureProjectsDriveFolder,
   loadFirstProjectFromDrive,
@@ -1405,6 +1407,26 @@ function App() {
     }
   }
 
+  const handleLoadAttachment =
+    useCallback(
+      async (
+        attachment: Attachment,
+      ): Promise<Blob | null> => {
+        if (
+          !googleAccessToken ||
+          !attachment.driveFileId
+        ) {
+          return null
+        }
+
+        return downloadAttachmentFromDrive(
+          googleAccessToken,
+          attachment.driveFileId,
+        )
+      },
+      [googleAccessToken],
+    )
+
   return (
     <main className="app-shell">
       <header className="app-header">
@@ -1593,6 +1615,7 @@ function App() {
                     handleDeleteTask(taskId)
                   }
                   onUploadImage={handleUploadImage}
+                  onLoadAttachment={handleLoadAttachment}
                 />
               )
             })}

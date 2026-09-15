@@ -1,5 +1,13 @@
+import {
+  useEffect,
+  useState,
+} from 'react'
 import { useDraggable } from '@dnd-kit/react'
-import type { DemoUser, Task } from '../types/board'
+import type {
+  Attachment,
+  DemoUser,
+  Task,
+} from '../types/board'
 
 interface TaskCardProps {
   task: Task
@@ -8,6 +16,9 @@ interface TaskCardProps {
   isPipelineEditing: boolean
   isEditing: boolean
   onEdit: () => void
+  onLoadAttachment: (
+    attachment: Attachment,
+  ) => Promise<Blob | null>
 }
 
 function getInitials(displayName: string) {
@@ -29,6 +40,7 @@ export function TaskCard({
   isPipelineEditing,
   isEditing,
   onEdit,
+  onLoadAttachment,
 }: TaskCardProps) {
   const assigneeInitials = assignee
     ? getInitials(assignee.displayName)
@@ -38,6 +50,52 @@ export function TaskCard({
     (attachment) =>
       attachment.mimeType.startsWith('image/'),
   )
+
+  const [imagePreviewUrl, setImagePreviewUrl] =
+    useState<string | null>(
+      imageAttachment?.previewUrl ?? null,
+    )
+
+  useEffect(() => {
+    if (
+      !imageAttachment ||
+      imageAttachment.previewUrl ||
+      !imageAttachment.driveFileId
+    ) {
+      setImagePreviewUrl(
+        imageAttachment?.previewUrl ?? null,
+      )
+
+      return
+    }
+
+    let isCancelled = false
+    let objectUrl: string | null = null
+
+    void onLoadAttachment(
+      imageAttachment,
+    ).then((blob) => {
+      if (!blob || isCancelled) {
+        return
+      }
+
+      objectUrl =
+        URL.createObjectURL(blob)
+
+      setImagePreviewUrl(objectUrl)
+    })
+
+    return () => {
+      isCancelled = true
+
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl)
+      }
+    }
+  }, [
+    imageAttachment,
+    onLoadAttachment,
+  ])
 
   const { ref } = useDraggable({
     id: task.id,
@@ -53,8 +111,8 @@ export function TaskCard({
         <button
           type="button"
           className={`task-card__edit-button ${isEditing
-              ? 'task-card__edit-button--active'
-              : ''
+            ? 'task-card__edit-button--active'
+            : ''
             }`}
           onClick={onEdit}
         >
@@ -90,10 +148,10 @@ export function TaskCard({
         {assigneeInitials}
       </div>
 
-      {imageAttachment && (
+      {imageAttachment && imagePreviewUrl && (
         <div className="task-card__attachment">
           <img
-            src={imageAttachment.previewUrl}
+            src={imagePreviewUrl}
             alt={imageAttachment.fileName}
           />
         </div>
