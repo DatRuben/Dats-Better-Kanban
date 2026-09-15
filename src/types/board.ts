@@ -10,7 +10,8 @@ export interface Attachment {
   id: string
   fileName: string
   mimeType: string
-  previewUrl: string
+  previewUrl?: string
+  driveFileId?: string
 }
 
 export interface Task {
@@ -34,6 +35,7 @@ export interface NewTaskInput {
   priority: Priority
   assigneeId: string | null
   deadline: string | null
+  attachments: Attachment[]
 }
 
 export interface BoardColumn {

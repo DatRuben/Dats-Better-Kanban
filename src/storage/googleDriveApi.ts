@@ -1035,3 +1035,69 @@ async function getTaskFileName(
 
   return `${cleanTitle} - ${task.id}.json`
 }
+
+export async function uploadAttachmentToDrive(
+  accessToken: string,
+  attachmentsFolderId: string,
+  file: File,
+): Promise<string> {
+  const mimeType =
+    file.type || 'application/octet-stream'
+
+  const createResponse =
+    await fetch(
+      GOOGLE_DRIVE_FILES_URL,
+      {
+        method: 'POST',
+
+        headers: {
+          Authorization:
+            `Bearer ${accessToken}`,
+          'Content-Type':
+            'application/json',
+        },
+
+        body: JSON.stringify({
+          name: file.name,
+          mimeType,
+          parents: [attachmentsFolderId],
+        }),
+      },
+    )
+
+  if (!createResponse.ok) {
+    throw new Error(
+      `Google Drive attachment creation failed with status ${createResponse.status}.`,
+    )
+  }
+
+  const createdFile =
+    await createResponse.json() as {
+      id: string
+    }
+
+  const uploadResponse =
+    await fetch(
+      `https://www.googleapis.com/upload/drive/v3/files/${createdFile.id}?uploadType=media`,
+      {
+        method: 'PATCH',
+
+        headers: {
+          Authorization:
+            `Bearer ${accessToken}`,
+          'Content-Type':
+            mimeType,
+        },
+
+        body: file,
+      },
+    )
+
+  if (!uploadResponse.ok) {
+    throw new Error(
+      `Google Drive attachment upload failed with status ${uploadResponse.status}.`,
+    )
+  }
+
+  return createdFile.id
+}

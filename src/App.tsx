@@ -6,7 +6,11 @@ import {
 } from 'react'
 import { KanbanColumn } from './components/KanbanColumn'
 import { demoProject } from './data/demoProject'
-import type { NewTaskInput, Task } from './types/board'
+import type {
+  Attachment,
+  NewTaskInput,
+  Task,
+} from './types/board'
 import type { WheelEvent } from 'react'
 import { moveTaskToColumn } from './utility/moveTask'
 import { DragDropProvider } from '@dnd-kit/react'
@@ -30,6 +34,7 @@ import {
   saveColumnsToDrive,
   saveProjectMetadataToDrive,
   saveTaskToDrive,
+  uploadAttachmentToDrive,
   verifyGoogleDriveAccess,
 } from './storage/googleDriveApi'
 
@@ -1358,6 +1363,45 @@ function App() {
     setSaveError(
       'Google Drive session expired. Reconnect to continue saving.',
     )
+  }
+
+  async function handleUploadImage(
+    file: File,
+  ): Promise<Attachment> {
+    if (isDemoMode) {
+      return {
+        id: crypto.randomUUID(),
+        fileName: file.name,
+        mimeType: file.type,
+        previewUrl:
+          URL.createObjectURL(file),
+      }
+    }
+
+    if (
+      !googleAccessToken ||
+      !googleAttachmentsFolderId
+    ) {
+      throw new Error(
+        'Google Drive is not ready for image uploads.',
+      )
+    }
+
+    const driveFileId =
+      await uploadAttachmentToDrive(
+        googleAccessToken,
+        googleAttachmentsFolderId,
+        file,
+      )
+
+    return {
+      id: crypto.randomUUID(),
+      fileName: file.name,
+      mimeType:
+        file.type ||
+        'application/octet-stream',
+      driveFileId,
+    }
   }
 
   return (
