@@ -123,6 +123,62 @@ async function findFolder(
   return data.files[0]?.id ?? null
 }
 
+async function getProjectFolderName(
+  accessToken: string,
+  projectsFolderId: string,
+  projectName: string,
+  projectId: string,
+  currentProjectFolderId?: string,
+): Promise<string> {
+  const cleanProjectName =
+    projectName.trim() || 'Untitled Project'
+
+  const existingFolderId =
+    await findFolder(
+      accessToken,
+      cleanProjectName,
+      projectsFolderId,
+    )
+
+  if (
+    !existingFolderId ||
+    existingFolderId === currentProjectFolderId
+  ) {
+    return cleanProjectName
+  }
+
+  return `${cleanProjectName} - ${projectId}`
+}
+
+async function renameFolder(
+  accessToken: string,
+  folderId: string,
+  folderName: string,
+): Promise<void> {
+  const response =
+    await fetch(
+      `${GOOGLE_DRIVE_FILES_URL}/${folderId}`,
+      {
+        method: 'PATCH',
+
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+
+        body: JSON.stringify({
+          name: folderName,
+        }),
+      },
+    )
+
+  if (!response.ok) {
+    throw new Error(
+      `Google Drive folder rename failed with status ${response.status}.`,
+    )
+  }
+}
+
 async function createFolder(
   accessToken: string,
   folderName: string,
@@ -217,10 +273,18 @@ export async function createProjectOnDrive(
   projectFolderId: string
   tasksFolderId: string
 }> {
+  const projectFolderName =
+    await getProjectFolderName(
+      accessToken,
+      projectsFolderId,
+      project.name,
+      project.id,
+    )
+
   const projectFolderId =
     await createFolder(
       accessToken,
-      project.id,
+      projectFolderName,
       projectsFolderId,
     )
 
@@ -249,6 +313,7 @@ export async function createProjectOnDrive(
 
   await saveProjectMetadataToDrive(
     accessToken,
+    projectsFolderId,
     projectFolderId,
     {
       ...project,
@@ -548,9 +613,25 @@ function createStoredProjectMetadata(
 
 export async function saveProjectMetadataToDrive(
   accessToken: string,
+  projectsFolderId: string,
   projectFolderId: string,
   project: Project,
 ): Promise<void> {
+  const projectFolderName =
+    await getProjectFolderName(
+      accessToken,
+      projectsFolderId,
+      project.name,
+      project.id,
+      projectFolderId,
+    )
+
+  await renameFolder(
+    accessToken,
+    projectFolderId,
+    projectFolderName,
+  )
+
   await writeJsonFile(
     accessToken,
     projectFolderId,

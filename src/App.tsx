@@ -117,10 +117,14 @@ function App() {
     tasks,
   )
 
+  const [googleProjectsFolderId, setGoogleProjectsFolderId] =
+    useState<string | null>(null)
+
   useEffect(() => {
     if (
       isDemoMode ||
       !googleAccessToken ||
+      !googleProjectsFolderId ||
       !googleProjectFolderId
     ) {
       return
@@ -130,6 +134,7 @@ function App() {
       window.setTimeout(() => {
         void saveProjectMetadataToDrive(
           googleAccessToken,
+          googleProjectsFolderId,
           googleProjectFolderId,
           project,
         ).catch((error) => {
@@ -639,6 +644,10 @@ function App() {
           accessToken,
           datsFolderId,
         )
+
+      setGoogleProjectsFolderId(
+        projectsFolderId,
+      )
 
       let loadedDriveProject =
         await loadFirstProjectFromDrive(
