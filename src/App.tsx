@@ -88,6 +88,12 @@ function formatCompletedAt(completedAt: string) {
   })
 }
 
+interface TaskSyncConflict {
+  taskId: string
+  localTask: Task | null
+  remoteTask: Task | null
+}
+
 function App() {
   const [project, setProject] =
     useState(demoProject)
@@ -117,6 +123,12 @@ function App() {
 
   const tasksRef =
     useRef<Task[]>(tasks)
+
+  const [, setTaskSyncConflicts] =
+    useState<TaskSyncConflict[]>([])
+
+  const taskSyncConflictIdsRef =
+    useRef<Set<string>>(new Set())
 
   const [isGoogleConnecting, setIsGoogleConnecting] =
     useState(false)
@@ -309,6 +321,14 @@ function App() {
 
         const changedTasks =
           tasks.filter((task) => {
+            if (
+              taskSyncConflictIdsRef.current.has(
+                task.id,
+              )
+            ) {
+              return false
+            }
+
             const previousTask =
               previousById.get(task.id)
 
@@ -323,7 +343,10 @@ function App() {
           previousTasks
             .filter(
               (task) =>
-                !currentIds.has(task.id),
+                !currentIds.has(task.id) &&
+                !taskSyncConflictIdsRef.current.has(
+                  task.id,
+                ),
             )
             .map((task) => task.id)
 
@@ -830,6 +853,12 @@ function App() {
       return
     }
 
+    const accessToken =
+      googleAccessToken
+
+    const tasksFolderId =
+      googleTasksFolderId
+
     let isChecking = false
     let isCancelled = false
 
@@ -841,20 +870,18 @@ function App() {
         return
       }
 
-      const localTasks =
-        tasksRef.current
+      function taskVersionsMatch(
+        firstTask: Task | undefined,
+        secondTask: Task | undefined,
+      ) {
+        if (!firstTask || !secondTask) {
+          return firstTask === secondTask
+        }
 
-      const lastSyncedTasks =
-        lastSavedTasksRef.current
-
-      const hasUnsavedLocalChanges =
-        !taskListsMatch(
-          localTasks,
-          lastSyncedTasks,
+        return (
+          JSON.stringify(firstTask) ===
+          JSON.stringify(secondTask)
         )
-
-      if (hasUnsavedLocalChanges) {
-        return
       }
 
       isChecking = true
@@ -862,31 +889,168 @@ function App() {
       try {
         const remoteTasks =
           await loadTasksFromDrive(
-            googleAccessToken,
-            googleTasksFolderId,
+            accessToken,
+            tasksFolderId,
           )
 
         if (isCancelled) {
           return
         }
 
-        const remoteChanged =
-          !taskListsMatch(
-            remoteTasks,
-            lastSyncedTasks,
+        const localTasks =
+          tasksRef.current
+
+        const lastSyncedTasks =
+          lastSavedTasksRef.current
+
+        const baseById =
+          new Map(
+            lastSyncedTasks.map(
+              (task) => [task.id, task],
+            ),
           )
 
-        if (!remoteChanged) {
-          return
+        const localById =
+          new Map(
+            localTasks.map(
+              (task) => [task.id, task],
+            ),
+          )
+
+        const remoteById =
+          new Map(
+            remoteTasks.map(
+              (task) => [task.id, task],
+            ),
+          )
+
+        const allTaskIds =
+          new Set([
+            ...baseById.keys(),
+            ...localById.keys(),
+            ...remoteById.keys(),
+          ])
+
+        const mergedTasks: Task[] = []
+        const nextSyncedTasks: Task[] = []
+        const conflicts: TaskSyncConflict[] = []
+
+        for (const taskId of allTaskIds) {
+          const baseTask =
+            baseById.get(taskId)
+
+          const localTask =
+            localById.get(taskId)
+
+          const remoteTask =
+            remoteById.get(taskId)
+
+          const localChanged =
+            !taskVersionsMatch(
+              localTask,
+              baseTask,
+            )
+
+          const remoteChanged =
+            !taskVersionsMatch(
+              remoteTask,
+              baseTask,
+            )
+
+          const localAndRemoteMatch =
+            taskVersionsMatch(
+              localTask,
+              remoteTask,
+            )
+
+          if (
+            localChanged &&
+            remoteChanged &&
+            !localAndRemoteMatch
+          ) {
+            conflicts.push({
+              taskId,
+              localTask: localTask ?? null,
+              remoteTask: remoteTask ?? null,
+            })
+
+            if (localTask) {
+              mergedTasks.push(localTask)
+            }
+
+            if (baseTask) {
+              nextSyncedTasks.push(baseTask)
+            }
+
+            continue
+          }
+
+          if (remoteChanged && !localChanged) {
+            if (remoteTask) {
+              mergedTasks.push(remoteTask)
+              nextSyncedTasks.push(remoteTask)
+            }
+
+            continue
+          }
+
+          if (localChanged && !remoteChanged) {
+            if (localTask) {
+              mergedTasks.push(localTask)
+            }
+
+            if (baseTask) {
+              nextSyncedTasks.push(baseTask)
+            }
+
+            continue
+          }
+
+          if (
+            localChanged &&
+            remoteChanged &&
+            localAndRemoteMatch
+          ) {
+            if (localTask) {
+              mergedTasks.push(localTask)
+              nextSyncedTasks.push(localTask)
+            }
+
+            continue
+          }
+
+          if (localTask) {
+            mergedTasks.push(localTask)
+          }
+
+          if (baseTask) {
+            nextSyncedTasks.push(baseTask)
+          }
         }
 
+        taskSyncConflictIdsRef.current =
+          new Set(
+            conflicts.map(
+              (conflict) => conflict.taskId,
+            ),
+          )
+
+        setTaskSyncConflicts(conflicts)
+
         lastSavedTasksRef.current =
-          remoteTasks
+          nextSyncedTasks
 
-        tasksRef.current =
-          remoteTasks
+        if (
+          !taskListsMatch(
+            mergedTasks,
+            localTasks,
+          )
+        ) {
+          tasksRef.current =
+            mergedTasks
 
-        setTasks(remoteTasks)
+          setTasks(mergedTasks)
+        }
       } catch (error) {
         if (
           !isCancelled &&
