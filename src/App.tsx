@@ -38,6 +38,7 @@ import {
   saveTaskToDrive,
   uploadAttachmentToDrive,
   verifyGoogleDriveAccess,
+  deleteAttachmentFromDrive,
 } from './storage/googleDriveApi'
 
 const priorityOrder = {
@@ -522,6 +523,75 @@ function App() {
               ),
             ),
           ])
+
+          const attachmentIdsToDelete: string[] = []
+
+          for (const task of safeChangedTasks) {
+            const previousTask =
+              previousById.get(task.id)
+
+            if (!previousTask) {
+              continue
+            }
+
+            const currentAttachmentIds =
+              new Set(
+                task.attachments
+                  .map(
+                    (attachment) =>
+                      attachment.driveFileId,
+                  )
+                  .filter(
+                    (fileId): fileId is string =>
+                      Boolean(fileId),
+                  ),
+              )
+
+            for (
+              const previousAttachment
+              of previousTask.attachments
+            ) {
+              if (
+                previousAttachment.driveFileId &&
+                !currentAttachmentIds.has(
+                  previousAttachment.driveFileId,
+                )
+              ) {
+                attachmentIdsToDelete.push(
+                  previousAttachment.driveFileId,
+                )
+              }
+            }
+          }
+
+          for (const taskId of safeDeletedTaskIds) {
+            const deletedTask =
+              previousById.get(taskId)
+
+            if (!deletedTask) {
+              continue
+            }
+
+            for (
+              const attachment
+              of deletedTask.attachments
+            ) {
+              if (attachment.driveFileId) {
+                attachmentIdsToDelete.push(
+                  attachment.driveFileId,
+                )
+              }
+            }
+          }
+
+          await Promise.all(
+            attachmentIdsToDelete.map((fileId) =>
+              deleteAttachmentFromDrive(
+                googleAccessToken,
+                fileId,
+              ),
+            ),
+          )
 
           const nextSavedTasksById =
             new Map(
