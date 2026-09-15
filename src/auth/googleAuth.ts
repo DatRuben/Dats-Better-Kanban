@@ -3,6 +3,49 @@ import {
   GOOGLE_DRIVE_SCOPE,
 } from '../config/google'
 
+const GOOGLE_TOKEN_STORAGE_KEY =
+  'datsGoogleAccessToken'
+
+const GOOGLE_TOKEN_EXPIRATION_KEY =
+  'datsGoogleAccessTokenExpiresAt'
+
+export function getStoredGoogleAccessToken():
+  string | null {
+  const accessToken =
+    sessionStorage.getItem(
+      GOOGLE_TOKEN_STORAGE_KEY,
+    )
+
+  const expiresAtText =
+    sessionStorage.getItem(
+      GOOGLE_TOKEN_EXPIRATION_KEY,
+    )
+
+  if (!accessToken || !expiresAtText) {
+    return null
+  }
+
+  const expiresAt =
+    Number(expiresAtText)
+
+  if (
+    !Number.isFinite(expiresAt) ||
+    Date.now() >= expiresAt
+  ) {
+    sessionStorage.removeItem(
+      GOOGLE_TOKEN_STORAGE_KEY,
+    )
+
+    sessionStorage.removeItem(
+      GOOGLE_TOKEN_EXPIRATION_KEY,
+    )
+
+    return null
+  }
+
+  return accessToken
+}
+
 export function requestGoogleAccessToken(): Promise<string> {
   return new Promise((resolve, reject) => {
     if (!GOOGLE_CLIENT_ID) {
@@ -33,6 +76,20 @@ export function requestGoogleAccessToken(): Promise<string> {
             )
             return
           }
+
+          const expiresAt =
+            Date.now() +
+            response.expires_in * 1000
+
+          sessionStorage.setItem(
+            GOOGLE_TOKEN_STORAGE_KEY,
+            response.access_token,
+          )
+
+          sessionStorage.setItem(
+            GOOGLE_TOKEN_EXPIRATION_KEY,
+            String(expiresAt),
+          )
 
           resolve(response.access_token)
         },

@@ -12,7 +12,10 @@ import { moveTaskToColumn } from './utility/moveTask'
 import { DragDropProvider } from '@dnd-kit/react'
 import { isSortable } from '@dnd-kit/react/sortable'
 import { createProjectSnapshot } from './storage/projectSnapshot'
-import { requestGoogleAccessToken } from './auth/googleAuth'
+import {
+  getStoredGoogleAccessToken,
+  requestGoogleAccessToken,
+} from './auth/googleAuth'
 import { createBlankProject } from './data/createBlankProject'
 import {
   createProjectOnDrive,
@@ -632,7 +635,11 @@ function App() {
     setGoogleAuthError(null)
 
     try {
+      const storedAccessToken =
+        getStoredGoogleAccessToken()
+
       const accessToken =
+        storedAccessToken ??
         await requestGoogleAccessToken()
 
       await verifyGoogleDriveAccess(accessToken)
