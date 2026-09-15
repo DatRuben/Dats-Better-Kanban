@@ -1,75 +1,49 @@
-# React + TypeScript + Vite
+# Dat's: Better Kanban
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A customizable Kanban project-management application built with React and TypeScript.
 
-Currently, two official plugins are available:
+Dat's: Better Kanban focuses on giving users control over their workflow while keeping their project data in their own Google Drive instead of a central Dat's project database.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Live Demo
 
-## React Compiler
+https://datsbetterkanban.dragooninteractive.com
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+You can explore the application using Demo Mode without connecting Google Drive.
 
-## Expanding the ESLint configuration
+## Features
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- Customizable Kanban pipeline sections
+- Drag-and-drop tasks and pipeline sections
+- Task priorities, deadlines, descriptions, and assignees
+- Automatic task sorting by priority and deadline
+- Task image attachments
+- Timeline view for upcoming work
+- Completed-task history
+- Configurable completion sections
+- Responsive layout for smaller screens
+- Google Drive project persistence
+- Near-live synchronization between sessions
+- Demo Mode for trying the application without saving data
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Google Drive Storage
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+When Google Drive mode is used, project files are stored inside the user's own Google Drive.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Dat's creates its own project folder containing project metadata, column data, individual task files, and attachment files.
 
-```
+The application uses Google's `drive.file` permission so it can work with files created for the application without requesting general access to the user's entire Drive.
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+## Project Structure
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+A saved project is organized approximately like this:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
-```
+```text
+Dat's: Better Kanban
+└── Projects
+    └── Project Name
+        ├── project.json
+        ├── columns.json
+        ├── tasks
+        │   └── Task Name.json
+        └── attachments
+            └── image.png
