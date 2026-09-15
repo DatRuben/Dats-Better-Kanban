@@ -26,6 +26,9 @@ const TASKS_FOLDER_NAME =
 const COLUMNS_FILE_NAME =
   'columns.json'
 
+const TASK_ID_PROPERTY =
+  'datsTaskId'
+
 const CURRENT_SCHEMA_VERSION =
   2
 
@@ -658,12 +661,119 @@ export async function saveTaskToDrive(
   tasksFolderId: string,
   task: Task,
 ): Promise<void> {
-  await writeJsonFile(
-    accessToken,
-    tasksFolderId,
-    `${task.id}.json`,
-    task,
-  )
+  let taskFileId =
+    await findTaskFileById(
+      accessToken,
+      tasksFolderId,
+      task.id,
+    )
+
+  const taskFileName =
+    await getTaskFileName(
+      accessToken,
+      tasksFolderId,
+      task,
+      taskFileId ?? undefined,
+    )
+
+  if (!taskFileId) {
+    const createResponse =
+      await fetch(
+        GOOGLE_DRIVE_FILES_URL,
+        {
+          method: 'POST',
+
+          headers: {
+            Authorization:
+              `Bearer ${accessToken}`,
+            'Content-Type':
+              'application/json',
+          },
+
+          body: JSON.stringify({
+            name: taskFileName,
+            mimeType: 'application/json',
+            parents: [tasksFolderId],
+
+            appProperties: {
+              [TASK_ID_PROPERTY]:
+                task.id,
+            },
+          }),
+        },
+      )
+
+    if (!createResponse.ok) {
+      throw new Error(
+        `Google Drive task file creation failed with status ${createResponse.status}.`,
+      )
+    }
+
+    const createdFile =
+      await createResponse.json() as {
+        id: string
+      }
+
+    taskFileId =
+      createdFile.id
+  } else {
+    const renameResponse =
+      await fetch(
+        `${GOOGLE_DRIVE_FILES_URL}/${taskFileId}`,
+        {
+          method: 'PATCH',
+
+          headers: {
+            Authorization:
+              `Bearer ${accessToken}`,
+            'Content-Type':
+              'application/json',
+          },
+
+          body: JSON.stringify({
+            name: taskFileName,
+
+            appProperties: {
+              [TASK_ID_PROPERTY]:
+                task.id,
+            },
+          }),
+        },
+      )
+
+    if (!renameResponse.ok) {
+      throw new Error(
+        `Google Drive task rename failed with status ${renameResponse.status}.`,
+      )
+    }
+  }
+
+  const uploadResponse =
+    await fetch(
+      `https://www.googleapis.com/upload/drive/v3/files/${taskFileId}?uploadType=media`,
+      {
+        method: 'PATCH',
+
+        headers: {
+          Authorization:
+            `Bearer ${accessToken}`,
+          'Content-Type':
+            'application/json',
+        },
+
+        body: JSON.stringify(
+          task,
+          null,
+          2,
+        ),
+      },
+    )
+
+  if (!uploadResponse.ok) {
+    throw new Error(
+      `Google Drive task save failed with status ${uploadResponse.status}.`,
+    )
+  }
 }
 
 export async function deleteTaskFromDrive(
@@ -672,10 +782,10 @@ export async function deleteTaskFromDrive(
   taskId: string,
 ): Promise<void> {
   const fileId =
-    await findFile(
+    await findTaskFileById(
       accessToken,
-      `${taskId}.json`,
       tasksFolderId,
+      taskId,
     )
 
   if (!fileId) {
@@ -689,7 +799,8 @@ export async function deleteTaskFromDrive(
         method: 'DELETE',
 
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization:
+            `Bearer ${accessToken}`,
         },
       },
     )
@@ -774,4 +885,87 @@ async function loadTasksFromDrive(
       return await taskResponse.json() as Task
     }),
   )
+}
+
+async function findTaskFileById(
+  accessToken: string,
+  tasksFolderId: string,
+  taskId: string,
+): Promise<string | null> {
+  const url =
+    new URL(GOOGLE_DRIVE_FILES_URL)
+
+  const escapedTaskId =
+    escapeDriveQueryValue(taskId)
+
+  url.searchParams.set(
+    'q',
+    [
+      `'${tasksFolderId}' in parents`,
+      `appProperties has { key='${TASK_ID_PROPERTY}' and value='${escapedTaskId}' }`,
+      'trashed = false',
+    ].join(' and '),
+  )
+
+  url.searchParams.set(
+    'fields',
+    'files(id)',
+  )
+
+  url.searchParams.set(
+    'pageSize',
+    '1',
+  )
+
+  const response =
+    await fetch(url, {
+      headers: {
+        Authorization:
+          `Bearer ${accessToken}`,
+      },
+    })
+
+  if (!response.ok) {
+    throw new Error(
+      `Google Drive task search failed with status ${response.status}.`,
+    )
+  }
+
+  const data =
+    await response.json() as {
+      files: Array<{
+        id: string
+      }>
+    }
+
+  return data.files[0]?.id ?? null
+}
+
+async function getTaskFileName(
+  accessToken: string,
+  tasksFolderId: string,
+  task: Task,
+  currentTaskFileId?: string,
+): Promise<string> {
+  const cleanTitle =
+    task.title.trim() || 'Untitled Task'
+
+  const preferredName =
+    `${cleanTitle}.json`
+
+  const existingFileId =
+    await findFile(
+      accessToken,
+      preferredName,
+      tasksFolderId,
+    )
+
+  if (
+    !existingFileId ||
+    existingFileId === currentTaskFileId
+  ) {
+    return preferredName
+  }
+
+  return `${cleanTitle} - ${task.id}.json`
 }
