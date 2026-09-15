@@ -695,7 +695,8 @@
 
 .task-creator__field-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns:
+    minmax(0, 1fr) minmax(0, 1fr);
   gap: 0.6rem;
 }
 
@@ -961,6 +962,10 @@
 
 @media (max-width: 600px) {
   .welcome-screen__choices {
+    grid-template-columns: 1fr;
+  }
+
+  .task-creator__field-row {
     grid-template-columns: 1fr;
   }
 }
