@@ -1,5 +1,11 @@
 import { useSortable } from '@dnd-kit/react/sortable'
-import type { BoardColumn, DemoUser, NewTaskInput, Task } from '../types/board'
+import type {
+  Attachment,
+  BoardColumn,
+  DemoUser,
+  NewTaskInput,
+  Task,
+} from '../types/board'
 import { TaskCard } from './TaskCard'
 import { TaskCreator } from './TaskCreator'
 
@@ -29,6 +35,9 @@ interface KanbanColumnProps {
   ) => void
   onCancelEditingTask: () => void
   onDeleteTask: (taskId: string) => void
+  onUploadImage: (
+    file: File,
+  ) => Promise<Attachment>
 }
 
 export function KanbanColumn({
@@ -47,8 +56,8 @@ export function KanbanColumn({
   onStartEditingTask,
   onUpdateTask,
   onCancelEditingTask,
-  onDeleteTask
-
+  onDeleteTask,
+  onUploadImage,
 }: KanbanColumnProps) {
   const {
     ref,
@@ -159,6 +168,7 @@ export function KanbanColumn({
                 }
                 onCancel={onCancelEditingTask}
                 onDelete={() => onDeleteTask(task.id)}
+                onUploadImage={onUploadImage}
               />
             )
           }
@@ -192,6 +202,7 @@ export function KanbanColumn({
             members={members}
             onCreate={onCreateTask}
             onCancel={onCancelCreatingTask}
+            onUploadImage={onUploadImage}
           />
         )}
       </div>

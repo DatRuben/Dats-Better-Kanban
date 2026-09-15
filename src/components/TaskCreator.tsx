@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { SubmitEvent } from 'react'
 import type {
+    Attachment,
     DemoUser,
     NewTaskInput,
     Priority,
@@ -14,6 +15,9 @@ interface TaskCreatorProps {
     onCreate: (task: NewTaskInput) => void
     onCancel: () => void
     onDelete?: () => void
+    onUploadImage: (
+        file: File,
+    ) => Promise<Attachment>
 }
 
 export function TaskCreator({
@@ -23,6 +27,7 @@ export function TaskCreator({
     onCreate,
     onCancel,
     onDelete,
+    onUploadImage,
 }: TaskCreatorProps) {
     const [title, setTitle] = useState(
         initialTask?.title ?? '',
@@ -44,22 +49,61 @@ export function TaskCreator({
         initialTask?.deadline ?? '',
     )
 
-    function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
+    const [imageFile, setImageFile] =
+        useState<File | null>(null)
+
+    const [isUploadingImage, setIsUploadingImage] =
+        useState(false)
+
+    const [imageUploadError, setImageUploadError] =
+        useState<string | null>(null)
+
+    async function handleSubmit(
+        event: SubmitEvent<HTMLFormElement>,
+    ) {
         event.preventDefault()
 
         const trimmedTitle = title.trim()
 
-        if (!trimmedTitle) {
+        if (!trimmedTitle || isUploadingImage) {
             return
         }
 
-        onCreate({
-            title: trimmedTitle,
-            description: description.trim(),
-            priority,
-            assigneeId: assigneeId || null,
-            deadline: deadline || null,
-        })
+        let attachments =
+            initialTask?.attachments ?? []
+
+        try {
+            setImageUploadError(null)
+
+            if (imageFile) {
+                setIsUploadingImage(true)
+
+                const uploadedAttachment =
+                    await onUploadImage(imageFile)
+
+                attachments = [
+                    ...attachments,
+                    uploadedAttachment,
+                ]
+            }
+
+            onCreate({
+                title: trimmedTitle,
+                description: description.trim(),
+                priority,
+                assigneeId: assigneeId || null,
+                deadline: deadline || null,
+                attachments,
+            })
+        } catch (error) {
+            setImageUploadError(
+                error instanceof Error
+                    ? error.message
+                    : 'Image upload failed.',
+            )
+        } finally {
+            setIsUploadingImage(false)
+        }
     }
 
     return (
@@ -162,6 +206,34 @@ export function TaskCreator({
                 </select>
             </label>
 
+            <label className="task-creator__field">
+                <span>Image</span>
+
+                <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(event) => {
+                        const file =
+                            event.target.files?.[0] ?? null
+
+                        setImageFile(file)
+                        setImageUploadError(null)
+                    }}
+                />
+
+                {imageFile && (
+                    <small>
+                        {imageFile.name}
+                    </small>
+                )}
+
+                {imageUploadError && (
+                    <small>
+                        {imageUploadError}
+                    </small>
+                )}
+            </label>
+
             <div className="task-creator__actions">
                 <div>
                     {initialTask && onDelete && (
@@ -180,6 +252,7 @@ export function TaskCreator({
                         type="button"
                         className="task-creator__cancel"
                         onClick={onCancel}
+                        disabled={isUploadingImage}
                     >
                         Cancel
                     </button>
@@ -187,9 +260,16 @@ export function TaskCreator({
                     <button
                         type="submit"
                         className="task-creator__create"
-                        disabled={!title.trim()}
+                        disabled={
+                            !title.trim() ||
+                            isUploadingImage
+                        }
                     >
-                        {initialTask ? 'Save Changes' : 'Create Task'}
+                        {isUploadingImage
+                            ? 'Uploading...'
+                            : initialTask
+                                ? 'Save Changes'
+                                : 'Create Task'}
                     </button>
                 </div>
             </div>

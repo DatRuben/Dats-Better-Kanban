@@ -821,7 +821,7 @@ function App() {
       priority: taskInput.priority,
       assigneeId: taskInput.assigneeId,
       deadline: taskInput.deadline,
-      attachments: [],
+      attachments: taskInput.attachments,
       createdAt,
       completedAt: column.countsAsCompleted
         ? createdAt
@@ -855,6 +855,7 @@ function App() {
             deadline: taskInput.deadline,
             updatedAt,
             revision: task.revision + 1,
+            attachments: taskInput.attachments,
           }
           : task,
       ),
@@ -1591,6 +1592,7 @@ function App() {
                   onDeleteTask={(taskId) =>
                     handleDeleteTask(taskId)
                   }
+                  onUploadImage={handleUploadImage}
                 />
               )
             })}
