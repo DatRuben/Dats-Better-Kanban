@@ -964,3 +964,39 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 900px) {
+  .app-shell {
+    padding: 1rem;
+  }
+
+  .app-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .app-header__actions {
+    flex-wrap: wrap;
+  }
+
+  .view-tabs {
+    flex-wrap: wrap;
+  }
+
+  .pipeline-controls {
+    flex-wrap: wrap;
+  }
+
+  .kanban-board {
+    grid-auto-flow: row;
+    grid-auto-columns: unset;
+    grid-template-columns: minmax(0, 1fr);
+    overflow-x: visible;
+  }
+
+  .kanban-column {
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+  }
+}
