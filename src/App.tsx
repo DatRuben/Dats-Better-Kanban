@@ -630,6 +630,92 @@ function App() {
     setEditingTaskId(null)
   }
 
+  async function connectGoogleWithToken(
+    accessToken: string,
+  ) {
+    await verifyGoogleDriveAccess(accessToken)
+
+    const datsFolderId =
+      await ensureDatsDriveFolder(accessToken)
+
+    const projectsFolderId =
+      await ensureProjectsDriveFolder(
+        accessToken,
+        datsFolderId,
+      )
+
+    setGoogleProjectsFolderId(
+      projectsFolderId,
+    )
+
+    let loadedDriveProject =
+      await loadFirstProjectFromDrive(
+        accessToken,
+        projectsFolderId,
+      )
+
+    if (!loadedDriveProject) {
+      const blankProject =
+        createBlankProject()
+
+      const location =
+        await createProjectOnDrive(
+          accessToken,
+          projectsFolderId,
+          blankProject,
+        )
+
+      loadedDriveProject = {
+        project: blankProject,
+        ...location,
+      }
+    }
+
+    const activeProject =
+      loadedDriveProject.project
+
+    lastSavedTasksRef.current =
+      activeProject.tasks
+
+    setGoogleProjectFolderId(
+      loadedDriveProject.projectFolderId,
+    )
+
+    setGoogleTasksFolderId(
+      loadedDriveProject.tasksFolderId,
+    )
+
+    setProject(activeProject)
+    setColumns(activeProject.columns)
+    setTasks(activeProject.tasks)
+
+    setActiveView('board')
+    setIsDemoMode(false)
+
+    setGoogleAccessToken(accessToken)
+  }
+
+  useEffect(() => {
+    const storedAccessToken =
+      getStoredGoogleAccessToken()
+
+    if (!storedAccessToken) {
+      return
+    }
+
+    void connectGoogleWithToken(
+      storedAccessToken,
+    ).catch((error) => {
+      setGoogleAccessToken(null)
+
+      setGoogleAuthError(
+        error instanceof Error
+          ? error.message
+          : 'Google session restore failed.',
+      )
+    })
+  }, [])
+
   async function handleConnectGoogle() {
     setIsGoogleConnecting(true)
     setGoogleAuthError(null)
@@ -642,65 +728,9 @@ function App() {
         storedAccessToken ??
         await requestGoogleAccessToken()
 
-      await verifyGoogleDriveAccess(accessToken)
-
-      const datsFolderId =
-        await ensureDatsDriveFolder(accessToken)
-
-      const projectsFolderId =
-        await ensureProjectsDriveFolder(
-          accessToken,
-          datsFolderId,
-        )
-
-      setGoogleProjectsFolderId(
-        projectsFolderId,
+      await connectGoogleWithToken(
+        accessToken,
       )
-
-      let loadedDriveProject =
-        await loadFirstProjectFromDrive(
-          accessToken,
-          projectsFolderId,
-        )
-
-      if (!loadedDriveProject) {
-        const blankProject =
-          createBlankProject()
-
-        const location =
-          await createProjectOnDrive(
-            accessToken,
-            projectsFolderId,
-            blankProject,
-          )
-
-        loadedDriveProject = {
-          project: blankProject,
-          ...location,
-        }
-      }
-
-      const activeProject =
-        loadedDriveProject.project
-
-      lastSavedTasksRef.current =
-        activeProject.tasks
-
-      setGoogleProjectFolderId(
-        loadedDriveProject.projectFolderId,
-      )
-
-      setGoogleTasksFolderId(
-        loadedDriveProject.tasksFolderId,
-      )
-      setProject(activeProject)
-      setColumns(activeProject.columns)
-      setTasks(activeProject.tasks)
-
-      setActiveView('board')
-      setIsDemoMode(false)
-
-      setGoogleAccessToken(accessToken)
     } catch (error) {
       setGoogleAccessToken(null)
 
