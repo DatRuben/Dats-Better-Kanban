@@ -232,6 +232,8 @@ function App() {
 
     const timeout =
       window.setTimeout(() => {
+        beginSave()
+
         void saveColumnsToDrive(
           googleAccessToken,
           googleProjectFolderId,
