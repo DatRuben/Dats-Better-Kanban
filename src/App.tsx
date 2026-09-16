@@ -1459,6 +1459,11 @@ function App() {
     return (
       <main className="welcome-screen">
         <section className="welcome-screen__content">
+          <img
+            className="welcome-screen__logo"
+            src="/favicon.png"
+            alt="favicon"
+          />
           <p className="product-name">
             Dat&apos;s: Better Kanban
             <span className="app-version">
