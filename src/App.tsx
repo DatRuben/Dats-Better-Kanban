@@ -78,6 +78,30 @@ function compareTasks(firstTask: Task, secondTask: Task) {
   return firstTask.createdAt.localeCompare(secondTask.createdAt)
 }
 
+function compareCompletedTasks(
+  firstTask: Task,
+  secondTask: Task,
+) {
+  if (
+    firstTask.completedAt &&
+    secondTask.completedAt
+  ) {
+    return secondTask.completedAt.localeCompare(
+      firstTask.completedAt,
+    )
+  }
+
+  if (firstTask.completedAt) {
+    return -1
+  }
+
+  if (secondTask.completedAt) {
+    return 1
+  }
+
+  return 0
+}
+
 function formatDeadline(deadline: string) {
   const date = new Date(`${deadline}T00:00:00`)
 
@@ -1773,30 +1797,6 @@ function App() {
               const columnTasks = tasks.filter(
                 (task) => task.columnId === column.id,
               )
-
-              function compareCompletedTasks(
-                firstTask: Task,
-                secondTask: Task,
-              ) {
-                if (
-                  firstTask.completedAt &&
-                  secondTask.completedAt
-                ) {
-                  return secondTask.completedAt.localeCompare(
-                    firstTask.completedAt,
-                  )
-                }
-
-                if (firstTask.completedAt) {
-                  return -1
-                }
-
-                if (secondTask.completedAt) {
-                  return 1
-                }
-
-                return 0
-              }
 
               const sortedColumnTasks =
                 [...columnTasks].sort(
