@@ -1774,7 +1774,37 @@ function App() {
                 (task) => task.columnId === column.id,
               )
 
-              const sortedColumnTasks = [...columnTasks].sort(compareTasks)
+              function compareCompletedTasks(
+                firstTask: Task,
+                secondTask: Task,
+              ) {
+                if (
+                  firstTask.completedAt &&
+                  secondTask.completedAt
+                ) {
+                  return secondTask.completedAt.localeCompare(
+                    firstTask.completedAt,
+                  )
+                }
+
+                if (firstTask.completedAt) {
+                  return -1
+                }
+
+                if (secondTask.completedAt) {
+                  return 1
+                }
+
+                return 0
+              }
+
+              const sortedColumnTasks =
+                [...columnTasks].sort(
+                  column.countsAsCompleted &&
+                    column.usePriorityDeadlineOrdering !== true
+                    ? compareCompletedTasks
+                    : compareTasks,
+                )
 
               return (
                 <KanbanColumn
