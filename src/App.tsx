@@ -842,6 +842,22 @@ function App() {
     )
   }
 
+  function handleColumnOrderingChange(
+    columnId: string,
+    usePriorityDeadlineOrdering: boolean,
+  ) {
+    setColumns((currentColumns) =>
+      currentColumns.map((column) =>
+        column.id === columnId
+          ? {
+            ...column,
+            usePriorityDeadlineOrdering,
+          }
+          : column,
+      ),
+    )
+  }
+
   function handleColumnCompletionChange(
     columnId: string,
     countsAsCompleted: boolean,
@@ -1843,6 +1859,9 @@ function App() {
                   }
                   onUploadImage={handleUploadImage}
                   onLoadAttachment={handleLoadAttachment}
+                  onColumnOrderingChange={
+                    handleColumnOrderingChange
+                  }
                 />
               )
             })}

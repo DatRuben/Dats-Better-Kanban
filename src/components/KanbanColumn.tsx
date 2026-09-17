@@ -41,6 +41,10 @@ interface KanbanColumnProps {
   onLoadAttachment: (
     attachment: Attachment,
   ) => Promise<Blob | null>
+  onColumnOrderingChange: (
+    columnId: string,
+    usePriorityDeadlineOrdering: boolean,
+  ) => void
 }
 
 export function KanbanColumn({
@@ -62,6 +66,7 @@ export function KanbanColumn({
   onDeleteTask,
   onUploadImage,
   onLoadAttachment,
+  onColumnOrderingChange,
 }: KanbanColumnProps) {
   const {
     ref,
@@ -128,6 +133,24 @@ export function KanbanColumn({
                 Counts as completed
               </label>
 
+              {column.countsAsCompleted && (
+                <label className="kanban-column__completion-setting">
+                  <input
+                    type="checkbox"
+                    checked={
+                      column.usePriorityDeadlineOrdering === true
+                    }
+                    onChange={(event) =>
+                      onColumnOrderingChange(
+                        column.id,
+                        event.target.checked,
+                      )
+                    }
+                  />
+                  Priority/Deadline Ordering
+                </label>
+              )}
+
               <button
                 type="button"
                 className="kanban-column__delete-button"
@@ -187,7 +210,6 @@ export function KanbanColumn({
               isEditing={false}
               onEdit={() => onStartEditingTask(task.id)}
               onLoadAttachment={onLoadAttachment}
-
             />
           )
         })}
