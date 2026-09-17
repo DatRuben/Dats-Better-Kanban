@@ -746,21 +746,7 @@ function App() {
 
       return taskColumn?.countsAsCompleted
     })
-    .sort((firstTask, secondTask) => {
-      if (firstTask.completedAt && secondTask.completedAt) {
-        return secondTask.completedAt.localeCompare(firstTask.completedAt)
-      }
-
-      if (firstTask.completedAt) {
-        return -1
-      }
-
-      if (secondTask.completedAt) {
-        return 1
-      }
-
-      return 0
-    })
+    .sort(compareCompletedTasks)
 
   for (const task of timelineTasks) {
     const lastGroup = timelineGroups[timelineGroups.length - 1]
