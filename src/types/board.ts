@@ -43,6 +43,7 @@ export interface BoardColumn {
   title: string
   order: number
   countsAsCompleted: boolean
+  usePriorityDeadlineOrdering?: boolean
 }
 
 export interface Project {
