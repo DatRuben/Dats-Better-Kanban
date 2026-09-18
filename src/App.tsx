@@ -1850,6 +1850,7 @@ function App() {
                   onColumnOrderingChange={
                     handleColumnOrderingChange
                   }
+                  isTaskEditing={isTaskEditing}
                 />
               )
             })}

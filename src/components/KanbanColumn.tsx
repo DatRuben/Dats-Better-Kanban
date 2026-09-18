@@ -14,6 +14,7 @@ interface KanbanColumnProps {
   tasks: Task[]
   members: DemoUser[]
   isPipelineEditing: boolean
+  isTaskEditing: boolean
   onColumnTitleChange: (
     columnId: string,
     title: string,
@@ -52,6 +53,7 @@ export function KanbanColumn({
   tasks,
   members,
   isPipelineEditing,
+  isTaskEditing,
   onColumnTitleChange,
   onColumnCompletionChange,
   onDeleteColumn,
@@ -208,6 +210,7 @@ export function KanbanColumn({
               taskNumber={index + 1}
               isPipelineEditing={isPipelineEditing}
               isEditing={false}
+              isTaskEditing={isTaskEditing}
               onEdit={() => onStartEditingTask(task.id)}
               onLoadAttachment={onLoadAttachment}
             />

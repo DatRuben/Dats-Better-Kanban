@@ -19,6 +19,7 @@ interface TaskCardProps {
   onLoadAttachment: (
     attachment: Attachment,
   ) => Promise<Blob | null>
+  isTaskEditing: boolean
 }
 
 function getInitials(displayName: string) {
@@ -41,6 +42,7 @@ export function TaskCard({
   isEditing,
   onEdit,
   onLoadAttachment,
+  isTaskEditing,
 }: TaskCardProps) {
   const assigneeInitials = assignee
     ? getInitials(assignee.displayName)
@@ -106,7 +108,9 @@ export function TaskCard({
 
   const { ref } = useDraggable({
     id: task.id,
-    disabled: isPipelineEditing,
+    disabled:
+      !isTaskEditing ||
+      isPipelineEditing,
   })
 
   return (
@@ -114,7 +118,7 @@ export function TaskCard({
       ref={ref}
       className="task-card"
     >
-      {!isPipelineEditing && (
+      {isTaskEditing && !isPipelineEditing && (
         <button
           type="button"
           className={`task-card__edit-button ${isEditing
