@@ -720,6 +720,8 @@ function App() {
   )
   const [isPipelineEditing, setIsPipelineEditing] = useState(false)
 
+  const [isTaskEditing, setIsTaskEditing] = useState(false)
+
   const [creatingTaskColumnId, setCreatingTaskColumnId] = useState<string | null>(null)
 
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
@@ -1940,13 +1942,34 @@ function App() {
               ? 'pipeline-controls__button--active'
               : ''
               }`}
-            onClick={() =>
-              setIsPipelineEditing((currentValue) => !currentValue)
-            }
+            onClick={() => {
+              setIsPipelineEditing(
+                (currentValue) => !currentValue,
+              )
+              setIsTaskEditing(false)
+            }}
           >
             {isPipelineEditing
               ? 'Exit Pipeline Edit Mode'
               : 'Edit Pipeline'}
+          </button>
+
+          <button
+            type="button"
+            className={`pipeline-controls__button ${isTaskEditing
+              ? 'pipeline-controls__button--active'
+              : ''
+              }`}
+            onClick={() => {
+              setIsTaskEditing(
+                (currentValue) => !currentValue,
+              )
+              setIsPipelineEditing(false)
+            }}
+          >
+            {isTaskEditing
+              ? 'Exit Task Edit Mode'
+              : 'Edit Tasks'}
           </button>
 
           {isPipelineEditing && (
