@@ -1991,61 +1991,6 @@ function App() {
           </div>
         </section>
       )}
-
-      {activeView === 'board' && (
-        <div className="pipeline-controls">
-          <button
-            type="button"
-            className={`pipeline-controls__button ${isPipelineEditing
-              ? 'pipeline-controls__button--active'
-              : ''
-              }`}
-            onClick={() => {
-              setIsPipelineEditing(
-                (currentValue) => !currentValue,
-              )
-              setIsTaskEditing(false)
-              setEditingTaskId(null)
-              setCreatingTaskColumnId(null)
-            }}
-          >
-            {isPipelineEditing
-              ? 'Exit Pipeline Edit Mode'
-              : 'Edit Pipeline'}
-          </button>
-
-          <button
-            type="button"
-            className={`pipeline-controls__button ${isTaskEditing
-              ? 'pipeline-controls__button--active'
-              : ''
-              }`}
-            onClick={() => {
-              setIsTaskEditing(
-                (currentValue) => !currentValue,
-              )
-              setIsPipelineEditing(false)
-              setEditingTaskId(null)
-              setCreatingTaskColumnId(null)
-            }}
-          >
-            {isTaskEditing
-              ? 'Exit Task Edit Mode'
-              : 'Edit Tasks'}
-          </button>
-
-          {isPipelineEditing && (
-            <button
-              type="button"
-              className="pipeline-controls__button pipeline-controls__button--secondary"
-              onClick={handleAddColumn}
-              disabled={columns.length >= 100}
-            >
-              + Add Section
-            </button>
-          )}
-        </div>
-      )}
     </main>
   )
 
