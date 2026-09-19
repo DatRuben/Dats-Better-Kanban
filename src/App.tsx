@@ -1948,6 +1948,8 @@ function App() {
                 (currentValue) => !currentValue,
               )
               setIsTaskEditing(false)
+              setEditingTaskId(null)
+              setCreatingTaskColumnId(null)
             }}
           >
             {isPipelineEditing
@@ -1966,6 +1968,8 @@ function App() {
                 (currentValue) => !currentValue,
               )
               setIsPipelineEditing(false)
+              setEditingTaskId(null)
+              setCreatingTaskColumnId(null)
             }}
           >
             {isTaskEditing
