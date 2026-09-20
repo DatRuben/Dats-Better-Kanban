@@ -908,8 +908,8 @@ export async function loadTasksFromDrive(
         file.name.endsWith('.json'),
     )
 
-  return Promise.all(
-    taskFiles.map(async (file) => {
+  const loadedTasks = await Promise.all(
+    taskFiles.map(async (file): Promise<Task | null> => {
       const taskResponse =
         await fetch(
           `${GOOGLE_DRIVE_FILES_URL}/${file.id}?alt=media`,
@@ -929,19 +929,27 @@ export async function loadTasksFromDrive(
       const taskContents = await taskResponse.text()
 
       if (!taskContents.trim()) {
-        throw new Error(
-          `Google Drive task file "${file.name}" is empty.`,
+        console.error(
+          `Skipping empty Google Drive task file: ${file.name}`,
         )
+
+        return null
       }
 
       try {
         return JSON.parse(taskContents) as Task
       } catch {
-        throw new Error(
-          `Google Drive task file "${file.name}" contains invalid JSON.`,
+        console.error(
+          `Skipping invalid Google Drive task file: ${file.name}`,
         )
+
+        return null
       }
     }),
+  )
+  return loadedTasks.filter(
+    (task): task is Task =>
+      task !== null,
   )
 }
 
