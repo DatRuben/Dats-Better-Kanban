@@ -712,6 +712,8 @@ export async function saveTaskToDrive(
       task.id,
     )
 
+  let createdNewTaskFile = false
+
   const taskFileName =
     await getTaskFileName(
       accessToken,
@@ -760,6 +762,8 @@ export async function saveTaskToDrive(
 
     taskFileId =
       createdFile.id
+
+    createdNewTaskFile = true
   } else {
     const renameResponse =
       await fetch(
@@ -814,6 +818,34 @@ export async function saveTaskToDrive(
     )
 
   if (!uploadResponse.ok) {
+    if (createdNewTaskFile && taskFileId) {
+      try {
+        const cleanupResponse =
+          await fetch(
+            `${GOOGLE_DRIVE_FILES_URL}/${taskFileId}`,
+            {
+              method: 'DELETE',
+
+              headers: {
+                Authorization:
+                  `Bearer ${accessToken}`,
+              },
+            },
+          )
+
+        if (!cleanupResponse.ok) {
+          console.error(
+            `Failed to clean up incomplete Google Drive task file with status ${cleanupResponse.status}.`,
+          )
+        }
+      } catch (cleanupError) {
+        console.error(
+          'Failed to clean up incomplete Google Drive task file.',
+          cleanupError,
+        )
+      }
+    }
+
     throw new Error(
       `Google Drive task save failed with status ${uploadResponse.status}.`,
     )
