@@ -628,7 +628,21 @@ async function readJsonFile<T>(
     )
   }
 
-  return await response.json() as T
+  const fileContents = await response.text()
+
+  if (!fileContents.trim()) {
+    throw new Error(
+      `Google Drive file "${fileName}" is empty.`,
+    )
+  }
+
+  try {
+    return JSON.parse(fileContents) as T
+  } catch {
+    throw new Error(
+      `Google Drive file "${fileName}" contains invalid JSON.`,
+    )
+  }
 }
 
 function createStoredProjectMetadata(
@@ -912,7 +926,21 @@ export async function loadTasksFromDrive(
         )
       }
 
-      return await taskResponse.json() as Task
+      const taskContents = await taskResponse.text()
+
+      if (!taskContents.trim()) {
+        throw new Error(
+          `Google Drive task file "${file.name}" is empty.`,
+        )
+      }
+
+      try {
+        return JSON.parse(taskContents) as Task
+      } catch {
+        throw new Error(
+          `Google Drive task file "${file.name}" contains invalid JSON.`,
+        )
+      }
     }),
   )
 }
