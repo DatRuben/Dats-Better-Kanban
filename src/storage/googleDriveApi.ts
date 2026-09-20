@@ -1032,7 +1032,21 @@ export async function loadTaskFromDrive(
     )
   }
 
-  return await response.json() as Task
+  const taskContents = await response.text()
+
+  if (!taskContents.trim()) {
+    throw new Error(
+      `Google Drive task "${taskId}" is empty.`,
+    )
+  }
+
+  try {
+    return JSON.parse(taskContents) as Task
+  } catch {
+    throw new Error(
+      `Google Drive task "${taskId}" contains invalid JSON.`,
+    )
+  }
 }
 
 async function getTaskFileName(
