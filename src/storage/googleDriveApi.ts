@@ -536,6 +536,8 @@ async function writeJsonFile(
       parentFolderId,
     )
 
+  let createdNewFile = false
+
   if (!fileId) {
     const createResponse =
       await fetch(
@@ -568,6 +570,8 @@ async function writeJsonFile(
       }
 
     fileId = createdFile.id
+
+    createdNewFile = true
   }
 
   const uploadResponse =
@@ -590,6 +594,34 @@ async function writeJsonFile(
     )
 
   if (!uploadResponse.ok) {
+    if (createdNewFile && fileId) {
+      try {
+        const cleanupResponse =
+          await fetch(
+            `${GOOGLE_DRIVE_FILES_URL}/${fileId}`,
+            {
+              method: 'DELETE',
+
+              headers: {
+                Authorization:
+                  `Bearer ${accessToken}`,
+              },
+            },
+          )
+
+        if (!cleanupResponse.ok) {
+          console.error(
+            `Failed to clean up incomplete Google Drive file "${fileName}" with status ${cleanupResponse.status}.`,
+          )
+        }
+      } catch (cleanupError) {
+        console.error(
+          `Failed to clean up incomplete Google Drive file "${fileName}".`,
+          cleanupError,
+        )
+      }
+    }
+
     throw new Error(
       `Google Drive file save failed with status ${uploadResponse.status}.`,
     )
