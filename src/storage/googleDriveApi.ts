@@ -1188,7 +1188,7 @@ export async function uploadAttachmentToDrive(
 
   if (!uploadResponse.ok) {
     throw new Error(
-      `Google Drive file save failed with status ${uploadResponse.status}.`,
+      `Google Drive attachment upload failed with status ${uploadResponse.status}.`,
     )
   }
 
