@@ -735,8 +735,6 @@ export async function saveTaskToDrive(
       task.id,
     )
 
-  let createdNewTaskFile = false
-
   const taskFileName =
     await getTaskFileName(
       accessToken,
@@ -746,29 +744,55 @@ export async function saveTaskToDrive(
     )
 
   if (!taskFileId) {
+    const boundary =
+      `dats_${crypto.randomUUID()}`
+
+    const metadata = JSON.stringify({
+      name: taskFileName,
+      mimeType: 'application/json',
+      parents: [tasksFolderId],
+
+      appProperties: {
+        [TASK_ID_PROPERTY]:
+          task.id,
+      },
+    })
+
+    const fileContents =
+      JSON.stringify(
+        task,
+        null,
+        2,
+      )
+
+    const multipartBody = [
+      `--${boundary}`,
+      'Content-Type: application/json; charset=UTF-8',
+      '',
+      metadata,
+      `--${boundary}`,
+      'Content-Type: application/json',
+      '',
+      fileContents,
+      `--${boundary}--`,
+      '',
+    ].join('\r\n')
+
     const createResponse =
       await fetch(
-        GOOGLE_DRIVE_FILES_URL,
+        'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
         {
           method: 'POST',
 
           headers: {
             Authorization:
               `Bearer ${accessToken}`,
+
             'Content-Type':
-              'application/json',
+              `multipart/related; boundary=${boundary}`,
           },
 
-          body: JSON.stringify({
-            name: taskFileName,
-            mimeType: 'application/json',
-            parents: [tasksFolderId],
-
-            appProperties: {
-              [TASK_ID_PROPERTY]:
-                task.id,
-            },
-          }),
+          body: multipartBody,
         },
       )
 
@@ -778,45 +802,37 @@ export async function saveTaskToDrive(
       )
     }
 
-    const createdFile =
-      await createResponse.json() as {
-        id: string
-      }
+    return
+  }
 
-    taskFileId =
-      createdFile.id
+  const renameResponse =
+    await fetch(
+      `${GOOGLE_DRIVE_FILES_URL}/${taskFileId}`,
+      {
+        method: 'PATCH',
 
-    createdNewTaskFile = true
-  } else {
-    const renameResponse =
-      await fetch(
-        `${GOOGLE_DRIVE_FILES_URL}/${taskFileId}`,
-        {
-          method: 'PATCH',
-
-          headers: {
-            Authorization:
-              `Bearer ${accessToken}`,
-            'Content-Type':
-              'application/json',
-          },
-
-          body: JSON.stringify({
-            name: taskFileName,
-
-            appProperties: {
-              [TASK_ID_PROPERTY]:
-                task.id,
-            },
-          }),
+        headers: {
+          Authorization:
+            `Bearer ${accessToken}`,
+          'Content-Type':
+            'application/json',
         },
-      )
 
-    if (!renameResponse.ok) {
-      throw new Error(
-        `Google Drive task rename failed with status ${renameResponse.status}.`,
-      )
-    }
+        body: JSON.stringify({
+          name: taskFileName,
+
+          appProperties: {
+            [TASK_ID_PROPERTY]:
+              task.id,
+          },
+        }),
+      },
+    )
+
+  if (!renameResponse.ok) {
+    throw new Error(
+      `Google Drive task rename failed with status ${renameResponse.status}.`,
+    )
   }
 
   const uploadResponse =
@@ -841,34 +857,6 @@ export async function saveTaskToDrive(
     )
 
   if (!uploadResponse.ok) {
-    if (createdNewTaskFile && taskFileId) {
-      try {
-        const cleanupResponse =
-          await fetch(
-            `${GOOGLE_DRIVE_FILES_URL}/${taskFileId}`,
-            {
-              method: 'DELETE',
-
-              headers: {
-                Authorization:
-                  `Bearer ${accessToken}`,
-              },
-            },
-          )
-
-        if (!cleanupResponse.ok) {
-          console.error(
-            `Failed to clean up incomplete Google Drive task file with status ${cleanupResponse.status}.`,
-          )
-        }
-      } catch (cleanupError) {
-        console.error(
-          'Failed to clean up incomplete Google Drive task file.',
-          cleanupError,
-        )
-      }
-    }
-
     throw new Error(
       `Google Drive task save failed with status ${uploadResponse.status}.`,
     )
