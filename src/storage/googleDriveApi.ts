@@ -536,64 +536,62 @@ async function writeJsonFile(
       parentFolderId,
     )
 
-  let createdNewFile = false
+  if (!fileId) {
+    const boundary =
+      `dats_${crypto.randomUUID()}`
 
-if (!fileId) {
-  const boundary =
-    `dats_${crypto.randomUUID()}`
+    const metadata = JSON.stringify({
+      name: fileName,
+      mimeType: 'application/json',
+      parents: [parentFolderId],
+    })
 
-  const metadata = JSON.stringify({
-    name: fileName,
-    mimeType: 'application/json',
-    parents: [parentFolderId],
-  })
+    const fileContents =
+      JSON.stringify(
+        value,
+        null,
+        2,
+      )
 
-  const fileContents =
-    JSON.stringify(
-      value,
-      null,
-      2,
-    )
+    const multipartBody = [
+      `--${boundary}`,
+      'Content-Type: application/json; charset=UTF-8',
+      '',
+      metadata,
+      `--${boundary}`,
+      'Content-Type: application/json',
+      '',
+      fileContents,
+      `--${boundary}--`,
+      '',
+    ].join('\r\n')
 
-  const multipartBody = [
-    `--${boundary}`,
-    'Content-Type: application/json; charset=UTF-8',
-    '',
-    metadata,
-    `--${boundary}`,
-    'Content-Type: application/json',
-    '',
-    fileContents,
-    `--${boundary}--`,
-    '',
-  ].join('\r\n')
+    const createResponse =
+      await fetch(
+        'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+        {
+          method: 'POST',
 
-  const createResponse =
-    await fetch(
-      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
-      {
-        method: 'POST',
+          headers: {
+            Authorization:
+              `Bearer ${accessToken}`,
 
-        headers: {
-          Authorization:
-            `Bearer ${accessToken}`,
+            'Content-Type':
+              `multipart/related; boundary=${boundary}`,
+          },
 
-          'Content-Type':
-            `multipart/related; boundary=${boundary}`,
+          body: multipartBody,
         },
+      )
 
-        body: multipartBody,
-      },
-    )
+    if (!createResponse.ok) {
+      throw new Error(
+        `Google Drive file creation failed with status ${createResponse.status}.`,
+      )
+    }
 
-  if (!createResponse.ok) {
-    throw new Error(
-      `Google Drive file creation failed with status ${createResponse.status}.`,
-    )
+    return
   }
-
-  return
-}
 
   const uploadResponse =
     await fetch(
@@ -615,34 +613,6 @@ if (!fileId) {
     )
 
   if (!uploadResponse.ok) {
-    if (createdNewFile && fileId) {
-      try {
-        const cleanupResponse =
-          await fetch(
-            `${GOOGLE_DRIVE_FILES_URL}/${fileId}`,
-            {
-              method: 'DELETE',
-
-              headers: {
-                Authorization:
-                  `Bearer ${accessToken}`,
-              },
-            },
-          )
-
-        if (!cleanupResponse.ok) {
-          console.error(
-            `Failed to clean up incomplete Google Drive file "${fileName}" with status ${cleanupResponse.status}.`,
-          )
-        }
-      } catch (cleanupError) {
-        console.error(
-          `Failed to clean up incomplete Google Drive file "${fileName}".`,
-          cleanupError,
-        )
-      }
-    }
-
     throw new Error(
       `Google Drive file save failed with status ${uploadResponse.status}.`,
     )
@@ -1230,7 +1200,7 @@ export async function uploadAttachmentToDrive(
 
   if (!uploadResponse.ok) {
     throw new Error(
-      `Google Drive attachment upload failed with status ${uploadResponse.status}.`,
+      `Google Drive file save failed with status ${uploadResponse.status}.`,
     )
   }
 
