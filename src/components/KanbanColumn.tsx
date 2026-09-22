@@ -236,30 +236,6 @@ export function KanbanColumn({
             />
           )
         })}
-
-        {!isPipelineEditing &&
-          !isTaskEditing &&
-          !isCreatingTask && (
-            <button
-              type="button"
-              className="kanban-column__add-task"
-              onClick={onStartCreatingTask}
-            >
-              + Add Task
-            </button>
-          )}
-
-        {!isPipelineEditing &&
-          !isTaskEditing &&
-          isCreatingTask && (
-            <TaskCreator
-              columnTitle={column.title}
-              members={members}
-              onCreate={onCreateTask}
-              onCancel={onCancelCreatingTask}
-              onUploadImage={onUploadImage}
-            />
-          )}
       </div>
     </section>
   )
