@@ -175,6 +175,30 @@ export function KanbanColumn({
       </header>
 
       <div className="kanban-column__content">
+        {isTaskEditing &&
+          !isPipelineEditing &&
+          !isCreatingTask && (
+            <button
+              type="button"
+              className="kanban-column__add-task"
+              onClick={onStartCreatingTask}
+            >
+              + Add Task
+            </button>
+          )}
+
+        {isTaskEditing &&
+          !isPipelineEditing &&
+          isCreatingTask && (
+            <TaskCreator
+              columnTitle={column.title}
+              members={members}
+              onCreate={onCreateTask}
+              onCancel={onCancelCreatingTask}
+              onUploadImage={onUploadImage}
+            />
+          )}
+
         {tasks.length === 0 && (
           <p className="kanban-column__empty">No tasks</p>
         )}
@@ -217,25 +241,29 @@ export function KanbanColumn({
           )
         })}
 
-        {!isPipelineEditing && !isCreatingTask && (
-          <button
-            type="button"
-            className="kanban-column__add-task"
-            onClick={onStartCreatingTask}
-          >
-            + Add Task
-          </button>
-        )}
+        {!isPipelineEditing &&
+          !isTaskEditing &&
+          !isCreatingTask && (
+            <button
+              type="button"
+              className="kanban-column__add-task"
+              onClick={onStartCreatingTask}
+            >
+              + Add Task
+            </button>
+          )}
 
-        {!isPipelineEditing && isCreatingTask && (
-          <TaskCreator
-            columnTitle={column.title}
-            members={members}
-            onCreate={onCreateTask}
-            onCancel={onCancelCreatingTask}
-            onUploadImage={onUploadImage}
-          />
-        )}
+        {!isPipelineEditing &&
+          !isTaskEditing &&
+          isCreatingTask && (
+            <TaskCreator
+              columnTitle={column.title}
+              members={members}
+              onCreate={onCreateTask}
+              onCancel={onCancelCreatingTask}
+              onUploadImage={onUploadImage}
+            />
+          )}
       </div>
     </section>
   )
