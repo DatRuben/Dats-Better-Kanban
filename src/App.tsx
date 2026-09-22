@@ -1855,7 +1855,10 @@ function App() {
           }}
         >
           <section
-            className="kanban-board"
+            className={`kanban-board ${orderedColumns.length > 6
+                ? 'kanban-board--scrolling'
+                : ''
+              }`}
             aria-label={`${currentProject.name} Kanban board`}
           >
             {orderedColumns.map((column) => {
