@@ -49,8 +49,8 @@ export function TaskCreator({
         initialTask?.deadline ?? '',
     )
 
-    const [imageFile, setImageFile] =
-        useState<File | null>(null)
+    const [imageFiles, setImageFiles] =
+        useState<File[]>([])
 
     const [removeImage, setRemoveImage] =
         useState(false)
@@ -92,18 +92,19 @@ export function TaskCreator({
         try {
             setImageUploadError(null)
 
-            if (imageFile) {
+            if (imageFiles.length > 0) {
                 setIsUploadingImage(true)
 
-                const uploadedAttachment =
-                    await onUploadImage(imageFile)
+                const uploadedAttachments =
+                    await Promise.all(
+                        imageFiles.map((file) =>
+                            onUploadImage(file),
+                        ),
+                    )
 
                 attachments = [
-                    ...attachments.filter(
-                        (attachment) =>
-                            !attachment.mimeType.startsWith('image/'),
-                    ),
-                    uploadedAttachment,
+                    ...attachments,
+                    ...uploadedAttachments,
                 ]
             }
             onCreate({
@@ -227,7 +228,7 @@ export function TaskCreator({
 
             <label className="task-creator__field">
                 <span>Image</span>
-                {removeImage && !imageFile && (
+                {removeImage && imageFiles.length === 0 && (
                     <div>
                         <small>
                             Image will be removed when you save.
@@ -244,40 +245,45 @@ export function TaskCreator({
                     </div>
                 )}
 
-                {existingImage && !removeImage && !imageFile && (
-                    <div>
-                        <small>
-                            Current: {existingImage.fileName}
-                        </small>
+                {existingImage &&
+                    !removeImage &&
+                    imageFiles.length === 0 && (
+                        <div>
+                            <small>
+                                Current: {existingImage.fileName}
+                            </small>
 
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setRemoveImage(true)
-                                setImageFile(null)
-                            }}
-                        >
-                            Delete Image
-                        </button>
-                    </div>
-                )}
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setRemoveImage(true)
+                                    setImageFiles([])
+                                }}
+                            >
+                                Delete Image
+                            </button>
+                        </div>
+                    )}
 
                 <input
                     type="file"
                     accept="image/*"
+                    multiple
                     onChange={(event) => {
-                        const file =
-                            event.target.files?.[0] ?? null
+                        const files =
+                            Array.from(event.target.files ?? [])
 
-                        setImageFile(file)
+                        setImageFiles(files)
                         setRemoveImage(false)
                         setImageUploadError(null)
                     }}
                 />
 
-                {imageFile && (
+                {imageFiles.length > 0 && (
                     <small>
-                        {imageFile.name}
+                        {imageFiles
+                            .map((file) => file.name)
+                            .join(', ')}
                     </small>
                 )}
 
