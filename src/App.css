@@ -227,13 +227,93 @@
   overflow: hidden;
   border-top: 1px solid #303746;
   border-radius: 0 0 0.625rem 0.625rem;
+  background: #111318;
+}
+
+.task-card__attachment-frame {
+  position: relative;
+  overflow: hidden;
+  background: #111318;
 }
 
 .task-card__attachment img {
   display: block;
   width: 100%;
-  max-height: 14rem;
+  aspect-ratio: 16 / 9;
   object-fit: cover;
+}
+
+.task-card__attachment-placeholder {
+  display: grid;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  place-items: center;
+  color: #717b8d;
+  background: #191c23;
+  font-size: 0.75rem;
+}
+
+.task-card__attachment-controls {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem;
+  pointer-events: none;
+}
+
+.task-card__attachment-arrow {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  place-items: center;
+  border: 1px solid #384155;
+  border-radius: 999px;
+  color: #e7eaf0;
+  background: rgb(17 19 24 / 82%);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.task-card__attachment-arrow:hover:not(:disabled) {
+  border-color: #6d86b8;
+  background: #222630;
+}
+
+.task-card__attachment-arrow:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.task-card__attachment-indicators {
+  display: flex;
+  gap: 0.3rem;
+  padding: 0.45rem 0.6rem;
+  background: #1b1f27;
+}
+
+.task-card__attachment-indicator {
+  height: 0.35rem;
+  min-width: 0;
+  flex: 1;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: #384155;
+  cursor: pointer;
+}
+
+.task-card__attachment-indicator:hover {
+  background: #6d86b8;
+}
+
+.task-card__attachment-indicator--active {
+  background: #c8d0df;
 }
 
 .task-card h3 {
