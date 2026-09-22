@@ -52,8 +52,8 @@ export function TaskCreator({
     const [imageFiles, setImageFiles] =
         useState<File[]>([])
 
-    const [removeImage, setRemoveImage] =
-        useState(false)
+    const [removedImageIds, setRemovedImageIds] =
+        useState<string[]>([])
 
     const [isUploadingImage, setIsUploadingImage] =
         useState(false)
@@ -61,11 +61,11 @@ export function TaskCreator({
     const [imageUploadError, setImageUploadError] =
         useState<string | null>(null)
 
-    const existingImage =
-        initialTask?.attachments.find(
+    const existingImages =
+        initialTask?.attachments.filter(
             (attachment) =>
                 attachment.mimeType.startsWith('image/'),
-        ) ?? null
+        ) ?? []
 
     async function handleSubmit(
         event: SubmitEvent<HTMLFormElement>,
@@ -81,11 +81,13 @@ export function TaskCreator({
         let attachments =
             initialTask?.attachments ?? []
 
-        if (removeImage) {
+        if (removedImageIds.length > 0) {
             attachments =
                 attachments.filter(
                     (attachment) =>
-                        !attachment.mimeType.startsWith('image/'),
+                        !removedImageIds.includes(
+                            attachment.id,
+                        ),
                 )
         }
 
@@ -144,7 +146,6 @@ export function TaskCreator({
                     </p>
                 </div>
             </div>
-
             <label className="task-creator__field">
                 <span>Title</span>
 
@@ -226,65 +227,118 @@ export function TaskCreator({
                 </select>
             </label>
 
-            <label className="task-creator__field">
-                <span>Image</span>
-                {removeImage && imageFiles.length === 0 && (
+            <div className="task-creator__field">
+                <span>Images / GIFs</span>
+
+                {existingImages.length > 0 && (
                     <div>
                         <small>
-                            Image will be removed when you save.
+                            Current attachments
                         </small>
 
-                        <button
-                            type="button"
-                            onClick={() =>
-                                setRemoveImage(false)
-                            }
-                        >
-                            Keep Image
-                        </button>
+                        {existingImages.map((attachment) => {
+                            const isRemoved =
+                                removedImageIds.includes(
+                                    attachment.id,
+                                )
+
+                            return (
+                                <div key={attachment.id}>
+                                    <small>
+                                        {attachment.fileName}
+                                    </small>
+
+                                    {isRemoved ? (
+                                        <>
+                                            <small>
+                                                {' '}
+                                                — will be removed
+                                                when you save
+                                            </small>
+
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setRemovedImageIds(
+                                                        (currentIds) =>
+                                                            currentIds.filter(
+                                                                (id) =>
+                                                                    id !==
+                                                                    attachment.id,
+                                                            ),
+                                                    )
+                                                }
+                                            >
+                                                Keep
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setRemovedImageIds(
+                                                    (currentIds) => [
+                                                        ...currentIds,
+                                                        attachment.id,
+                                                    ],
+                                                )
+                                            }
+                                        >
+                                            Remove
+                                        </button>
+                                    )}
+                                </div>
+                            )
+                        })}
                     </div>
                 )}
-
-                {existingImage &&
-                    !removeImage &&
-                    imageFiles.length === 0 && (
-                        <div>
-                            <small>
-                                Current: {existingImage.fileName}
-                            </small>
-
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setRemoveImage(true)
-                                    setImageFiles([])
-                                }}
-                            >
-                                Delete Image
-                            </button>
-                        </div>
-                    )}
 
                 <input
                     type="file"
                     accept="image/*"
                     multiple
                     onChange={(event) => {
-                        const files =
-                            Array.from(event.target.files ?? [])
+                        const selectedFiles =
+                            Array.from(
+                                event.target.files ?? [],
+                            )
 
-                        setImageFiles(files)
-                        setRemoveImage(false)
+                        setImageFiles(selectedFiles)
                         setImageUploadError(null)
                     }}
                 />
 
                 {imageFiles.length > 0 && (
-                    <small>
-                        {imageFiles
-                            .map((file) => file.name)
-                            .join(', ')}
-                    </small>
+                    <div>
+                        <small>
+                            New attachments
+                        </small>
+
+                        {imageFiles.map((file, index) => (
+                            <div
+                                key={`${file.name}-${file.size}-${file.lastModified}`}
+                            >
+                                <small>
+                                    {file.name}
+                                </small>
+
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setImageFiles(
+                                            (currentFiles) =>
+                                                currentFiles.filter(
+                                                    (_, currentIndex) =>
+                                                        currentIndex !== index,
+                                                ),
+                                        )
+                                    }
+                                >
+                                    Remove
+                                </button>
+                            </div>
+                        ))}
+                    </div>
                 )}
 
                 {imageUploadError && (
@@ -292,7 +346,7 @@ export function TaskCreator({
                         {imageUploadError}
                     </small>
                 )}
-            </label>
+            </div>
 
             <div className="task-creator__actions">
                 <div>
