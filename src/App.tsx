@@ -1837,6 +1837,10 @@ function App() {
               return
             }
 
+            if (!isTaskEditing) {
+              return
+            }
+
             const sourceId = event.operation.source?.id
             const targetId = event.operation.target?.id
 
