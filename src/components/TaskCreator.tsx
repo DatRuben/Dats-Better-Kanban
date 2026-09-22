@@ -20,6 +20,15 @@ interface TaskCreatorProps {
     ) => Promise<Attachment>
 }
 
+function isSupportedMedia(
+    mimeType: string,
+) {
+    return (
+        mimeType.startsWith('image/') ||
+        mimeType === 'video/mp4'
+    )
+}
+
 export function TaskCreator({
     columnTitle,
     members,
@@ -61,10 +70,12 @@ export function TaskCreator({
     const [imageUploadError, setImageUploadError] =
         useState<string | null>(null)
 
-    const existingImages =
+    const existingMedia =
         initialTask?.attachments.filter(
             (attachment) =>
-                attachment.mimeType.startsWith('image/'),
+                isSupportedMedia(
+                    attachment.mimeType,
+                ),
         ) ?? []
 
     async function handleSubmit(
@@ -228,15 +239,15 @@ export function TaskCreator({
             </label>
 
             <div className="task-creator__field">
-                <span>Images / GIFs</span>
+                <span>Images / GIFs / MP4s</span>
 
-                {existingImages.length > 0 && (
+                {existingMedia.length > 0 && (
                     <div>
                         <small>
                             Current attachments
                         </small>
 
-                        {existingImages.map((attachment) => {
+                        {existingMedia.map((attachment) => {
                             const isRemoved =
                                 removedImageIds.includes(
                                     attachment.id,

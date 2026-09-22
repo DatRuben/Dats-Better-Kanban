@@ -236,7 +236,8 @@
   background: #111318;
 }
 
-.task-card__attachment img {
+.task-card__attachment img,
+.task-card__attachment video {
   display: block;
   width: 100%;
   max-height: 14rem;

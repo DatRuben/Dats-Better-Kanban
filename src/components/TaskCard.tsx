@@ -34,6 +34,15 @@ function getInitials(displayName: string) {
   return `${firstInitial}${lastInitial}`.toUpperCase()
 }
 
+function isSupportedMedia(
+  mimeType: string,
+) {
+  return (
+    mimeType.startsWith('image/') ||
+    mimeType === 'video/mp4'
+  )
+}
+
 export function TaskCard({
   task,
   assignee,
@@ -48,68 +57,70 @@ export function TaskCard({
     ? getInitials(assignee.displayName)
     : '?'
 
-  const imageAttachments =
+  const mediaAttachments =
     task.attachments
       .filter(
         (attachment) =>
-          attachment.mimeType.startsWith('image/'),
+          isSupportedMedia(
+            attachment.mimeType,
+          ),
       )
       .reverse()
 
-  const imageAttachmentIds =
-    imageAttachments
+  const mediaAttachmentIds =
+    mediaAttachments
       .map((attachment) => attachment.id)
       .join('|')
 
-  const [currentImageIndex, setCurrentImageIndex] =
+  const [currentMediaIndex, setcurrentMediaIndex] =
     useState(0)
 
-  const imageAttachment =
-    imageAttachments[currentImageIndex] ?? null
+  const mediaAttachment =
+    mediaAttachments[currentMediaIndex] ?? null
 
-  const [imagePreviewUrl, setImagePreviewUrl] =
+  const [mediaPreviewUrl, setmediaPreviewUrl] =
     useState<string | null>(
-      imageAttachment?.previewUrl ?? null,
+      mediaAttachment?.previewUrl ?? null,
     )
 
-  const [imageLoadError, setImageLoadError] =
+  const [mediaLoadError, setmediaLoadError] =
     useState(false)
 
   useEffect(() => {
-    setCurrentImageIndex(0)
+    setcurrentMediaIndex(0)
   }, [
     task.id,
-    imageAttachmentIds,
+    mediaAttachmentIds,
   ])
 
   useEffect(() => {
-    setImageLoadError(false)
+    setmediaLoadError(false)
 
-    if (!imageAttachment) {
-      setImagePreviewUrl(null)
+    if (!mediaAttachment) {
+      setmediaPreviewUrl(null)
       return
     }
 
-    if (imageAttachment.previewUrl) {
-      setImagePreviewUrl(
-        imageAttachment.previewUrl,
+    if (mediaAttachment.previewUrl) {
+      setmediaPreviewUrl(
+        mediaAttachment.previewUrl,
       )
       return
     }
 
-    if (!imageAttachment.driveFileId) {
-      setImagePreviewUrl(null)
-      setImageLoadError(true)
+    if (!mediaAttachment.driveFileId) {
+      setmediaPreviewUrl(null)
+      setmediaLoadError(true)
       return
     }
 
-    setImagePreviewUrl(null)
+    setmediaPreviewUrl(null)
 
     let isCancelled = false
     let objectUrl: string | null = null
 
     void onLoadAttachment(
-      imageAttachment,
+      mediaAttachment,
     )
       .then((blob) => {
         if (!blob || isCancelled) {
@@ -119,14 +130,14 @@ export function TaskCard({
         objectUrl =
           URL.createObjectURL(blob)
 
-        setImagePreviewUrl(objectUrl)
+        setmediaPreviewUrl(objectUrl)
       })
       .catch((error) => {
         if (isCancelled) {
           return
         }
 
-        setImageLoadError(true)
+        setmediaLoadError(true)
 
         console.error(
           'Failed to load attachment preview:',
@@ -142,7 +153,7 @@ export function TaskCard({
       }
     }
   }, [
-    imageAttachment,
+    mediaAttachment,
     onLoadAttachment,
   ])
 
@@ -153,8 +164,11 @@ export function TaskCard({
       isPipelineEditing,
   })
 
-  const hasMultipleImages =
-    imageAttachments.length > 1
+  const hasMultipleMedia =
+    mediaAttachments.length > 1
+
+  const isVideo =
+    mediaAttachment?.mimeType === 'video/mp4'
 
   return (
     <article
@@ -210,34 +224,46 @@ export function TaskCard({
         )}
       </div>
 
-      {imageAttachment && (
+      {mediaAttachment && (
         <div className="task-card__attachment">
           <div className="task-card__attachment-frame">
-            {imagePreviewUrl ? (
-              <img
-                src={imagePreviewUrl}
-                alt={imageAttachment.fileName}
-              />
+            {mediaPreviewUrl ? (
+              isVideo ? (
+                <video
+                  src={mediaPreviewUrl}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  onPointerDown={(event) =>
+                    event.stopPropagation()
+                  }
+                />
+              ) : (
+                <img
+                  src={mediaPreviewUrl}
+                  alt={mediaAttachment.fileName}
+                />
+              )
             ) : (
               <div className="task-card__attachment-placeholder">
-                {imageLoadError
+                {mediaLoadError
                   ? 'Media unavailable'
                   : 'Loading media…'}
               </div>
             )}
 
-            {hasMultipleImages && (
+            {hasMultipleMedia && (
               <div className="task-card__attachment-controls">
                 <button
                   type="button"
                   className="task-card__attachment-arrow"
                   aria-label="Show newer attachment"
-                  disabled={currentImageIndex === 0}
+                  disabled={currentMediaIndex === 0}
                   onPointerDown={(event) =>
                     event.stopPropagation()
                   }
                   onClick={() =>
-                    setCurrentImageIndex(
+                    setcurrentMediaIndex(
                       (currentIndex) =>
                         Math.max(
                           0,
@@ -254,17 +280,17 @@ export function TaskCard({
                   className="task-card__attachment-arrow"
                   aria-label="Show older attachment"
                   disabled={
-                    currentImageIndex ===
-                    imageAttachments.length - 1
+                    currentMediaIndex ===
+                    mediaAttachments.length - 1
                   }
                   onPointerDown={(event) =>
                     event.stopPropagation()
                   }
                   onClick={() =>
-                    setCurrentImageIndex(
+                    setcurrentMediaIndex(
                       (currentIndex) =>
                         Math.min(
-                          imageAttachments.length - 1,
+                          mediaAttachments.length - 1,
                           currentIndex + 1,
                         ),
                     )
@@ -276,27 +302,27 @@ export function TaskCard({
             )}
           </div>
 
-          {hasMultipleImages && (
+          {hasMultipleMedia && (
             <div className="task-card__attachment-indicators">
-              {imageAttachments.map(
+              {mediaAttachments.map(
                 (attachment, index) => (
                   <button
                     key={attachment.id}
                     type="button"
-                    className={`task-card__attachment-indicator ${index === currentImageIndex
+                    className={`task-card__attachment-indicator ${index === currentMediaIndex
                       ? 'task-card__attachment-indicator--active'
                       : ''
                       }`}
                     aria-label={`Show ${attachment.fileName}`}
                     aria-pressed={
-                      index === currentImageIndex
+                      index === currentMediaIndex
                     }
                     title={attachment.fileName}
                     onPointerDown={(event) =>
                       event.stopPropagation()
                     }
                     onClick={() =>
-                      setCurrentImageIndex(index)
+                      setcurrentMediaIndex(index)
                     }
                   />
                 ),
