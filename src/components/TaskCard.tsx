@@ -161,19 +161,6 @@ export function TaskCard({
       ref={ref}
       className="task-card"
     >
-      {isTaskEditing && !isPipelineEditing && (
-        <button
-          type="button"
-          className={`task-card__edit-button ${isEditing
-            ? 'task-card__edit-button--active'
-            : ''
-            }`}
-          onClick={onEdit}
-        >
-          {isEditing ? 'Editing' : 'Edit'}
-        </button>
-      )}
-
       <div className="task-card__top">
         <p
           className={`task-card__priority task-card__priority--${task.priority}`}
@@ -198,11 +185,29 @@ export function TaskCard({
         {task.description}
       </p>
 
-      <div
-        className="task-card__assignee"
-        title={assignee?.displayName ?? 'Unassigned'}
-      >
-        {assigneeInitials}
+      <div className="task-card__footer">
+        <div
+          className="task-card__assignee"
+          title={assignee?.displayName ?? 'Unassigned'}
+        >
+          {assigneeInitials}
+        </div>
+
+        {isTaskEditing && !isPipelineEditing && (
+          <button
+            type="button"
+            className={`task-card__edit-button ${isEditing
+              ? 'task-card__edit-button--active'
+              : ''
+              }`}
+            onPointerDown={(event) =>
+              event.stopPropagation()
+            }
+            onClick={onEdit}
+          >
+            {isEditing ? 'Editing' : 'Edit'}
+          </button>
+        )}
       </div>
 
       {imageAttachment && (

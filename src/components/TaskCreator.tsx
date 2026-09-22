@@ -295,7 +295,7 @@ export function TaskCreator({
 
                 <input
                     type="file"
-                    accept="image/*"
+                    accept="image/*,video/mp4"
                     multiple
                     onChange={(event) => {
                         const selectedFiles =
