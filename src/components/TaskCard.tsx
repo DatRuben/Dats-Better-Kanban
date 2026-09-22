@@ -48,10 +48,16 @@ export function TaskCard({
     ? getInitials(assignee.displayName)
     : '?'
 
-  const imageAttachment = task.attachments.find(
-    (attachment) =>
-      attachment.mimeType.startsWith('image/'),
-  )
+  const imageAttachments =
+    task.attachments.filter(
+      (attachment) =>
+        attachment.mimeType.startsWith('image/'),
+    )
+
+  const imageAttachment =
+    imageAttachments[
+    imageAttachments.length - 1
+    ] ?? null
 
   const [imagePreviewUrl, setImagePreviewUrl] =
     useState<string | null>(
