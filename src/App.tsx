@@ -705,11 +705,10 @@ function App() {
 
           const nextSavedTasksById =
             new Map(
-              previousTasks.map(
+              lastSavedTasksRef.current.map(
                 (task) => [task.id, task],
               ),
             )
-
           for (const task of syncedChangedTasks) {
             nextSavedTasksById.set(
               task.id,
