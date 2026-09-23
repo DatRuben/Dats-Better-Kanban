@@ -197,6 +197,9 @@ function App() {
   const [saveError, setSaveError] =
     useState<string | null>(null)
 
+  const [syncError, setSyncError] =
+    useState<string | null>(null)
+
   const pendingSavesRef =
     useRef(0)
 
@@ -1391,34 +1394,42 @@ function App() {
 
           setTasks(mergedTasks)
         }
+
+        setSyncError(null)
+
       } catch (error) {
-        if (
-          !isCancelled &&
-          isGoogleUnauthorizedError(error)
-        ) {
-          expireGoogleSession()
+        if (isCancelled) {
+          return
         }
-      } finally {
-        isChecking = false
+
+        if (isGoogleUnauthorizedError(error)) {
+          expireGoogleSession()
+          return
+        }
+
+        setSyncError(
+          error instanceof Error
+            ? error.message
+            : 'Google Drive sync failed.',
+        )
       }
-    }
 
-    void syncRemoteTasks()
+      void syncRemoteTasks()
 
-    const interval =
-      window.setInterval(() => {
-        void syncRemoteTasks()
-      }, 3000)
+      const interval =
+        window.setInterval(() => {
+          void syncRemoteTasks()
+        }, 3000)
 
-    return () => {
-      isCancelled = true
-      window.clearInterval(interval)
-    }
-  }, [
-    isDemoMode,
-    googleAccessToken,
-    googleTasksFolderId,
-  ])
+      return () => {
+        isCancelled = true
+        window.clearInterval(interval)
+      }
+    }, [
+      isDemoMode,
+      googleAccessToken,
+      googleTasksFolderId,
+    ])
 
   async function handleConnectGoogle(
     forceNewToken = false,
@@ -1809,13 +1820,15 @@ function App() {
             <span className="save-status">
               {taskSyncConflicts.length > 0
                 ? `Sync conflict (${taskSyncConflicts.length})`
-                : saveStatus === 'saving'
-                  ? 'Saving…'
-                  : saveStatus === 'saved'
-                    ? 'Saved'
-                    : saveStatus === 'error'
-                      ? 'Save failed'
-                      : ''}
+                : syncError
+                  ? 'Sync failed'
+                  : saveStatus === 'saving'
+                    ? 'Saving…'
+                    : saveStatus === 'saved'
+                      ? 'Saved'
+                      : saveStatus === 'error'
+                        ? 'Save failed'
+                        : ''}
             </span>
           )}
 
@@ -1863,6 +1876,12 @@ function App() {
       {saveError && (
         <p className="save-error">
           {saveError}
+        </p>
+      )}
+
+      {syncError && (
+        <p className="save-error">
+          {syncError}
         </p>
       )}
 
