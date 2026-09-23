@@ -1622,6 +1622,88 @@ function App() {
     }
   }
 
+  async function handleUploadMedia(
+    files: File[],
+  ): Promise<Attachment[]> {
+    const uploadResults =
+      await Promise.allSettled(
+        files.map((file) =>
+          handleUploadImage(file),
+        ),
+      )
+
+    const uploadedAttachments =
+      uploadResults.flatMap(
+        (result) =>
+          result.status === 'fulfilled'
+            ? [result.value]
+            : [],
+      )
+
+    const failedUpload =
+      uploadResults.find(
+        (result) =>
+          result.status === 'rejected',
+      )
+
+    if (!failedUpload) {
+      return uploadedAttachments
+    }
+
+    const cleanupResults =
+      await Promise.allSettled(
+        uploadedAttachments.map(
+          async (attachment) => {
+            if (isDemoMode) {
+              if (attachment.previewUrl) {
+                URL.revokeObjectURL(
+                  attachment.previewUrl,
+                )
+              }
+
+              return
+            }
+
+            if (
+              !googleAccessToken ||
+              !attachment.driveFileId
+            ) {
+              return
+            }
+
+            await deleteAttachmentFromDrive(
+              googleAccessToken,
+              attachment.driveFileId,
+            )
+          },
+        ),
+      )
+
+    for (const cleanupResult of cleanupResults) {
+      if (
+        cleanupResult.status ===
+        'rejected'
+      ) {
+        console.error(
+          'Failed to clean up an attachment after a batch upload failure:',
+          cleanupResult.reason,
+        )
+      }
+    }
+
+    if (
+      failedUpload.status ===
+      'rejected' &&
+      failedUpload.reason instanceof Error
+    ) {
+      throw failedUpload.reason
+    }
+
+    throw new Error(
+      'Media upload failed.',
+    )
+  }
+
   return (
     <main className="app-shell">
       <header className="app-header">
@@ -1856,8 +1938,8 @@ function App() {
         >
           <section
             className={`kanban-board ${orderedColumns.length > 6
-                ? 'kanban-board--scrolling'
-                : ''
+              ? 'kanban-board--scrolling'
+              : ''
               }`}
             aria-label={`${currentProject.name} Kanban board`}
           >
@@ -1909,7 +1991,7 @@ function App() {
                   onDeleteTask={(taskId) =>
                     handleDeleteTask(taskId)
                   }
-                  onUploadImage={handleUploadImage}
+                  onUploadMedia={handleUploadMedia}
                   onLoadAttachment={handleLoadAttachment}
                   onColumnOrderingChange={
                     handleColumnOrderingChange

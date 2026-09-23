@@ -15,9 +15,9 @@ interface TaskCreatorProps {
     onCreate: (task: NewTaskInput) => void
     onCancel: () => void
     onDelete?: () => void
-    onUploadImage: (
-        file: File,
-    ) => Promise<Attachment>
+    onUploadMedia: (
+        files: File[],
+    ) => Promise<Attachment[]>
 }
 
 function isSupportedMedia(
@@ -36,7 +36,7 @@ export function TaskCreator({
     onCreate,
     onCancel,
     onDelete,
-    onUploadImage,
+    onUploadMedia,
 }: TaskCreatorProps) {
     const [title, setTitle] = useState(
         initialTask?.title ?? '',
@@ -109,10 +109,8 @@ export function TaskCreator({
                 setIsUploadingImage(true)
 
                 const uploadedAttachments =
-                    await Promise.all(
-                        imageFiles.map((file) =>
-                            onUploadImage(file),
-                        ),
+                    await onUploadMedia(
+                        imageFiles,
                     )
 
                 attachments = [
@@ -132,7 +130,7 @@ export function TaskCreator({
             setImageUploadError(
                 error instanceof Error
                     ? error.message
-                    : 'Image upload failed.',
+                    : 'Media upload failed.',
             )
         } finally {
             setIsUploadingImage(false)

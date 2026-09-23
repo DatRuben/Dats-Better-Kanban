@@ -36,9 +36,9 @@ interface KanbanColumnProps {
   ) => void
   onCancelEditingTask: () => void
   onDeleteTask: (taskId: string) => void
-  onUploadImage: (
-    file: File,
-  ) => Promise<Attachment>
+  onUploadMedia: (
+    files: File[],
+  ) => Promise<Attachment[]>
   onLoadAttachment: (
     attachment: Attachment,
   ) => Promise<Blob | null>
@@ -66,7 +66,7 @@ export function KanbanColumn({
   onUpdateTask,
   onCancelEditingTask,
   onDeleteTask,
-  onUploadImage,
+  onUploadMedia,
   onLoadAttachment,
   onColumnOrderingChange,
 }: KanbanColumnProps) {
@@ -191,7 +191,7 @@ export function KanbanColumn({
             members={members}
             onCreate={onCreateTask}
             onCancel={onCancelCreatingTask}
-            onUploadImage={onUploadImage}
+            onUploadMedia={onUploadMedia}
           />
         )}
 
@@ -217,7 +217,7 @@ export function KanbanColumn({
                 }
                 onCancel={onCancelEditingTask}
                 onDelete={() => onDeleteTask(task.id)}
-                onUploadImage={onUploadImage}
+                onUploadMedia={onUploadMedia}
               />
             )
           }
