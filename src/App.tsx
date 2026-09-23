@@ -1396,7 +1396,7 @@ function App() {
         }
 
         setSyncError(null)
-
+        
       } catch (error) {
         if (isCancelled) {
           return
@@ -1412,24 +1412,27 @@ function App() {
             ? error.message
             : 'Google Drive sync failed.',
         )
+      } finally {
+        isChecking = false
       }
+    }
 
-      void syncRemoteTasks()
+    void syncRemoteTasks()
 
-      const interval =
-        window.setInterval(() => {
-          void syncRemoteTasks()
-        }, 3000)
+    const interval =
+      window.setInterval(() => {
+        void syncRemoteTasks()
+      }, 3000)
 
-      return () => {
-        isCancelled = true
-        window.clearInterval(interval)
-      }
-    }, [
-      isDemoMode,
-      googleAccessToken,
-      googleTasksFolderId,
-    ])
+    return () => {
+      isCancelled = true
+      window.clearInterval(interval)
+    }
+  }, [
+    isDemoMode,
+    googleAccessToken,
+    googleTasksFolderId,
+  ])
 
   async function handleConnectGoogle(
     forceNewToken = false,
