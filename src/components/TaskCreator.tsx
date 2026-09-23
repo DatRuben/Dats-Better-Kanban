@@ -312,6 +312,23 @@ export function TaskCreator({
                                 event.target.files ?? [],
                             )
 
+                        const unsupportedFile =
+                            selectedFiles.find(
+                                (file) =>
+                                    !isSupportedMedia(file.type),
+                            )
+
+                        if (unsupportedFile) {
+                            setImageFiles([])
+
+                            setImageUploadError(
+                                `${unsupportedFile.name} is not a supported media type.`,
+                            )
+
+                            event.target.value = ''
+                            return
+                        }
+
                         setImageFiles(selectedFiles)
                         setImageUploadError(null)
                     }}
