@@ -664,14 +664,27 @@ function App() {
             }
           }
 
-          await Promise.all(
-            attachmentIdsToDelete.map((fileId) =>
-              deleteAttachmentFromDrive(
-                googleAccessToken,
-                fileId,
+          const attachmentCleanupResults =
+            await Promise.allSettled(
+              attachmentIdsToDelete.map((fileId) =>
+                deleteAttachmentFromDrive(
+                  googleAccessToken,
+                  fileId,
+                ),
               ),
-            ),
-          )
+            )
+
+          for (
+            const cleanupResult
+            of attachmentCleanupResults
+          ) {
+            if (cleanupResult.status === 'rejected') {
+              console.error(
+                'Failed to clean up an unused attachment:',
+                cleanupResult.reason,
+              )
+            }
+          }
 
           const nextSavedTasksById =
             new Map(
