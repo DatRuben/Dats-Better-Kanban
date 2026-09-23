@@ -1355,6 +1355,19 @@ function App() {
           }
         }
 
+        if (
+          !taskListsMatch(
+            tasksRef.current,
+            localTasks,
+          ) ||
+          !taskListsMatch(
+            lastSavedTasksRef.current,
+            lastSyncedTasks,
+          )
+        ) {
+          return
+        }
+
         taskSyncConflictIdsRef.current =
           new Set(
             conflicts.map(
