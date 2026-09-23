@@ -478,6 +478,9 @@ function App() {
           const safeChangedTasks: Task[] = []
           const safeDeletedTaskIds: string[] = []
 
+          const alreadySyncedChangedTasks: Task[] = []
+          const alreadyDeletedTaskIds: string[] = []
+
           const detectedConflicts: TaskSyncConflict[] = []
 
           for (const task of changedTasks) {
@@ -504,6 +507,7 @@ function App() {
               )
 
             if (remoteAlreadyMatchesLocal) {
+              alreadySyncedChangedTasks.push(task)
               continue
             }
 
@@ -536,6 +540,7 @@ function App() {
               )
 
             if (remoteTask === null) {
+              alreadyDeletedTaskIds.push(taskId)
               continue
             }
 
@@ -604,9 +609,19 @@ function App() {
             ),
           ])
 
+          const syncedChangedTasks = [
+            ...safeChangedTasks,
+            ...alreadySyncedChangedTasks,
+          ]
+
+          const syncedDeletedTaskIds = [
+            ...safeDeletedTaskIds,
+            ...alreadyDeletedTaskIds,
+          ]
+
           const attachmentIdsToDelete: string[] = []
 
-          for (const task of safeChangedTasks) {
+          for (const task of syncedChangedTasks) {
             const previousTask =
               previousById.get(task.id)
 
@@ -644,7 +659,7 @@ function App() {
             }
           }
 
-          for (const taskId of safeDeletedTaskIds) {
+          for (const taskId of syncedDeletedTaskIds) {
             const deletedTask =
               previousById.get(taskId)
 
