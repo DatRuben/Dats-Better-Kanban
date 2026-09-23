@@ -892,7 +892,10 @@ export async function deleteTaskFromDrive(
       },
     )
 
-  if (!response.ok) {
+  if (
+    !response.ok &&
+    response.status !== 404
+  ) {
     throw new Error(
       `Google Drive task deletion failed with status ${response.status}.`,
     )
