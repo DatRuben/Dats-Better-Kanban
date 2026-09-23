@@ -1135,54 +1135,55 @@ export async function uploadAttachmentToDrive(
   file: File,
 ): Promise<string> {
   const mimeType =
-    file.type || 'application/octet-stream'
+    file.type ||
+    'application/octet-stream'
 
-  const createResponse =
+  const boundary =
+    `dats_${crypto.randomUUID()}`
+
+  const metadata =
+    JSON.stringify({
+      name: file.name,
+      mimeType,
+      parents: [
+        attachmentsFolderId,
+      ],
+    })
+
+  const multipartBody =
+    new Blob(
+      [
+        `--${boundary}\r\n`,
+        'Content-Type: application/json; charset=UTF-8\r\n',
+        '\r\n',
+        metadata,
+        '\r\n',
+
+        `--${boundary}\r\n`,
+        `Content-Type: ${mimeType}\r\n`,
+        '\r\n',
+        file,
+        '\r\n',
+
+        `--${boundary}--\r\n`,
+      ],
+    )
+
+  const uploadResponse =
     await fetch(
-      GOOGLE_DRIVE_FILES_URL,
+      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',
       {
         method: 'POST',
 
         headers: {
           Authorization:
             `Bearer ${accessToken}`,
+
           'Content-Type':
-            'application/json',
+            `multipart/related; boundary=${boundary}`,
         },
 
-        body: JSON.stringify({
-          name: file.name,
-          mimeType,
-          parents: [attachmentsFolderId],
-        }),
-      },
-    )
-
-  if (!createResponse.ok) {
-    throw new Error(
-      `Google Drive attachment creation failed with status ${createResponse.status}.`,
-    )
-  }
-
-  const createdFile =
-    await createResponse.json() as {
-      id: string
-    }
-
-  const uploadResponse =
-    await fetch(
-      `https://www.googleapis.com/upload/drive/v3/files/${createdFile.id}?uploadType=media`,
-      {
-        method: 'PATCH',
-
-        headers: {
-          Authorization:
-            `Bearer ${accessToken}`,
-          'Content-Type':
-            mimeType,
-        },
-
-        body: file,
+        body: multipartBody,
       },
     )
 
@@ -1192,7 +1193,12 @@ export async function uploadAttachmentToDrive(
     )
   }
 
-  return createdFile.id
+  const uploadedFile =
+    await uploadResponse.json() as {
+      id: string
+    }
+
+  return uploadedFile.id
 }
 
 export async function downloadAttachmentFromDrive(
