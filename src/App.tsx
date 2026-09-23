@@ -708,14 +708,14 @@ function App() {
               ),
             )
 
-          for (const task of safeChangedTasks) {
+          for (const task of syncedChangedTasks) {
             nextSavedTasksById.set(
               task.id,
               task,
             )
           }
 
-          for (const taskId of safeDeletedTaskIds) {
+          for (const taskId of syncedDeletedTaskIds) {
             nextSavedTasksById.delete(
               taskId,
             )
