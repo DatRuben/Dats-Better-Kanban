@@ -905,6 +905,7 @@ export async function deleteTaskFromDrive(
 export async function loadTasksFromDrive(
   accessToken: string,
   tasksFolderId: string,
+  skipInvalidTasks = true,
 ): Promise<Task[]> {
   const url =
     new URL(GOOGLE_DRIVE_FILES_URL)
@@ -975,6 +976,12 @@ export async function loadTasksFromDrive(
       const taskContents = await taskResponse.text()
 
       if (!taskContents.trim()) {
+        if (!skipInvalidTasks) {
+          throw new Error(
+            `Google Drive task file "${file.name}" is empty.`,
+          )
+        }
+
         console.error(
           `Skipping empty Google Drive task file: ${file.name}`,
         )
@@ -985,6 +992,12 @@ export async function loadTasksFromDrive(
       try {
         return JSON.parse(taskContents) as Task
       } catch {
+        if (!skipInvalidTasks) {
+          throw new Error(
+            `Google Drive task file "${file.name}" contains invalid JSON.`,
+          )
+        }
+
         console.error(
           `Skipping invalid Google Drive task file: ${file.name}`,
         )

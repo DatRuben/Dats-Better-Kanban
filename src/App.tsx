@@ -1217,6 +1217,7 @@ function App() {
           await loadTasksFromDrive(
             accessToken,
             tasksFolderId,
+            false,
           )
 
         if (isCancelled) {
