@@ -171,8 +171,10 @@ function App() {
   const tasksRef =
     useRef<Task[]>(tasks)
 
-  const [, setTaskSyncConflicts] =
-    useState<TaskSyncConflict[]>([])
+  const [
+    taskSyncConflicts,
+    setTaskSyncConflicts,
+  ] = useState<TaskSyncConflict[]>([])
 
   const taskSyncConflictIdsRef =
     useRef<Set<string>>(new Set())
@@ -1792,9 +1794,15 @@ function App() {
 
           {!isDemoMode && (
             <span className="save-status">
-              {saveStatus === 'saving' && 'Saving…'}
-              {saveStatus === 'saved' && 'Saved'}
-              {saveStatus === 'error' && 'Save failed'}
+              {taskSyncConflicts.length > 0
+                ? `Sync conflict (${taskSyncConflicts.length})`
+                : saveStatus === 'saving'
+                  ? 'Saving…'
+                  : saveStatus === 'saved'
+                    ? 'Saved'
+                    : saveStatus === 'error'
+                      ? 'Save failed'
+                      : ''}
             </span>
           )}
 
