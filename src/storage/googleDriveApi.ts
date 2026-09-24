@@ -49,6 +49,12 @@ export interface LoadedDriveProject {
   attachmentsFolderId: string
 }
 
+export interface GoogleDriveUser {
+  displayName: string
+  emailAddress: string
+  permissionId: string
+}
+
 export async function verifyGoogleDriveAccess(
   accessToken: string,
 ): Promise<void> {
@@ -68,6 +74,41 @@ export async function verifyGoogleDriveAccess(
       `Google Drive request failed with status ${response.status}.`,
     )
   }
+}
+
+export async function getGoogleDriveUser(
+  accessToken: string,
+): Promise<GoogleDriveUser> {
+  const url =
+    new URL(
+      'https://www.googleapis.com/drive/v3/about',
+    )
+
+  url.searchParams.set(
+    'fields',
+    'user(displayName,emailAddress,permissionId)',
+  )
+
+  const response =
+    await fetch(url, {
+      headers: {
+        Authorization:
+          `Bearer ${accessToken}`,
+      },
+    })
+
+  if (!response.ok) {
+    throw new Error(
+      `Google Drive user request failed with status ${response.status}.`,
+    )
+  }
+
+  const data =
+    await response.json() as {
+      user: GoogleDriveUser
+    }
+
+  return data.user
 }
 
 function escapeDriveQueryValue(value: string) {
