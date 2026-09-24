@@ -1,9 +1,16 @@
 export type Priority = 'critical' | 'high' | 'medium' | 'low'
 
+export type ProjectAccessRole =
+  | 'owner'
+  | 'editor'
+  | 'viewer'
+
 export interface DemoUser {
   id: string
   displayName: string
   role: string
+  email?: string
+  accessRole?: ProjectAccessRole
 }
 
 export interface Attachment {
