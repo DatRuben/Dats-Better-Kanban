@@ -40,6 +40,7 @@ import {
   uploadAttachmentToDrive,
   verifyGoogleDriveAccess,
   deleteAttachmentFromDrive,
+  getGoogleDriveUser,
 } from './storage/googleDriveApi'
 
 const priorityOrder = {
@@ -1119,6 +1120,9 @@ function App() {
   ) {
     await verifyGoogleDriveAccess(accessToken)
 
+    const googleUser =
+      await getGoogleDriveUser(accessToken)
+
     const datsFolderId =
       await ensureDatsDriveFolder(accessToken)
 
@@ -1141,6 +1145,16 @@ function App() {
     if (!loadedDriveProject) {
       const blankProject =
         createBlankProject()
+
+      blankProject.members = [
+        {
+          id: googleUser.permissionId,
+          displayName: googleUser.displayName,
+          role: '',
+          email: googleUser.emailAddress,
+          accessRole: 'owner',
+        },
+      ]
 
       const location =
         await createProjectOnDrive(
@@ -1396,7 +1410,7 @@ function App() {
         }
 
         setSyncError(null)
-        
+
       } catch (error) {
         if (isCancelled) {
           return
