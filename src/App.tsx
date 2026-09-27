@@ -1172,6 +1172,25 @@ function App() {
     const activeProject =
       loadedDriveProject.project
 
+    const hasProjectOwner =
+      activeProject.members.some(
+        (member) =>
+          member.accessRole === 'owner',
+      )
+
+    if (!hasProjectOwner) {
+      activeProject.members = [
+        ...activeProject.members,
+        {
+          id: googleUser.permissionId,
+          displayName: googleUser.displayName,
+          role: '',
+          email: googleUser.emailAddress,
+          accessRole: 'owner',
+        },
+      ]
+    }
+
     lastSavedTasksRef.current =
       activeProject.tasks
 
