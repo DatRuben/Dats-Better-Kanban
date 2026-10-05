@@ -2,6 +2,7 @@ import type {
   BoardColumn,
   DemoUser,
   Project,
+  ProjectAccessRole,
   Task,
 } from '../types/board'
 
@@ -1280,6 +1281,62 @@ export async function downloadAttachmentFromDrive(
   }
 
   return await response.blob()
+}
+
+export async function shareProjectFolderWithUser(
+  accessToken: string,
+  projectFolderId: string,
+  emailAddress: string,
+  accessRole: Exclude<
+    ProjectAccessRole,
+    'owner'
+  >,
+): Promise<string> {
+  const driveRole =
+    accessRole === 'editor'
+      ? 'writer'
+      : 'reader'
+
+  const url =
+    new URL(
+      `${GOOGLE_DRIVE_FILES_URL}/${projectFolderId}/permissions`,
+    )
+
+  url.searchParams.set(
+    'fields',
+    'id',
+  )
+
+  const response =
+    await fetch(url, {
+      method: 'POST',
+
+      headers: {
+        Authorization:
+          `Bearer ${accessToken}`,
+        'Content-Type':
+          'application/json',
+      },
+
+      body: JSON.stringify({
+        type: 'user',
+        role: driveRole,
+        emailAddress,
+      }),
+    })
+
+  if (!response.ok) {
+    throw new Error(
+      `Google Drive project sharing failed with status ${response.status}.`,
+    )
+  }
+
+  const permission =
+    await response.json() as {
+      id: string
+    }
+
+  return permission.id
 }
 
 export async function deleteAttachmentFromDrive(
