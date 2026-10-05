@@ -42,6 +42,7 @@ import {
   deleteAttachmentFromDrive,
   getGoogleDriveUser,
 } from './storage/googleDriveApi'
+import type { GoogleDriveUser, } from './storage/googleDriveApi'
 
 const priorityOrder = {
   critical: 0,
@@ -144,6 +145,9 @@ function App() {
 
   const [googleAccessToken, setGoogleAccessToken] =
     useState<string | null>(null)
+
+  const [connectedGoogleUser, setGoogleUser] =
+    useState<GoogleDriveUser | null>(null)
 
   const [
     googleTokenExpiresAt,
@@ -1120,8 +1124,10 @@ function App() {
   ) {
     await verifyGoogleDriveAccess(accessToken)
 
-    const googleUser =
+    const connectedGoogleUser =
       await getGoogleDriveUser(accessToken)
+
+    setGoogleUser(connectedGoogleUser)
 
     const datsFolderId =
       await ensureDatsDriveFolder(accessToken)
@@ -1148,10 +1154,10 @@ function App() {
 
       blankProject.members = [
         {
-          id: googleUser.permissionId,
-          displayName: googleUser.displayName,
+          id: connectedGoogleUser.permissionId,
+          displayName: connectedGoogleUser.displayName,
           role: '',
-          email: googleUser.emailAddress,
+          email: connectedGoogleUser.emailAddress,
           accessRole: 'owner',
         },
       ]
@@ -1182,10 +1188,10 @@ function App() {
       activeProject.members = [
         ...activeProject.members,
         {
-          id: googleUser.permissionId,
-          displayName: googleUser.displayName,
+          id: connectedGoogleUser.permissionId,
+          displayName: connectedGoogleUser.displayName,
           role: '',
-          email: googleUser.emailAddress,
+          email: connectedGoogleUser.emailAddress,
           accessRole: 'owner',
         },
       ]
