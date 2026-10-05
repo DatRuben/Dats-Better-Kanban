@@ -881,6 +881,10 @@ function App() {
   }
 
   function handleAddColumn() {
+    if (!canCurrentUserEditProject) {
+      return
+    }
+
     setColumns((currentColumns) => {
       if (currentColumns.length >= 100) {
         return currentColumns
@@ -909,6 +913,10 @@ function App() {
     columnId: string,
     title: string,
   ) {
+    if (!canCurrentUserEditProject) {
+      return
+    }
+
     setColumns((currentColumns) =>
       currentColumns.map((column) =>
         column.id === columnId
@@ -925,6 +933,10 @@ function App() {
     columnId: string,
     usePriorityDeadlineOrdering: boolean,
   ) {
+    if (!canCurrentUserEditProject) {
+      return
+    }
+
     setColumns((currentColumns) =>
       currentColumns.map((column) =>
         column.id === columnId
@@ -941,6 +953,10 @@ function App() {
     columnId: string,
     countsAsCompleted: boolean,
   ) {
+    if (!canCurrentUserEditProject) {
+      return
+    }
+
     const column = columns.find(
       (column) => column.id === columnId,
     )
@@ -997,6 +1013,10 @@ function App() {
   }
 
   function handleDeleteColumn(columnId: string) {
+    if (!canCurrentUserEditProject) {
+      return
+    }
+
     const column = columns.find(
       (column) => column.id === columnId,
     )
@@ -1035,6 +1055,10 @@ function App() {
     initialIndex: number,
     targetIndex: number,
   ) {
+    if (!canCurrentUserEditProject) {
+      return
+    }
+
     if (initialIndex === targetIndex) {
       return
     }
