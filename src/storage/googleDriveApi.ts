@@ -172,6 +172,46 @@ async function findFolder(
   return data.files[0]?.id ?? null
 }
 
+export async function updateProjectFolderPermission(
+  accessToken: string,
+  projectFolderId: string,
+  permissionId: string,
+  accessRole: Exclude<
+    ProjectAccessRole,
+    'owner'
+  >,
+): Promise<void> {
+  const driveRole =
+    accessRole === 'editor'
+      ? 'writer'
+      : 'reader'
+
+  const response =
+    await fetch(
+      `${GOOGLE_DRIVE_FILES_URL}/${projectFolderId}/permissions/${permissionId}`,
+      {
+        method: 'PATCH',
+
+        headers: {
+          Authorization:
+            `Bearer ${accessToken}`,
+          'Content-Type':
+            'application/json',
+        },
+
+        body: JSON.stringify({
+          role: driveRole,
+        }),
+      },
+    )
+
+  if (!response.ok) {
+    throw new Error(
+      `Google Drive permission update failed with status ${response.status}.`,
+    )
+  }
+}
+
 async function getProjectFolderName(
   accessToken: string,
   projectsFolderId: string,
