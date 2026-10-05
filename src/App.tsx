@@ -2006,8 +2006,7 @@ function App() {
                       }
                       disabled={
                         updatingMemberId !== null ||
-                        removingMemberId !== null ||
-                        updatingMemberId !== null
+                        removingMemberId !== null
                       }
                       onChange={(event) => {
                         void handleUpdateMemberAccessRole(
@@ -2038,7 +2037,8 @@ function App() {
                     <button
                       type="button"
                       disabled={
-                        removingMemberId !== null
+                        removingMemberId !== null ||
+                        updatingMemberId !== null
                       }
                       onClick={() => {
                         void handleRemoveMember(
