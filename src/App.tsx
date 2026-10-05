@@ -228,6 +228,19 @@ function App() {
         member.accessRole === 'owner',
     )
 
+  const currentProjectMember =
+    googleUser
+      ? currentProject.members.find(
+        (member) =>
+          member.id === googleUser.permissionId,
+      )
+      : undefined
+
+  const canCurrentUserEditProject =
+    isDemoMode ||
+    currentProjectMember?.accessRole === 'owner' ||
+    currentProjectMember?.accessRole === 'editor'
+
   const [googleProjectsFolderId, setGoogleProjectsFolderId] =
     useState<string | null>(null)
 
