@@ -43,6 +43,7 @@ import {
   getGoogleDriveUser,
   shareProjectFolderWithUser,
   removeProjectFolderPermission,
+  updateProjectFolderPermission,
 } from './storage/googleDriveApi'
 import type { GoogleDriveUser, } from './storage/googleDriveApi'
 
@@ -150,6 +151,9 @@ function App() {
 
   const [googleUser, setGoogleUser] =
     useState<GoogleDriveUser | null>(null)
+
+  const [updatingMemberId, setUpdatingMemberId] =
+    useState<string | null>(null)
 
   const [
     googleTokenExpiresAt,
@@ -1988,10 +1992,40 @@ function App() {
                     {member.displayName}
                   </strong>
 
-                  <span>
-                    {' '}
-                    — {member.accessRole ?? 'member'}
-                  </span>
+                  {member.accessRole === 'owner' ? (
+                    <span>
+                      {' '}
+                      — owner
+                    </span>
+                  ) : (
+                    <select
+                      value={
+                        member.accessRole === 'editor'
+                          ? 'editor'
+                          : 'viewer'
+                      }
+                      disabled={
+                        updatingMemberId !== null ||
+                        removingMemberId !== null ||
+                        updatingMemberId !== null
+                      }
+                      onChange={(event) => {
+                        void handleUpdateMemberAccessRole(
+                          member.id,
+                          event.target.value as
+                          'editor' | 'viewer',
+                        )
+                      }}
+                    >
+                      <option value="editor">
+                        Editor
+                      </option>
+
+                      <option value="viewer">
+                        Viewer
+                      </option>
+                    </select>
+                  )}
 
                   {member.email && (
                     <span>
@@ -2587,6 +2621,99 @@ function App() {
       )
     } finally {
       setRemovingMemberId(null)
+    }
+  }
+
+  async function handleUpdateMemberAccessRole(
+    memberId: string,
+    nextAccessRole: 'editor' | 'viewer',
+  ) {
+    const member =
+      currentProject.members.find(
+        (member) => member.id === memberId,
+      )
+
+    if (
+      !member ||
+      member.accessRole === 'owner' ||
+      (
+        member.accessRole !== 'editor' &&
+        member.accessRole !== 'viewer'
+      ) ||
+      member.accessRole === nextAccessRole ||
+      !isCurrentUserProjectOwner ||
+      !googleAccessToken ||
+      !googleProjectFolderId ||
+      !googleProjectsFolderId
+    ) {
+      return
+    }
+
+    const previousAccessRole =
+      member.accessRole
+
+    setUpdatingMemberId(member.id)
+    setMemberInviteError(null)
+
+    let drivePermissionUpdated = false
+
+    try {
+      await updateProjectFolderPermission(
+        googleAccessToken,
+        googleProjectFolderId,
+        member.id,
+        nextAccessRole,
+      )
+
+      drivePermissionUpdated = true
+
+      const nextProject = {
+        ...project,
+
+        members:
+          project.members.map(
+            (projectMember) =>
+              projectMember.id === member.id
+                ? {
+                  ...projectMember,
+                  accessRole: nextAccessRole,
+                }
+                : projectMember,
+          ),
+      }
+
+      await saveProjectMetadataToDrive(
+        googleAccessToken,
+        googleProjectsFolderId,
+        googleProjectFolderId,
+        nextProject,
+      )
+
+      setProject(nextProject)
+    } catch (error) {
+      if (drivePermissionUpdated) {
+        try {
+          await updateProjectFolderPermission(
+            googleAccessToken,
+            googleProjectFolderId,
+            member.id,
+            previousAccessRole,
+          )
+        } catch (rollbackError) {
+          console.error(
+            'Failed to restore previous Drive permission:',
+            rollbackError,
+          )
+        }
+      }
+
+      setMemberInviteError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to update member access.',
+      )
+    } finally {
+      setUpdatingMemberId(null)
     }
   }
 }
