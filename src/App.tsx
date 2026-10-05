@@ -214,6 +214,14 @@ function App() {
     tasks,
   )
 
+  const isCurrentUserProjectOwner =
+    googleUser !== null &&
+    currentProject.members.some(
+      (member) =>
+        member.id === googleUser.permissionId &&
+        member.accessRole === 'owner',
+    )
+
   const [googleProjectsFolderId, setGoogleProjectsFolderId] =
     useState<string | null>(null)
 
