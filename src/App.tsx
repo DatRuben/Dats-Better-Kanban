@@ -266,6 +266,10 @@ function App() {
     )
 
   function beginSave(): boolean {
+    if (!canCurrentUserEditProject) {
+      return false
+    }
+
     const storedAccessToken =
       getStoredGoogleAccessToken()
 
