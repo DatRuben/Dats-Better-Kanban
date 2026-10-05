@@ -146,7 +146,7 @@ function App() {
   const [googleAccessToken, setGoogleAccessToken] =
     useState<string | null>(null)
 
-  const [connectedGoogleUser, setGoogleUser] =
+  const [googleUser, setGoogleUser] =
     useState<GoogleDriveUser | null>(null)
 
   const [
@@ -1666,6 +1666,7 @@ function App() {
     clearStoredGoogleAccessToken()
 
     setGoogleAccessToken(null)
+    setGoogleUser(null)
 
     setGoogleTokenExpiresAt(null)
     setGoogleTokenMinutesRemaining(0)
