@@ -1339,6 +1339,34 @@ export async function shareProjectFolderWithUser(
   return permission.id
 }
 
+export async function removeProjectFolderPermission(
+  accessToken: string,
+  projectFolderId: string,
+  permissionId: string,
+): Promise<void> {
+  const response =
+    await fetch(
+      `${GOOGLE_DRIVE_FILES_URL}/${projectFolderId}/permissions/${permissionId}`,
+      {
+        method: 'DELETE',
+
+        headers: {
+          Authorization:
+            `Bearer ${accessToken}`,
+        },
+      },
+    )
+
+  if (
+    !response.ok &&
+    response.status !== 404
+  ) {
+    throw new Error(
+      `Google Drive permission removal failed with status ${response.status}.`,
+    )
+  }
+}
+
 export async function deleteAttachmentFromDrive(
   accessToken: string,
   fileId: string,
