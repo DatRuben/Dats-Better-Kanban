@@ -775,6 +775,8 @@ function App() {
 
   const [isInvitingMember, setIsInvitingMember] = useState(false)
 
+  const [removingMemberId, setRemovingMemberId] = useState<string | null>(null)
+
   const [memberInviteError, setMemberInviteError] = useState<string | null>(null)
 
   const [isTaskEditing, setIsTaskEditing] = useState(false)
@@ -1982,20 +1984,22 @@ function App() {
             {currentProject.members.map(
               (member) => (
                 <div key={member.id}>
-                  <strong>
-                    {member.displayName}
-                  </strong>
-
-                  <span>
-                    {' '}
-                    — {member.accessRole ?? 'member'}
-                  </span>
-
-                  {member.email && (
-                    <span>
-                      {' '}
-                      — {member.email}
-                    </span>
+                  {member.accessRole !== 'owner' && (
+                    <button
+                      type="button"
+                      disabled={
+                        removingMemberId !== null
+                      }
+                      onClick={() => {
+                        void handleRemoveMember(
+                          member.id,
+                        )
+                      }}
+                    >
+                      {removingMemberId === member.id
+                        ? 'Removing...'
+                        : 'Remove'}
+                    </button>
                   )}
                 </div>
               ),
@@ -2481,6 +2485,92 @@ function App() {
       )
     } finally {
       setIsInvitingMember(false)
+    }
+  }
+
+  async function handleRemoveMember(
+    memberId: string,
+  ) {
+    const member =
+      currentProject.members.find(
+        (member) => member.id === memberId,
+      )
+
+    if (
+      !member ||
+      member.accessRole === 'owner' ||
+      !googleAccessToken ||
+      !googleProjectFolderId ||
+      !googleProjectsFolderId
+    ) {
+      return
+    }
+
+    const confirmed =
+      window.confirm(
+        `Remove ${member.displayName} from this project?`,
+      )
+
+    if (!confirmed) {
+      return
+    }
+
+    setRemovingMemberId(member.id)
+    setMemberInviteError(null)
+
+    const nextProject = {
+      ...project,
+
+      members:
+        project.members.filter(
+          (projectMember) =>
+            projectMember.id !== member.id,
+        ),
+    }
+
+    let metadataUpdated = false
+
+    try {
+      await saveProjectMetadataToDrive(
+        googleAccessToken,
+        googleProjectsFolderId,
+        googleProjectFolderId,
+        nextProject,
+      )
+
+      metadataUpdated = true
+
+      await removeProjectFolderPermission(
+        googleAccessToken,
+        googleProjectFolderId,
+        member.id,
+      )
+
+      setProject(nextProject)
+    } catch (error) {
+      if (metadataUpdated) {
+        try {
+          await saveProjectMetadataToDrive(
+            googleAccessToken,
+            googleProjectsFolderId,
+            googleProjectFolderId,
+            project,
+          )
+        } catch (rollbackError) {
+          console.error(
+            'Failed to restore project member metadata:',
+            rollbackError,
+          )
+        }
+      }
+
+      setMemberInviteError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to remove project member.',
+      )
+    } finally {
+      setRemovingMemberId(null)
     }
   }
 }
