@@ -45,7 +45,10 @@ import {
   removeProjectFolderPermission,
   updateProjectFolderPermission,
 } from './storage/googleDriveApi'
-import type { GoogleDriveUser, } from './storage/googleDriveApi'
+import type {
+  GoogleDriveUser,
+  LoadedDriveProject,
+} from './storage/googleDriveApi'
 
 const priorityOrder = {
   critical: 0,
@@ -1209,6 +1212,35 @@ function App() {
     setEditingTaskId(null)
   }
 
+  function activateDriveProject(
+    loadedDriveProject: LoadedDriveProject,
+  ) {
+    const activeProject =
+      loadedDriveProject.project
+
+    lastSavedTasksRef.current =
+      activeProject.tasks
+
+    setGoogleProjectFolderId(
+      loadedDriveProject.projectFolderId,
+    )
+
+    setGoogleTasksFolderId(
+      loadedDriveProject.tasksFolderId,
+    )
+
+    setGoogleAttachmentsFolderId(
+      loadedDriveProject.attachmentsFolderId,
+    )
+
+    setProject(activeProject)
+    setColumns(activeProject.columns)
+    setTasks(activeProject.tasks)
+
+    setActiveView('board')
+    setIsDemoMode(false)
+  }
+
   async function connectGoogleWithToken(
     accessToken: string,
   ) {
@@ -1287,27 +1319,9 @@ function App() {
       ]
     }
 
-    lastSavedTasksRef.current =
-      activeProject.tasks
-
-    setGoogleProjectFolderId(
-      loadedDriveProject.projectFolderId,
+    activateDriveProject(
+      loadedDriveProject,
     )
-
-    setGoogleTasksFolderId(
-      loadedDriveProject.tasksFolderId,
-    )
-
-    setGoogleAttachmentsFolderId(
-      loadedDriveProject.attachmentsFolderId,
-    )
-
-    setProject(activeProject)
-    setColumns(activeProject.columns)
-    setTasks(activeProject.tasks)
-
-    setActiveView('board')
-    setIsDemoMode(false)
 
     setGoogleAccessToken(accessToken)
   }
