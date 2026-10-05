@@ -41,6 +41,8 @@ import {
   verifyGoogleDriveAccess,
   deleteAttachmentFromDrive,
   getGoogleDriveUser,
+  shareProjectFolderWithUser,
+  removeProjectFolderPermission,
 } from './storage/googleDriveApi'
 import type { GoogleDriveUser, } from './storage/googleDriveApi'
 
@@ -766,6 +768,14 @@ function App() {
   const [isPipelineEditing, setIsPipelineEditing] = useState(false)
 
   const [isMemberPanelOpen, setIsMemberPanelOpen] = useState(false)
+
+  const [memberEmail, setMemberEmail] = useState('')
+
+  const [memberAccessRole, setMemberAccessRole] = useState<'editor' | 'viewer'>('editor')
+
+  const [isInvitingMember, setIsInvitingMember] = useState(false)
+
+  const [memberInviteError, setMemberInviteError] = useState<string | null>(null)
 
   const [isTaskEditing, setIsTaskEditing] = useState(false)
 
@@ -1916,6 +1926,59 @@ function App() {
           <section className="member-panel">
             <h2>Project Members</h2>
 
+            <div className="member-panel__invite">
+              <input
+                type="email"
+                value={memberEmail}
+                placeholder="member@example.com"
+                aria-label="Member email"
+                disabled={isInvitingMember}
+                onChange={(event) =>
+                  setMemberEmail(event.target.value)
+                }
+              />
+
+              <select
+                value={memberAccessRole}
+                disabled={isInvitingMember}
+                onChange={(event) =>
+                  setMemberAccessRole(
+                    event.target.value as
+                    'editor' | 'viewer',
+                  )
+                }
+              >
+                <option value="editor">
+                  Editor
+                </option>
+
+                <option value="viewer">
+                  Viewer
+                </option>
+              </select>
+
+              <button
+                type="button"
+                disabled={
+                  !memberEmail.trim() ||
+                  isInvitingMember
+                }
+                onClick={() => {
+                  void handleInviteMember()
+                }}
+              >
+                {isInvitingMember
+                  ? 'Adding...'
+                  : 'Add Member'}
+              </button>
+            </div>
+
+            {memberInviteError && (
+              <p className="save-error">
+                {memberInviteError}
+              </p>
+            )}
+
             {currentProject.members.map(
               (member) => (
                 <div key={member.id}>
@@ -2327,6 +2390,98 @@ function App() {
         JSON.stringify(matchingTask)
       )
     })
+  }
+
+  async function handleInviteMember() {
+    const emailAddress =
+      memberEmail.trim().toLowerCase()
+
+    if (
+      !emailAddress ||
+      !isCurrentUserProjectOwner ||
+      !googleAccessToken ||
+      !googleProjectFolderId ||
+      !googleProjectsFolderId
+    ) {
+      return
+    }
+
+    const alreadyMember =
+      currentProject.members.some(
+        (member) =>
+          member.email?.toLowerCase() ===
+          emailAddress,
+      )
+
+    if (alreadyMember) {
+      setMemberInviteError(
+        'That user is already a project member.',
+      )
+      return
+    }
+
+    setIsInvitingMember(true)
+    setMemberInviteError(null)
+
+    let permissionId: string | null = null
+
+    try {
+      permissionId =
+        await shareProjectFolderWithUser(
+          googleAccessToken,
+          googleProjectFolderId,
+          emailAddress,
+          memberAccessRole,
+        )
+
+      const nextProject = {
+        ...project,
+
+        members: [
+          ...project.members,
+          {
+            id: permissionId,
+            displayName: emailAddress,
+            role: '',
+            email: emailAddress,
+            accessRole: memberAccessRole,
+          },
+        ],
+      }
+
+      await saveProjectMetadataToDrive(
+        googleAccessToken,
+        googleProjectsFolderId,
+        googleProjectFolderId,
+        nextProject,
+      )
+
+      setProject(nextProject)
+      setMemberEmail('')
+    } catch (error) {
+      if (permissionId) {
+        try {
+          await removeProjectFolderPermission(
+            googleAccessToken,
+            googleProjectFolderId,
+            permissionId,
+          )
+        } catch (rollbackError) {
+          console.error(
+            'Failed to roll back project permission:',
+            rollbackError,
+          )
+        }
+      }
+
+      setMemberInviteError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to add project member.',
+      )
+    } finally {
+      setIsInvitingMember(false)
+    }
   }
 }
 
