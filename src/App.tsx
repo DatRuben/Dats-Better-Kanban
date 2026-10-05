@@ -1812,6 +1812,12 @@ function App() {
   async function handleUploadMedia(
     files: File[],
   ): Promise<Attachment[]> {
+    if (!canCurrentUserEditProject) {
+      throw new Error(
+        'You do not have permission to upload attachments to this project.',
+      )
+    }
+
     const uploadResults =
       await Promise.allSettled(
         files.map((file) =>
