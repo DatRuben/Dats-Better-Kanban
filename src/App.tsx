@@ -803,6 +803,17 @@ function App() {
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
 
 
+  useEffect(() => {
+    if (canCurrentUserEditProject) {
+      return
+    }
+
+    setIsPipelineEditing(false)
+    setIsTaskEditing(false)
+    setEditingTaskId(null)
+    setCreatingTaskColumnId(null)
+  }, [canCurrentUserEditProject])
+
   const timelineTasks = tasks
     .filter((task) => {
       const taskColumn = columns.find(
@@ -1855,6 +1866,7 @@ function App() {
             className="project-title-input"
             type="text"
             value={project.name}
+            readOnly={!canCurrentUserEditProject}
             onChange={(event) => {
               setProject((currentProject) => ({
                 ...currentProject,
@@ -2139,60 +2151,61 @@ function App() {
           </button>
         </nav>
 
-        {activeView === 'board' && (
-          <div className="board-toolbar__edit-controls">
-            <button
-              type="button"
-              className={`pipeline-controls__button ${isPipelineEditing
-                ? 'pipeline-controls__button--active'
-                : ''
-                }`}
-              onClick={() => {
-                setIsPipelineEditing(
-                  (currentValue) => !currentValue,
-                )
-                setIsTaskEditing(false)
-                setEditingTaskId(null)
-                setCreatingTaskColumnId(null)
-              }}
-            >
-              {isPipelineEditing
-                ? 'Exit Pipeline Edit Mode'
-                : 'Edit Pipeline'}
-            </button>
-
-            <button
-              type="button"
-              className={`pipeline-controls__button ${isTaskEditing
-                ? 'pipeline-controls__button--active'
-                : ''
-                }`}
-              onClick={() => {
-                setIsTaskEditing(
-                  (currentValue) => !currentValue,
-                )
-                setIsPipelineEditing(false)
-                setEditingTaskId(null)
-                setCreatingTaskColumnId(null)
-              }}
-            >
-              {isTaskEditing
-                ? 'Exit Task Edit Mode'
-                : 'Edit Tasks'}
-            </button>
-
-            {isPipelineEditing && (
+        {activeView === 'board' &&
+          canCurrentUserEditProject && (
+            <div className="board-toolbar__edit-controls">
               <button
                 type="button"
-                className="pipeline-controls__button pipeline-controls__button--secondary"
-                onClick={handleAddColumn}
-                disabled={columns.length >= 100}
+                className={`pipeline-controls__button ${isPipelineEditing
+                  ? 'pipeline-controls__button--active'
+                  : ''
+                  }`}
+                onClick={() => {
+                  setIsPipelineEditing(
+                    (currentValue) => !currentValue,
+                  )
+                  setIsTaskEditing(false)
+                  setEditingTaskId(null)
+                  setCreatingTaskColumnId(null)
+                }}
               >
-                + Add Section
+                {isPipelineEditing
+                  ? 'Exit Pipeline Edit Mode'
+                  : 'Edit Pipeline'}
               </button>
-            )}
-          </div>
-        )}
+
+              <button
+                type="button"
+                className={`pipeline-controls__button ${isTaskEditing
+                  ? 'pipeline-controls__button--active'
+                  : ''
+                  }`}
+                onClick={() => {
+                  setIsTaskEditing(
+                    (currentValue) => !currentValue,
+                  )
+                  setIsPipelineEditing(false)
+                  setEditingTaskId(null)
+                  setCreatingTaskColumnId(null)
+                }}
+              >
+                {isTaskEditing
+                  ? 'Exit Task Edit Mode'
+                  : 'Edit Tasks'}
+              </button>
+
+              {isPipelineEditing && (
+                <button
+                  type="button"
+                  className="pipeline-controls__button pipeline-controls__button--secondary"
+                  onClick={handleAddColumn}
+                  disabled={columns.length >= 100}
+                >
+                  + Add Section
+                </button>
+              )}
+            </div>
+          )}
       </div>
 
       {activeView === 'board' && (
