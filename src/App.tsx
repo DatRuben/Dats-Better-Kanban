@@ -1984,6 +1984,22 @@ function App() {
             {currentProject.members.map(
               (member) => (
                 <div key={member.id}>
+                  <strong>
+                    {member.displayName}
+                  </strong>
+
+                  <span>
+                    {' '}
+                    — {member.accessRole ?? 'member'}
+                  </span>
+
+                  {member.email && (
+                    <span>
+                      {' '}
+                      — {member.email}
+                    </span>
+                  )}
+
                   {member.accessRole !== 'owner' && (
                     <button
                       type="button"
