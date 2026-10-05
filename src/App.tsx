@@ -1095,6 +1095,10 @@ function App() {
     columnId: string,
     taskInput: NewTaskInput,
   ) {
+    if (!canCurrentUserEditProject) {
+      return
+    }
+
     const column = columns.find(
       (column) => column.id === columnId,
     )
@@ -1134,6 +1138,10 @@ function App() {
     taskId: string,
     taskInput: NewTaskInput,
   ) {
+    if (!canCurrentUserEditProject) {
+      return
+    }
+
     const updatedAt = new Date().toISOString()
     setTasks((currentTasks) =>
       currentTasks.map((task) =>
@@ -1172,6 +1180,10 @@ function App() {
   }
 
   function handleDeleteTask(taskId: string) {
+    if (!canCurrentUserEditProject) {
+      return
+    }
+
     const task = tasks.find(
       (task) => task.id === taskId,
     )
@@ -2423,6 +2435,10 @@ function App() {
   )
 
   function handleMoveTask(taskId: string, targetColumnId: string) {
+    if (!canCurrentUserEditProject) {
+      return
+    }
+
     const task = tasks.find((task) => task.id === taskId)
     const targetColumn = columns.find(
       (column) => column.id === targetColumnId,
