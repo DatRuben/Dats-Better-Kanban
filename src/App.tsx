@@ -765,6 +765,8 @@ function App() {
   )
   const [isPipelineEditing, setIsPipelineEditing] = useState(false)
 
+  const [isMemberPanelOpen, setIsMemberPanelOpen] = useState(false)
+
   const [isTaskEditing, setIsTaskEditing] = useState(false)
 
   const [creatingTaskColumnId, setCreatingTaskColumnId] = useState<string | null>(null)
@@ -1840,6 +1842,24 @@ function App() {
         </div>
 
         <div className="app-header__actions">
+          {isCurrentUserProjectOwner &&
+            !isDemoMode &&
+            googleAccessToken && (
+              <button
+                type="button"
+                className="google-connect-button"
+                onClick={() =>
+                  setIsMemberPanelOpen(
+                    (currentValue) => !currentValue,
+                  )
+                }
+              >
+                {isMemberPanelOpen
+                  ? 'Close Members'
+                  : `Members (${currentProject.members.length})`}
+              </button>
+            )}
+
           <a
             className="privacy-policy-button"
             href="/privacy.html"
@@ -1890,6 +1910,35 @@ function App() {
           )}
         </div>
       </header>
+
+      {isMemberPanelOpen &&
+        isCurrentUserProjectOwner && (
+          <section className="member-panel">
+            <h2>Project Members</h2>
+
+            {currentProject.members.map(
+              (member) => (
+                <div key={member.id}>
+                  <strong>
+                    {member.displayName}
+                  </strong>
+
+                  <span>
+                    {' '}
+                    — {member.accessRole ?? 'member'}
+                  </span>
+
+                  {member.email && (
+                    <span>
+                      {' '}
+                      — {member.email}
+                    </span>
+                  )}
+                </div>
+              ),
+            )}
+          </section>
+        )}
 
       {!isDemoMode &&
         googleAccessToken &&
