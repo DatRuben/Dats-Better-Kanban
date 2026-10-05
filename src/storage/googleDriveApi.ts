@@ -426,6 +426,99 @@ export async function createProjectOnDrive(
   }
 }
 
+export async function loadProjectFromDriveFolder(
+  accessToken: string,
+  projectFolderId: string,
+  createMissingFolders = false,
+): Promise<LoadedDriveProject | null> {
+  const storedProject =
+    await readJsonFile<StoredProjectMetadata>(
+      accessToken,
+      projectFolderId,
+      PROJECT_FILE_NAME,
+    )
+
+  if (!storedProject) {
+    return null
+  }
+
+  const columns =
+    await readJsonFile<BoardColumn[]>(
+      accessToken,
+      projectFolderId,
+      COLUMNS_FILE_NAME,
+    )
+
+  if (!columns) {
+    throw new Error(
+      'Google Drive columns file could not be found.',
+    )
+  }
+
+  let tasksFolderId =
+    await findFolder(
+      accessToken,
+      TASKS_FOLDER_NAME,
+      projectFolderId,
+    )
+
+  if (!tasksFolderId) {
+    if (!createMissingFolders) {
+      throw new Error(
+        'Google Drive tasks folder could not be found.',
+      )
+    }
+
+    tasksFolderId =
+      await createFolder(
+        accessToken,
+        TASKS_FOLDER_NAME,
+        projectFolderId,
+      )
+  }
+
+  let attachmentsFolderId =
+    await findFolder(
+      accessToken,
+      ATTACHMENTS_FOLDER_NAME,
+      projectFolderId,
+    )
+
+  if (!attachmentsFolderId) {
+    if (!createMissingFolders) {
+      throw new Error(
+        'Google Drive attachments folder could not be found.',
+      )
+    }
+
+    attachmentsFolderId =
+      await createFolder(
+        accessToken,
+        ATTACHMENTS_FOLDER_NAME,
+        projectFolderId,
+      )
+  }
+
+  const tasks =
+    await loadTasksFromDrive(
+      accessToken,
+      tasksFolderId,
+    )
+
+  const project: Project = {
+    ...storedProject,
+    columns,
+    tasks,
+  }
+
+  return {
+    project,
+    projectFolderId,
+    tasksFolderId,
+    attachmentsFolderId,
+  }
+}
+
 export async function loadFirstProjectFromDrive(
   accessToken: string,
   projectsFolderId: string,
@@ -473,79 +566,15 @@ export async function loadFirstProjectFromDrive(
     }
 
   for (const folder of foldersData.files) {
-    const storedProject =
-      await readJsonFile<StoredProjectMetadata>(
+    const loadedProject =
+      await loadProjectFromDriveFolder(
         accessToken,
         folder.id,
-        PROJECT_FILE_NAME,
+        true,
       )
 
-    if (!storedProject) {
-      continue
-    }
-
-    const columns =
-      await readJsonFile<BoardColumn[]>(
-        accessToken,
-        folder.id,
-        COLUMNS_FILE_NAME,
-      )
-
-    if (!columns) {
-      throw new Error(
-        'Google Drive columns file could not be found.',
-      )
-    }
-
-    let tasksFolderId =
-      await findFolder(
-        accessToken,
-        TASKS_FOLDER_NAME,
-        folder.id,
-      )
-
-    if (!tasksFolderId) {
-      tasksFolderId =
-        await createFolder(
-          accessToken,
-          TASKS_FOLDER_NAME,
-          folder.id,
-        )
-    }
-
-    let attachmentsFolderId =
-      await findFolder(
-        accessToken,
-        ATTACHMENTS_FOLDER_NAME,
-        folder.id,
-      )
-
-    if (!attachmentsFolderId) {
-      attachmentsFolderId =
-        await createFolder(
-          accessToken,
-          ATTACHMENTS_FOLDER_NAME,
-          folder.id,
-        )
-    }
-
-    const tasks =
-      await loadTasksFromDrive(
-        accessToken,
-        tasksFolderId,
-      )
-
-    const project: Project = {
-      ...storedProject,
-      columns,
-      tasks,
-    }
-
-    return {
-      project,
-      projectFolderId: folder.id,
-      tasksFolderId,
-      attachmentsFolderId,
+    if (loadedProject) {
+      return loadedProject
     }
   }
 
