@@ -34,6 +34,7 @@ import {
   loadFirstProjectFromDrive,
   loadTaskFromDrive,
   loadTasksFromDrive,
+  rememberProjectFolder,
   saveColumnsToDrive,
   saveProjectMetadataToDrive,
   saveTaskToDrive,
@@ -1318,6 +1319,12 @@ function App() {
         },
       ]
     }
+
+    await rememberProjectFolder(
+      accessToken,
+      projectsFolderId,
+      loadedDriveProject.projectFolderId,
+    )
 
     activateDriveProject(
       loadedDriveProject,
