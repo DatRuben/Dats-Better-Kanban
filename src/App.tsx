@@ -52,6 +52,10 @@ import type {
   GoogleDriveUser,
   LoadedDriveProject,
 } from './storage/googleDriveApi'
+import {
+  pickGoogleDriveFolder,
+} from './storage/googleDrivePicker'
+
 
 const priorityOrder = {
   critical: 0,
@@ -198,6 +202,16 @@ function App() {
 
   const [isGoogleConnecting, setIsGoogleConnecting] =
     useState(false)
+
+  const [
+    isOpeningSharedProject,
+    setIsOpeningSharedProject,
+  ] = useState(false)
+
+  const [
+    sharedProjectError,
+    setSharedProjectError,
+  ] = useState<string | null>(null)
 
   const [googleAuthError, setGoogleAuthError] =
     useState<string | null>(null)
@@ -1297,6 +1311,55 @@ function App() {
     )
   }
 
+  async function handleOpenSharedProject() {
+    if (!googleAccessToken) {
+      setSharedProjectError(
+        'Google Drive is not connected.',
+      )
+
+      return
+    }
+
+    if (pendingSavesRef.current > 0) {
+      setSharedProjectError(
+        'Wait for the current project to finish saving before switching projects.',
+      )
+
+      return
+    }
+
+    setIsOpeningSharedProject(true)
+    setSharedProjectError(null)
+
+    try {
+      const projectFolderId =
+        await pickGoogleDriveFolder(
+          googleAccessToken,
+        )
+
+      if (!projectFolderId) {
+        return
+      }
+
+      await openSharedDriveProject(
+        projectFolderId,
+      )
+    } catch (error) {
+      if (isGoogleUnauthorizedError(error)) {
+        expireGoogleSession()
+        return
+      }
+
+      setSharedProjectError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to open the selected project.',
+      )
+    } finally {
+      setIsOpeningSharedProject(false)
+    }
+  }
+
   async function connectGoogleWithToken(
     accessToken: string,
   ) {
@@ -2041,6 +2104,25 @@ function App() {
               </button>
             )}
 
+          {!isDemoMode &&
+            googleAccessToken && (
+              <button
+                type="button"
+                className="google-connect-button"
+                disabled={
+                  isOpeningSharedProject ||
+                  saveStatus === 'saving'
+                }
+                onClick={() => {
+                  void handleOpenSharedProject()
+                }}
+              >
+                {isOpeningSharedProject
+                  ? 'Opening...'
+                  : 'Open Shared Project'}
+              </button>
+            )}
+
           <a
             className="privacy-policy-button"
             href="/privacy.html"
@@ -2249,9 +2331,9 @@ function App() {
           </div>
         )}
 
-      {googleAuthError && (
+      {sharedProjectError && (
         <p className="google-auth-error">
-          {googleAuthError}
+          {sharedProjectError}
         </p>
       )}
 
