@@ -56,6 +56,10 @@ export interface GoogleDriveUser {
   permissionId: string
 }
 
+export interface DriveProjectReference {
+  projectFolderId: string
+}
+
 export async function verifyGoogleDriveAccess(
   accessToken: string,
 ): Promise<void> {
@@ -1461,4 +1465,53 @@ export async function deleteAttachmentFromDrive(
       `Google Drive attachment deletion failed with status ${response.status}.`,
     )
   }
+}
+
+export async function loadProjectIndexFromDrive(
+  accessToken: string,
+  projectsFolderId: string,
+): Promise<DriveProjectReference[]> {
+  const projectIndex =
+    await readJsonFile<DriveProjectReference[]>(
+      accessToken,
+      projectsFolderId,
+      PROJECT_INDEX_FILE_NAME,
+    )
+
+  return projectIndex ?? []
+}
+
+export async function rememberProjectFolder(
+  accessToken: string,
+  projectsFolderId: string,
+  projectFolderId: string,
+): Promise<void> {
+  const projectIndex =
+    await loadProjectIndexFromDrive(
+      accessToken,
+      projectsFolderId,
+    )
+
+  const alreadyRemembered =
+    projectIndex.some(
+      (reference) =>
+        reference.projectFolderId ===
+        projectFolderId,
+    )
+
+  if (alreadyRemembered) {
+    return
+  }
+
+  await writeJsonFile(
+    accessToken,
+    projectsFolderId,
+    PROJECT_INDEX_FILE_NAME,
+    [
+      ...projectIndex,
+      {
+        projectFolderId,
+      },
+    ],
+  )
 }
