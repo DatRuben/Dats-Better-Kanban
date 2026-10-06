@@ -32,6 +32,7 @@ import {
   ensureDatsDriveFolder,
   ensureProjectsDriveFolder,
   loadFirstProjectFromDrive,
+  loadFirstRememberedProjectFromDrive,
   loadTaskFromDrive,
   loadTasksFromDrive,
   rememberProjectFolder,
@@ -1265,11 +1266,24 @@ function App() {
       projectsFolderId,
     )
 
+    let loadedFromOwnedProjectSearch = false
+
     let loadedDriveProject =
-      await loadFirstProjectFromDrive(
+      await loadFirstRememberedProjectFromDrive(
         accessToken,
         projectsFolderId,
       )
+
+    if (!loadedDriveProject) {
+      loadedDriveProject =
+        await loadFirstProjectFromDrive(
+          accessToken,
+          projectsFolderId,
+        )
+
+      loadedFromOwnedProjectSearch =
+        loadedDriveProject !== null
+    }
 
     if (!loadedDriveProject) {
       const blankProject =
@@ -1298,6 +1312,8 @@ function App() {
       }
     }
 
+    loadedFromOwnedProjectSearch = true
+
     const activeProject =
       loadedDriveProject.project
 
@@ -1307,7 +1323,10 @@ function App() {
           member.accessRole === 'owner',
       )
 
-    if (!hasProjectOwner) {
+    if (
+      loadedFromOwnedProjectSearch &&
+      !hasProjectOwner
+    ) {
       activeProject.members = [
         ...activeProject.members,
         {
