@@ -1310,9 +1310,9 @@ function App() {
         project: blankProject,
         ...location,
       }
-    }
 
-    loadedFromOwnedProjectSearch = true
+      loadedFromOwnedProjectSearch = true
+    }
 
     const activeProject =
       loadedDriveProject.project
