@@ -247,6 +247,10 @@ function App() {
     currentProjectMember?.accessRole === 'owner' ||
     currentProjectMember?.accessRole === 'editor'
 
+  const canCurrentUserEditProjectSettings =
+    isDemoMode ||
+    isCurrentUserProjectOwner
+
   const [googleProjectsFolderId, setGoogleProjectsFolderId] =
     useState<string | null>(null)
 
@@ -331,7 +335,7 @@ function App() {
 
   useEffect(() => {
     if (
-      isDemoMode ||
+      !canCurrentUserEditProjectSettings ||
       !googleAccessToken ||
       !googleProjectsFolderId ||
       !googleProjectFolderId
@@ -364,7 +368,7 @@ function App() {
     }
   }, [
     project,
-    isDemoMode,
+    canCurrentUserEditProjectSettings,
     googleAccessToken,
     googleProjectsFolderId,
     googleProjectFolderId,
@@ -2002,7 +2006,7 @@ function App() {
             className="project-title-input"
             type="text"
             value={project.name}
-            readOnly={!canCurrentUserEditProject}
+            readOnly={!canCurrentUserEditProjectSettings}
             onChange={(event) => {
               setProject((currentProject) => ({
                 ...currentProject,
