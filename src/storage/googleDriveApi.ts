@@ -21,6 +21,9 @@ const PROJECTS_FOLDER_NAME =
 const PROJECT_FILE_NAME =
   'project.json'
 
+const PROJECT_INDEX_FILE_NAME =
+  'project-index.json'  
+
 const TASKS_FOLDER_NAME =
   'tasks'
 
