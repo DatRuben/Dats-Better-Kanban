@@ -35,6 +35,7 @@ import {
   loadFirstRememberedProjectFromDrive,
   loadTaskFromDrive,
   loadTasksFromDrive,
+  loadProjectFromDriveFolder,
   rememberProjectFolder,
   saveColumnsToDrive,
   saveProjectMetadataToDrive,
@@ -1241,6 +1242,55 @@ function App() {
 
     setActiveView('board')
     setIsDemoMode(false)
+  }
+
+  async function openSharedDriveProject(
+    projectFolderId: string,
+  ) {
+    if (
+      !googleAccessToken ||
+      !googleProjectsFolderId ||
+      !googleUser
+    ) {
+      throw new Error(
+        'Google Drive is not connected.',
+      )
+    }
+
+    const loadedDriveProject =
+      await loadProjectFromDriveFolder(
+        googleAccessToken,
+        projectFolderId,
+        false,
+      )
+
+    if (!loadedDriveProject) {
+      throw new Error(
+        'The selected folder is not a Dat’s project.',
+      )
+    }
+
+    const currentMember =
+      loadedDriveProject.project.members.find(
+        (member) =>
+          member.id === googleUser.permissionId,
+      )
+
+    if (!currentMember) {
+      throw new Error(
+        'Your Google account is not a member of this project.',
+      )
+    }
+
+    await rememberProjectFolder(
+      googleAccessToken,
+      googleProjectsFolderId,
+      loadedDriveProject.projectFolderId,
+    )
+
+    activateDriveProject(
+      loadedDriveProject,
+    )
   }
 
   async function connectGoogleWithToken(
