@@ -1894,6 +1894,13 @@ function App() {
               {googleAuthError}
             </p>
           )}
+
+          {sharedProjectError && (
+            <p className="google-auth-error">
+              {sharedProjectError}
+            </p>
+          )}
+          
         </section>
       </main>
     )
