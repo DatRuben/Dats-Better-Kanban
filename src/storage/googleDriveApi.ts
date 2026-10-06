@@ -22,7 +22,7 @@ const PROJECT_FILE_NAME =
   'project.json'
 
 const PROJECT_INDEX_FILE_NAME =
-  'project-index.json'  
+  'project-index.json'
 
 const TASKS_FOLDER_NAME =
   'tasks'
@@ -1517,4 +1517,30 @@ export async function rememberProjectFolder(
       },
     ],
   )
+}
+
+export async function loadFirstRememberedProjectFromDrive(
+  accessToken: string,
+  projectsFolderId: string,
+): Promise<LoadedDriveProject | null> {
+  const projectIndex =
+    await loadProjectIndexFromDrive(
+      accessToken,
+      projectsFolderId,
+    )
+
+  for (const reference of projectIndex) {
+    const loadedProject =
+      await loadProjectFromDriveFolder(
+        accessToken,
+        reference.projectFolderId,
+        false,
+      )
+
+    if (loadedProject) {
+      return loadedProject
+    }
+  }
+
+  return null
 }
