@@ -1900,7 +1900,7 @@ function App() {
               {sharedProjectError}
             </p>
           )}
-          
+
         </section>
       </main>
     )
@@ -2337,6 +2337,12 @@ function App() {
             </button>
           </div>
         )}
+
+      {googleAuthError && (
+        <p className="google-auth-error">
+          {googleAuthError}
+        </p>
+      )}
 
       {sharedProjectError && (
         <p className="google-auth-error">
