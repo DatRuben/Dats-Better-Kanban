@@ -1721,6 +1721,263 @@ function App() {
     updatingMemberId,
   ])
 
+  useEffect(() => {
+    if (
+      isDemoMode ||
+      !googleAccessToken ||
+      !googleTasksFolderId
+    ) {
+      return
+    }
+
+    const accessToken =
+      googleAccessToken
+
+    const tasksFolderId =
+      googleTasksFolderId
+
+    let isChecking = false
+    let isCancelled = false
+
+    async function syncRemoteTasks() {
+      if (
+        isChecking ||
+        hasPendingProjectSaves()
+      ) {
+        return
+      }
+
+      isChecking = true
+
+      try {
+        const remoteTasks =
+          await loadTasksFromDrive(
+            accessToken,
+            tasksFolderId,
+            false,
+          )
+
+        if (isCancelled) {
+          return
+        }
+
+        const localTasks =
+          tasksRef.current
+
+        const lastSyncedTasks =
+          lastSavedTasksRef.current
+
+        const baseById =
+          new Map(
+            lastSyncedTasks.map(
+              (task) => [task.id, task],
+            ),
+          )
+
+        const localById =
+          new Map(
+            localTasks.map(
+              (task) => [task.id, task],
+            ),
+          )
+
+        const remoteById =
+          new Map(
+            remoteTasks.map(
+              (task) => [task.id, task],
+            ),
+          )
+
+        const allTaskIds =
+          new Set([
+            ...baseById.keys(),
+            ...localById.keys(),
+            ...remoteById.keys(),
+          ])
+
+        const mergedTasks: Task[] = []
+        const nextSyncedTasks: Task[] = []
+        const conflicts: TaskSyncConflict[] = []
+
+        for (const taskId of allTaskIds) {
+          const baseTask =
+            baseById.get(taskId)
+
+          const localTask =
+            localById.get(taskId)
+
+          const remoteTask =
+            remoteById.get(taskId)
+
+          const localChanged =
+            !taskVersionsMatch(
+              localTask,
+              baseTask,
+            )
+
+          const remoteChanged =
+            !taskVersionsMatch(
+              remoteTask,
+              baseTask,
+            )
+
+          const localAndRemoteMatch =
+            taskVersionsMatch(
+              localTask,
+              remoteTask,
+            )
+
+          if (
+            localChanged &&
+            remoteChanged &&
+            !localAndRemoteMatch
+          ) {
+            conflicts.push({
+              taskId,
+              localTask:
+                localTask ?? null,
+              remoteTask:
+                remoteTask ?? null,
+            })
+
+            if (localTask) {
+              mergedTasks.push(localTask)
+            }
+
+            if (baseTask) {
+              nextSyncedTasks.push(baseTask)
+            }
+
+            continue
+          }
+
+          if (
+            remoteChanged &&
+            !localChanged
+          ) {
+            if (remoteTask) {
+              mergedTasks.push(remoteTask)
+              nextSyncedTasks.push(remoteTask)
+            }
+
+            continue
+          }
+
+          if (
+            localChanged &&
+            !remoteChanged
+          ) {
+            if (localTask) {
+              mergedTasks.push(localTask)
+            }
+
+            if (baseTask) {
+              nextSyncedTasks.push(baseTask)
+            }
+
+            continue
+          }
+
+          if (
+            localChanged &&
+            remoteChanged &&
+            localAndRemoteMatch
+          ) {
+            if (localTask) {
+              mergedTasks.push(localTask)
+              nextSyncedTasks.push(localTask)
+            }
+
+            continue
+          }
+
+          if (localTask) {
+            mergedTasks.push(localTask)
+          }
+
+          if (baseTask) {
+            nextSyncedTasks.push(baseTask)
+          }
+        }
+
+        if (
+          !taskListsMatch(
+            tasksRef.current,
+            localTasks,
+          ) ||
+          !taskListsMatch(
+            lastSavedTasksRef.current,
+            lastSyncedTasks,
+          )
+        ) {
+          return
+        }
+
+        taskSyncConflictIdsRef.current =
+          new Set(
+            conflicts.map(
+              (conflict) =>
+                conflict.taskId,
+            ),
+          )
+
+        setTaskSyncConflicts(conflicts)
+
+        lastSavedTasksRef.current =
+          nextSyncedTasks
+
+        if (
+          !taskListsMatch(
+            mergedTasks,
+            localTasks,
+          )
+        ) {
+          tasksRef.current =
+            mergedTasks
+
+          setTasks(mergedTasks)
+        }
+
+        setSyncError(null)
+      } catch (error) {
+        if (isCancelled) {
+          return
+        }
+
+        if (
+          isGoogleUnauthorizedError(error)
+        ) {
+          expireGoogleSession()
+          return
+        }
+
+        setSyncError(
+          error instanceof Error
+            ? error.message
+            : 'Google Drive sync failed.',
+        )
+      } finally {
+        isChecking = false
+      }
+    }
+
+    void syncRemoteTasks()
+
+    const interval =
+      window.setInterval(() => {
+        void syncRemoteTasks()
+      }, 3000)
+
+    return () => {
+      isCancelled = true
+      window.clearInterval(interval)
+    }
+  }, [
+    isDemoMode,
+    googleAccessToken,
+    googleTasksFolderId,
+  ])
+
   async function handleConnectGoogle(
     forceNewToken = false,
   ) {
