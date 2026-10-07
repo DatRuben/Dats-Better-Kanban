@@ -478,8 +478,13 @@ function App() {
       return
     }
 
+    const releaseScheduledSave =
+      registerScheduledSave()
+
     const timeout =
       window.setTimeout(() => {
+        releaseScheduledSave()
+
         if (!beginSave()) {
           return
         }
@@ -499,6 +504,7 @@ function App() {
 
     return () => {
       window.clearTimeout(timeout)
+      releaseScheduledSave()
     }
   }, [
     columns,
