@@ -125,6 +125,18 @@ function escapeDriveQueryValue(value: string) {
     .replaceAll("'", "\\'")
 }
 
+function isUnavailableProjectReferenceError(
+  error: unknown,
+) {
+  return (
+    error instanceof Error &&
+    (
+      error.message.includes('status 403') ||
+      error.message.includes('status 404')
+    )
+  )
+}
+
 async function findFolder(
   accessToken: string,
   folderName: string,
@@ -1529,17 +1541,70 @@ export async function loadFirstRememberedProjectFromDrive(
       projectsFolderId,
     )
 
-  for (const reference of projectIndex) {
-    const loadedProject =
-      await loadProjectFromDriveFolder(
-        accessToken,
-        reference.projectFolderId,
-        false,
-      )
+  let cleanedProjectIndex =
+    [...projectIndex]
 
-    if (loadedProject) {
+  let projectIndexChanged = false
+
+  for (const reference of projectIndex) {
+    try {
+      const loadedProject =
+        await loadProjectFromDriveFolder(
+          accessToken,
+          reference.projectFolderId,
+          false,
+        )
+
+      if (!loadedProject) {
+        cleanedProjectIndex =
+          cleanedProjectIndex.filter(
+            (savedReference) =>
+              savedReference.projectFolderId !==
+              reference.projectFolderId,
+          )
+
+        projectIndexChanged = true
+
+        continue
+      }
+
+      if (projectIndexChanged) {
+        await writeJsonFile(
+          accessToken,
+          projectsFolderId,
+          PROJECT_INDEX_FILE_NAME,
+          cleanedProjectIndex,
+        )
+      }
+
       return loadedProject
+    } catch (error) {
+      if (
+        !isUnavailableProjectReferenceError(
+          error,
+        )
+      ) {
+        throw error
+      }
+
+      cleanedProjectIndex =
+        cleanedProjectIndex.filter(
+          (savedReference) =>
+            savedReference.projectFolderId !==
+            reference.projectFolderId,
+        )
+
+      projectIndexChanged = true
     }
+  }
+
+  if (projectIndexChanged) {
+    await writeJsonFile(
+      accessToken,
+      projectsFolderId,
+      PROJECT_INDEX_FILE_NAME,
+      cleanedProjectIndex,
+    )
   }
 
   return null
