@@ -29,6 +29,7 @@ export interface Task {
   priority: Priority
   assigneeId: string | null
   deadline: string | null
+  tags?: string[]
   attachments: Attachment[]
   createdAt: string
   updatedAt: string
@@ -42,6 +43,7 @@ export interface NewTaskInput {
   priority: Priority
   assigneeId: string | null
   deadline: string | null
+  tags: string[]
   attachments: Attachment[]
 }
 

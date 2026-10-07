@@ -199,6 +199,19 @@ export function TaskCard({
         {task.description}
       </p>
 
+      {(task.tags?.length ?? 0) > 0 && (
+        <div className="task-card__tags">
+          {task.tags?.map((tag) => (
+            <span
+              key={tag}
+              className="task-card__tag"
+            >
+              #{tag}
+            </span>
+          ))}
+        </div>
+      )}
+
       <div className="task-card__footer">
         <div
           className="task-card__assignee"

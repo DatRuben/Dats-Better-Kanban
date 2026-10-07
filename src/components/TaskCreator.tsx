@@ -58,6 +58,13 @@ export function TaskCreator({
         initialTask?.deadline ?? '',
     )
 
+    const [tags, setTags] = useState<string[]>(
+        initialTask?.tags ?? [],
+    )
+
+    const [tagInput, setTagInput] =
+        useState('')
+
     const [imageFiles, setImageFiles] =
         useState<File[]>([])
 
@@ -77,6 +84,40 @@ export function TaskCreator({
                     attachment.mimeType,
                 ),
         ) ?? []
+
+    function handleAddTag() {
+        const normalizedTag =
+            tagInput
+                .trim()
+                .replace(/^#+/, '')
+                .trim()
+
+        if (
+            !normalizedTag ||
+            tags.length >= 3
+        ) {
+            return
+        }
+
+        const alreadyExists =
+            tags.some(
+                (tag) =>
+                    tag.toLowerCase() ===
+                    normalizedTag.toLowerCase(),
+            )
+
+        if (alreadyExists) {
+            setTagInput('')
+            return
+        }
+
+        setTags((currentTags) => [
+            ...currentTags,
+            normalizedTag,
+        ])
+
+        setTagInput('')
+    }
 
     async function handleSubmit(
         event: SubmitEvent<HTMLFormElement>,
@@ -124,6 +165,7 @@ export function TaskCreator({
                 priority,
                 assigneeId: assigneeId || null,
                 deadline: deadline || null,
+                tags,
                 attachments,
             })
         } catch (error) {
@@ -235,6 +277,60 @@ export function TaskCreator({
                     ))}
                 </select>
             </label>
+
+            <div className="task-creator__field">
+                <span>Tags</span>
+
+                <div className="task-creator__tag-input">
+                    <input
+                        type="text"
+                        value={tagInput}
+                        placeholder="Add tag"
+                        disabled={tags.length >= 3}
+                        onChange={(event) =>
+                            setTagInput(event.target.value)
+                        }
+                    />
+
+                    <button
+                        type="button"
+                        disabled={
+                            !tagInput.trim() ||
+                            tags.length >= 3
+                        }
+                        onClick={handleAddTag}
+                    >
+                        Add
+                    </button>
+                </div>
+
+                {tags.length > 0 && (
+                    <div className="task-creator__tags">
+                        {tags.map((tag) => (
+                            <button
+                                key={tag}
+                                type="button"
+                                className="task-creator__tag"
+                                title={`Remove ${tag}`}
+                                onClick={() =>
+                                    setTags((currentTags) =>
+                                        currentTags.filter(
+                                            (currentTag) =>
+                                                currentTag !== tag,
+                                        ),
+                                    )
+                                }
+                            >
+                                #{tag} ×
+                            </button>
+                        ))}
+                    </div>
+                )}
+
+                <small>
+                    {tags.length}/3 tags
+                </small>
+            </div>
 
             <div className="task-creator__field">
                 <span>Images / GIFs / MP4s</span>

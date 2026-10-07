@@ -1195,6 +1195,7 @@ function App() {
       priority: taskInput.priority,
       assigneeId: taskInput.assigneeId,
       deadline: taskInput.deadline,
+      tags: taskInput.tags,
       attachments: taskInput.attachments,
       createdAt,
       completedAt: column.countsAsCompleted

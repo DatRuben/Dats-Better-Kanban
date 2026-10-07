@@ -1143,3 +1143,47 @@
   gap: 0.75rem;
   margin-top: 1rem;
 }
+
+.task-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.65rem;
+}
+
+.task-card__tag {
+  padding: 0.2rem 0.45rem;
+  border: 1px solid #384155;
+  border-radius: 999px;
+  color: #b8c4dc;
+  background: #1b202a;
+  font-size: 0.7rem;
+}
+
+.task-creator__tag-input {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.task-creator__tag-input input {
+  min-width: 0;
+  flex: 1;
+}
+
+.task-creator__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.task-creator__tag {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #384155;
+  border-radius: 999px;
+  color: #b8c4dc;
+  background: #252a35;
+  font: inherit;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
