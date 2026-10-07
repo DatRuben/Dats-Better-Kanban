@@ -1507,27 +1507,23 @@ export async function rememberProjectFolder(
       projectsFolderId,
     )
 
-  const alreadyRemembered =
-    projectIndex.some(
-      (reference) =>
-        reference.projectFolderId ===
-        projectFolderId,
-    )
+  const nextProjectIndex = [
+    {
+      projectFolderId,
+    },
 
-  if (alreadyRemembered) {
-    return
-  }
+    ...projectIndex.filter(
+      (reference) =>
+        reference.projectFolderId !==
+        projectFolderId,
+    ),
+  ]
 
   await writeJsonFile(
     accessToken,
     projectsFolderId,
     PROJECT_INDEX_FILE_NAME,
-    [
-      ...projectIndex,
-      {
-        projectFolderId,
-      },
-    ],
+    nextProjectIndex,
   )
 }
 
