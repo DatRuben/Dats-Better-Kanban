@@ -39,7 +39,7 @@ const TASK_ID_PROPERTY =
 const CURRENT_SCHEMA_VERSION =
   2
 
-interface StoredProjectMetadata {
+export interface StoredProjectMetadata {
   schemaVersion: number
   id: string
   name: string
@@ -451,10 +451,9 @@ export async function loadProjectFromDriveFolder(
   createMissingFolders = false,
 ): Promise<LoadedDriveProject | null> {
   const storedProject =
-    await readJsonFile<StoredProjectMetadata>(
+    await loadProjectMetadataFromDrive(
       accessToken,
       projectFolderId,
-      PROJECT_FILE_NAME,
     )
 
   if (!storedProject) {
@@ -796,6 +795,17 @@ async function readJsonFile<T>(
       `Google Drive file "${fileName}" contains invalid JSON.`,
     )
   }
+}
+
+export async function loadProjectMetadataFromDrive(
+  accessToken: string,
+  projectFolderId: string,
+): Promise<StoredProjectMetadata | null> {
+  return readJsonFile<StoredProjectMetadata>(
+    accessToken,
+    projectFolderId,
+    PROJECT_FILE_NAME,
+  )
 }
 
 function createStoredProjectMetadata(
