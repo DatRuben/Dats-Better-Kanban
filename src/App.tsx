@@ -234,6 +234,9 @@ function App() {
   const pendingSavesRef =
     useRef(0)
 
+  const scheduledSavesRef =
+    useRef(0)
+
   const currentProject = createProjectSnapshot(
     project,
     columns,
@@ -310,6 +313,33 @@ function App() {
     return true
   }
 
+  function registerScheduledSave() {
+    scheduledSavesRef.current += 1
+
+    let released = false
+
+    return () => {
+      if (released) {
+        return
+      }
+
+      released = true
+
+      scheduledSavesRef.current =
+        Math.max(
+          0,
+          scheduledSavesRef.current - 1,
+        )
+    }
+  }
+
+  function hasPendingProjectSaves() {
+    return (
+      scheduledSavesRef.current > 0 ||
+      pendingSavesRef.current > 0
+    )
+  }
+
   function completeSave() {
     pendingSavesRef.current =
       Math.max(
@@ -357,8 +387,13 @@ function App() {
       return
     }
 
+    const releaseScheduledSave =
+      registerScheduledSave()
+
     const timeout =
       window.setTimeout(() => {
+        releaseScheduledSave()
+
         if (!beginSave()) {
           return
         }
@@ -379,6 +414,7 @@ function App() {
 
     return () => {
       window.clearTimeout(timeout)
+      releaseScheduledSave()
     }
   }, [
     project,
@@ -480,8 +516,13 @@ function App() {
       return
     }
 
+    const releaseScheduledSave =
+      registerScheduledSave()
+
     const timeout =
       window.setTimeout(() => {
+        releaseScheduledSave()
+
         const previousTasks =
           lastSavedTasksRef.current
 
@@ -796,6 +837,7 @@ function App() {
 
     return () => {
       window.clearTimeout(timeout)
+      releaseScheduledSave()
     }
   }, [
     tasks,
@@ -1343,7 +1385,7 @@ function App() {
       return
     }
 
-    if (pendingSavesRef.current > 0) {
+    if (hasPendingProjectSaves()) {
       setSharedProjectError(
         'Wait for the current project to finish saving before switching projects.',
       )
@@ -1373,6 +1415,14 @@ function App() {
         )
 
       if (!projectFolderId) {
+        return
+      }
+
+      if (hasPendingProjectSaves()) {
+        setSharedProjectError(
+          'Wait for the current project to finish saving before switching projects.',
+        )
+
         return
       }
 
