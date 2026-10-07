@@ -1242,6 +1242,14 @@ function App() {
     lastSavedTasksRef.current =
       activeProject.tasks
 
+    tasksRef.current =
+      activeProject.tasks
+
+    taskSyncConflictIdsRef.current =
+      new Set()
+
+    setTaskSyncConflicts([])
+
     setGoogleProjectFolderId(
       loadedDriveProject.projectFolderId,
     )
@@ -1257,6 +1265,21 @@ function App() {
     setProject(activeProject)
     setColumns(activeProject.columns)
     setTasks(activeProject.tasks)
+
+    setSaveStatus('idle')
+    setSaveError(null)
+    setSyncError(null)
+    setSharedProjectError(null)
+
+    setIsPipelineEditing(false)
+    setIsTaskEditing(false)
+    setEditingTaskId(null)
+    setCreatingTaskColumnId(null)
+
+    setIsMemberPanelOpen(false)
+    setMemberEmail('')
+    setMemberAccessRole('editor')
+    setMemberInviteError(null)
 
     setActiveView('board')
     setIsDemoMode(false)
@@ -1323,6 +1346,18 @@ function App() {
     if (pendingSavesRef.current > 0) {
       setSharedProjectError(
         'Wait for the current project to finish saving before switching projects.',
+      )
+
+      return
+    }
+
+    if (
+      isInvitingMember ||
+      removingMemberId !== null ||
+      updatingMemberId !== null
+    ) {
+      setSharedProjectError(
+        'Wait for the current member change to finish before switching projects.',
       )
 
       return
@@ -2118,7 +2153,10 @@ function App() {
                 className="google-connect-button"
                 disabled={
                   isOpeningSharedProject ||
-                  saveStatus === 'saving'
+                  saveStatus === 'saving' ||
+                  isInvitingMember ||
+                  removingMemberId !== null ||
+                  updatingMemberId !== null
                 }
                 onClick={() => {
                   void handleOpenSharedProject()
