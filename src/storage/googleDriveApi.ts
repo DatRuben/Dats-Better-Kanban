@@ -66,6 +66,7 @@ export interface DriveProjectReference {
 export interface DriveProjectSummary {
   projectFolderId: string
   metadata: StoredProjectMetadata
+  isOwned: boolean
 }
 
 export async function verifyGoogleDriveAccess(
@@ -1567,6 +1568,9 @@ export async function loadAvailableProjectSummariesFromDrive(
       projectsFolderId,
     )
 
+  const ownedProjectFolderIdSet =
+    new Set(ownedProjectFolderIds)
+
   const rememberedProjectFolderIds =
     new Set(
       projectIndex.map(
@@ -1625,6 +1629,10 @@ export async function loadAvailableProjectSummariesFromDrive(
       summaries.push({
         projectFolderId,
         metadata,
+        isOwned:
+          ownedProjectFolderIdSet.has(
+            projectFolderId,
+          ),
       })
     } catch (error) {
       if (

@@ -37,6 +37,7 @@ import {
   loadTasksFromDrive,
   loadProjectFromDriveFolder,
   loadProjectMetadataFromDrive,
+  loadAvailableProjectSummariesFromDrive,
   rememberProjectFolder,
   saveColumnsToDrive,
   saveProjectMetadataToDrive,
@@ -52,6 +53,7 @@ import {
 import type {
   GoogleDriveUser,
   LoadedDriveProject,
+  DriveProjectSummary,
 } from './storage/googleDriveApi'
 import {
   pickGoogleDriveFolder,
@@ -208,6 +210,31 @@ function App() {
     isOpeningSharedProject,
     setIsOpeningSharedProject,
   ] = useState(false)
+
+  const [
+    isProjectChooserOpen,
+    setIsProjectChooserOpen,
+  ] = useState(false)
+
+  const [
+    availableProjectSummaries,
+    setAvailableProjectSummaries,
+  ] = useState<DriveProjectSummary[]>([])
+
+  const [
+    isLoadingProjectSummaries,
+    setIsLoadingProjectSummaries,
+  ] = useState(false)
+
+  const [
+    projectChooserError,
+    setProjectChooserError,
+  ] = useState<string | null>(null)
+
+  const [
+    openingProjectFolderId,
+    setOpeningProjectFolderId,
+  ] = useState<string | null>(null)
 
   const [
     sharedProjectError,
@@ -1479,8 +1506,9 @@ function App() {
     setIsDemoMode(false)
   }
 
-  async function openSharedDriveProject(
+  async function openDriveProject(
     projectFolderId: string,
+    isOwned: boolean,
   ) {
     if (
       !googleAccessToken ||
@@ -1492,11 +1520,11 @@ function App() {
       )
     }
 
-    const loadedDriveProject =
+    let loadedDriveProject =
       await loadProjectFromDriveFolder(
         googleAccessToken,
         projectFolderId,
-        false,
+        isOwned,
       )
 
     if (!loadedDriveProject) {
@@ -1505,16 +1533,56 @@ function App() {
       )
     }
 
-    const currentMember =
-      loadedDriveProject.project.members.find(
-        (member) =>
-          member.id === googleUser.permissionId,
-      )
+    if (isOwned) {
+      const hasProjectOwner =
+        loadedDriveProject.project.members.some(
+          (member) =>
+            member.accessRole === 'owner',
+        )
 
-    if (!currentMember) {
-      throw new Error(
-        'Your Google account is not a member of this project.',
-      )
+      if (!hasProjectOwner) {
+        const migratedProject = {
+          ...loadedDriveProject.project,
+
+          members: [
+            ...loadedDriveProject.project.members,
+            {
+              id: googleUser.permissionId,
+              displayName:
+                googleUser.displayName,
+              role: '',
+              email:
+                googleUser.emailAddress,
+              accessRole: 'owner' as const,
+            },
+          ],
+        }
+
+        await saveProjectMetadataToDrive(
+          googleAccessToken,
+          googleProjectsFolderId,
+          projectFolderId,
+          migratedProject,
+        )
+
+        loadedDriveProject = {
+          ...loadedDriveProject,
+          project: migratedProject,
+        }
+      }
+    } else {
+      const currentMember =
+        loadedDriveProject.project.members.find(
+          (member) =>
+            member.id ===
+            googleUser.permissionId,
+        )
+
+      if (!currentMember) {
+        throw new Error(
+          'Your Google account is not a member of this project.',
+        )
+      }
     }
 
     await rememberProjectFolder(
@@ -1526,6 +1594,108 @@ function App() {
     activateDriveProject(
       loadedDriveProject,
     )
+  }
+
+  async function handleToggleProjectChooser() {
+    if (isProjectChooserOpen) {
+      setIsProjectChooserOpen(false)
+      return
+    }
+
+    if (
+      !googleAccessToken ||
+      !googleProjectsFolderId
+    ) {
+      return
+    }
+
+    setIsMemberPanelOpen(false)
+    setIsProjectChooserOpen(true)
+    setIsLoadingProjectSummaries(true)
+    setProjectChooserError(null)
+
+    try {
+      const summaries =
+        await loadAvailableProjectSummariesFromDrive(
+          googleAccessToken,
+          googleProjectsFolderId,
+        )
+
+      setAvailableProjectSummaries(
+        summaries,
+      )
+    } catch (error) {
+      if (isGoogleUnauthorizedError(error)) {
+        expireGoogleSession()
+        return
+      }
+
+      setProjectChooserError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to load projects.',
+      )
+    } finally {
+      setIsLoadingProjectSummaries(false)
+    }
+  }
+
+  async function handleSelectProject(
+    summary: DriveProjectSummary,
+  ) {
+    if (
+      summary.projectFolderId ===
+      googleProjectFolderId
+    ) {
+      setIsProjectChooserOpen(false)
+      return
+    }
+
+    if (hasPendingProjectSaves()) {
+      setProjectChooserError(
+        'Wait for the current project to finish saving before switching projects.',
+      )
+      return
+    }
+
+    if (
+      isInvitingMember ||
+      removingMemberId !== null ||
+      updatingMemberId !== null
+    ) {
+      setProjectChooserError(
+        'Wait for the current member change to finish before switching projects.',
+      )
+      return
+    }
+
+    setOpeningProjectFolderId(
+      summary.projectFolderId,
+    )
+
+    setProjectChooserError(null)
+
+    try {
+      await openDriveProject(
+        summary.projectFolderId,
+        summary.isOwned,
+      )
+
+      setIsProjectChooserOpen(false)
+    } catch (error) {
+      if (isGoogleUnauthorizedError(error)) {
+        expireGoogleSession()
+        return
+      }
+
+      setProjectChooserError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to open project.',
+      )
+    } finally {
+      setOpeningProjectFolderId(null)
+    }
   }
 
   async function handleOpenSharedProject() {
@@ -1578,8 +1748,9 @@ function App() {
         return
       }
 
-      await openSharedDriveProject(
+      await openDriveProject(
         projectFolderId,
+        false,
       )
     } catch (error) {
       if (isGoogleUnauthorizedError(error)) {
@@ -2508,11 +2679,13 @@ function App() {
               <button
                 type="button"
                 className="google-connect-button"
-                onClick={() =>
+                onClick={() => {
+                  setIsProjectChooserOpen(false)
+
                   setIsMemberPanelOpen(
                     (currentValue) => !currentValue,
                   )
-                }
+                }}
               >
                 {isMemberPanelOpen
                   ? 'Close Members'
@@ -2527,18 +2700,15 @@ function App() {
                 className="google-connect-button"
                 disabled={
                   isOpeningSharedProject ||
-                  saveStatus === 'saving' ||
-                  isInvitingMember ||
-                  removingMemberId !== null ||
-                  updatingMemberId !== null
+                  isLoadingProjectSummaries
                 }
                 onClick={() => {
-                  void handleOpenSharedProject()
+                  void handleToggleProjectChooser()
                 }}
               >
-                {isOpeningSharedProject
-                  ? 'Opening...'
-                  : 'Open Shared Project'}
+                {isProjectChooserOpen
+                  ? 'Close Projects'
+                  : 'Projects'}
               </button>
             )}
 
@@ -2592,6 +2762,111 @@ function App() {
           )}
         </div>
       </header>
+
+      {isProjectChooserOpen &&
+        !isDemoMode && (
+          <section className="project-chooser">
+            <div className="project-chooser__header">
+              <div>
+                <h2>Projects</h2>
+
+                <p>
+                  Switch between your remembered
+                  and owned projects.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="google-connect-button"
+                disabled={
+                  isOpeningSharedProject ||
+                  openingProjectFolderId !== null
+                }
+                onClick={() => {
+                  void handleOpenSharedProject()
+                }}
+              >
+                {isOpeningSharedProject
+                  ? 'Opening...'
+                  : 'Open another Drive project'}
+              </button>
+            </div>
+
+            {projectChooserError && (
+              <p className="save-error">
+                {projectChooserError}
+              </p>
+            )}
+
+            {isLoadingProjectSummaries ? (
+              <p className="project-chooser__status">
+                Loading projects…
+              </p>
+            ) : (
+              <div className="project-chooser__list">
+                {availableProjectSummaries.map(
+                  (summary) => {
+                    const isCurrentProject =
+                      summary.projectFolderId ===
+                      googleProjectFolderId
+
+                    const member =
+                      googleUser
+                        ? summary.metadata.members.find(
+                          (projectMember) =>
+                            projectMember.id ===
+                            googleUser.permissionId,
+                        )
+                        : undefined
+
+                    const accessLabel =
+                      summary.isOwned
+                        ? 'Owner'
+                        : member?.accessRole ??
+                        'Shared'
+
+                    return (
+                      <button
+                        key={
+                          summary.projectFolderId
+                        }
+                        type="button"
+                        className={`project-chooser__project ${isCurrentProject
+                          ? 'project-chooser__project--current'
+                          : ''
+                          }`}
+                        disabled={
+                          isCurrentProject ||
+                          openingProjectFolderId !==
+                          null
+                        }
+                        onClick={() => {
+                          void handleSelectProject(
+                            summary,
+                          )
+                        }}
+                      >
+                        <strong>
+                          {summary.metadata.name}
+                        </strong>
+
+                        <span>
+                          {isCurrentProject
+                            ? 'Current project'
+                            : openingProjectFolderId ===
+                              summary.projectFolderId
+                              ? 'Opening…'
+                              : accessLabel}
+                        </span>
+                      </button>
+                    )
+                  },
+                )}
+              </div>
+            )}
+          </section>
+        )}
 
       {isMemberPanelOpen &&
         isCurrentUserProjectOwner && (
