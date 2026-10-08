@@ -1232,6 +1232,7 @@ function App() {
             priority: taskInput.priority,
             assigneeId: taskInput.assigneeId,
             deadline: taskInput.deadline,
+            tags: taskInput.tags,
             updatedAt,
             revision: task.revision + 1,
             attachments: taskInput.attachments,
