@@ -1332,3 +1332,31 @@
 .project-chooser__status {
   color: #8f99aa;
 }
+
+.task-card__edit-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.task-card__manual-order {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.task-card__manual-order button {
+  width: 1.8rem;
+  height: 1.8rem;
+  padding: 0;
+  border: 1px solid #384155;
+  border-radius: 0.35rem;
+  color: #c8d0df;
+  background: #252a35;
+  font: inherit;
+  cursor: pointer;
+}
+
+.task-card__manual-order button:disabled {
+  cursor: default;
+  opacity: 0.35;
+}

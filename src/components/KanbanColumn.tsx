@@ -46,6 +46,11 @@ interface KanbanColumnProps {
     columnId: string,
     usePriorityDeadlineOrdering: boolean,
   ) => void
+  allowManualTaskOrdering: boolean
+  onMoveTiedTask: (
+    taskId: string,
+    direction: 'up' | 'down',
+  ) => void
 }
 
 export function KanbanColumn({
@@ -205,6 +210,26 @@ export function KanbanColumn({
               (member) => member.id === task.assigneeId,
             ) ?? null
 
+          const previousTask =
+            tasks[index - 1]
+
+          const nextTask =
+            tasks[index + 1]
+
+          const canMoveManualUp =
+            allowManualTaskOrdering &&
+            task.deadline === null &&
+            previousTask?.priority ===
+            task.priority &&
+            previousTask.deadline === null
+
+          const canMoveManualDown =
+            allowManualTaskOrdering &&
+            task.deadline === null &&
+            nextTask?.priority ===
+            task.priority &&
+            nextTask.deadline === null
+
           if (editingTaskId === task.id) {
             return (
               <TaskCreator
@@ -233,6 +258,24 @@ export function KanbanColumn({
               isTaskEditing={isTaskEditing}
               onEdit={() => onStartEditingTask(task.id)}
               onLoadAttachment={onLoadAttachment}
+              canMoveManualUp={
+                canMoveManualUp
+              }
+              canMoveManualDown={
+                canMoveManualDown
+              }
+              onMoveManualUp={() =>
+                onMoveTiedTask(
+                  task.id,
+                  'up',
+                )
+              }
+              onMoveManualDown={() =>
+                onMoveTiedTask(
+                  task.id,
+                  'down',
+                )
+              }
             />
           )
         })}

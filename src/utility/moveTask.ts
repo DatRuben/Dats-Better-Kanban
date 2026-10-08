@@ -30,5 +30,10 @@ export function moveTaskToColumn(
     completedAt: nextCompletedAt,
     updatedAt: completionTime,
     revision: task.revision + 1,
+
+    manualOrderKey:
+      currentColumn.id === targetColumn.id
+        ? task.manualOrderKey
+        : undefined,
   }
 }

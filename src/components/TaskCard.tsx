@@ -20,6 +20,10 @@ interface TaskCardProps {
     attachment: Attachment,
   ) => Promise<Blob | null>
   isTaskEditing: boolean
+  canMoveManualUp: boolean
+  canMoveManualDown: boolean
+  onMoveManualUp: () => void
+  onMoveManualDown: () => void
 }
 
 function getInitials(displayName: string) {
@@ -52,6 +56,10 @@ export function TaskCard({
   onEdit,
   onLoadAttachment,
   isTaskEditing,
+  canMoveManualUp,
+  canMoveManualDown,
+  onMoveManualUp,
+  onMoveManualDown,
 }: TaskCardProps) {
   const assigneeInitials = assignee
     ? getInitials(assignee.displayName)
@@ -220,21 +228,59 @@ export function TaskCard({
           {assigneeInitials}
         </div>
 
-        {isTaskEditing && !isPipelineEditing && (
-          <button
-            type="button"
-            className={`task-card__edit-button ${isEditing
-              ? 'task-card__edit-button--active'
-              : ''
-              }`}
-            onPointerDown={(event) =>
-              event.stopPropagation()
-            }
-            onClick={onEdit}
-          >
-            {isEditing ? 'Editing' : 'Edit'}
-          </button>
-        )}
+        {isTaskEditing &&
+          !isPipelineEditing && (
+            <div className="task-card__edit-controls">
+              {(
+                canMoveManualUp ||
+                canMoveManualDown
+              ) && (
+                  <div className="task-card__manual-order">
+                    <button
+                      type="button"
+                      disabled={!canMoveManualUp}
+                      title="Move task up"
+                      aria-label="Move task up"
+                      onPointerDown={(event) =>
+                        event.stopPropagation()
+                      }
+                      onClick={onMoveManualUp}
+                    >
+                      ↑
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={!canMoveManualDown}
+                      title="Move task down"
+                      aria-label="Move task down"
+                      onPointerDown={(event) =>
+                        event.stopPropagation()
+                      }
+                      onClick={onMoveManualDown}
+                    >
+                      ↓
+                    </button>
+                  </div>
+                )}
+
+              <button
+                type="button"
+                className={`task-card__edit-button ${isEditing
+                    ? 'task-card__edit-button--active'
+                    : ''
+                  }`}
+                onPointerDown={(event) =>
+                  event.stopPropagation()
+                }
+                onClick={onEdit}
+              >
+                {isEditing
+                  ? 'Editing'
+                  : 'Edit'}
+              </button>
+            </div>
+          )}
       </div>
 
       {mediaAttachment && (

@@ -67,6 +67,15 @@ const priorityOrder = {
   low: 3,
 }
 
+function getManualOrderKey(
+  task: Task,
+) {
+  return (
+    task.manualOrderKey ??
+    `${task.createdAt}:${task.id}`
+  )
+}
+
 function compareTasks(firstTask: Task, secondTask: Task) {
   const priorityDifference =
     priorityOrder[firstTask.priority] -
@@ -91,6 +100,24 @@ function compareTasks(firstTask: Task, secondTask: Task) {
 
   if (!firstTask.deadline && secondTask.deadline) {
     return 1
+  }
+
+  if (
+    !firstTask.deadline &&
+    !secondTask.deadline
+  ) {
+    const manualOrderDifference =
+      getManualOrderKey(
+        firstTask,
+      ).localeCompare(
+        getManualOrderKey(
+          secondTask,
+        ),
+      )
+
+    if (manualOrderDifference !== 0) {
+      return manualOrderDifference
+    }
   }
 
   return firstTask.createdAt.localeCompare(secondTask.createdAt)
@@ -1394,6 +1421,15 @@ function App() {
             priority: taskInput.priority,
             assigneeId: taskInput.assigneeId,
             deadline: taskInput.deadline,
+
+            manualOrderKey:
+              task.priority ===
+                taskInput.priority &&
+                task.deadline ===
+                taskInput.deadline
+                ? task.manualOrderKey
+                : undefined,
+
             tags: taskInput.tags,
             updatedAt,
             revision: task.revision + 1,
@@ -3322,6 +3358,18 @@ function App() {
                     handleColumnOrderingChange
                   }
                   isTaskEditing={isTaskEditing}
+                  allowManualTaskOrdering={
+                    taskSortMode === 'priority' &&
+                    assigneeFilter === 'all' &&
+                    (
+                      !column.countsAsCompleted ||
+                      column.usePriorityDeadlineOrdering ===
+                      true
+                    )
+                  }
+                  onMoveTiedTask={
+                    handleMoveTiedTask
+                  }
                 />
               )
             })}
@@ -3510,6 +3558,104 @@ function App() {
           : currentTask,
       ),
     )
+  }
+
+  function handleMoveTiedTask(
+    taskId: string,
+    direction: 'up' | 'down',
+  ) {
+    if (!canCurrentUserEditProject) {
+      return
+    }
+
+    setTasks((currentTasks) => {
+      const task =
+        currentTasks.find(
+          (currentTask) =>
+            currentTask.id === taskId,
+        )
+
+      if (
+        !task ||
+        task.deadline !== null
+      ) {
+        return currentTasks
+      }
+
+      const tiedTasks =
+        currentTasks
+          .filter(
+            (currentTask) =>
+              currentTask.columnId ===
+              task.columnId &&
+              currentTask.priority ===
+              task.priority &&
+              currentTask.deadline === null,
+          )
+          .sort(compareTasks)
+
+      const currentIndex =
+        tiedTasks.findIndex(
+          (tiedTask) =>
+            tiedTask.id === taskId,
+        )
+
+      if (currentIndex < 0) {
+        return currentTasks
+      }
+
+      const targetIndex =
+        direction === 'up'
+          ? currentIndex - 1
+          : currentIndex + 1
+
+      const targetTask =
+        tiedTasks[targetIndex]
+
+      if (!targetTask) {
+        return currentTasks
+      }
+
+      const taskOrderKey =
+        getManualOrderKey(task)
+
+      const targetOrderKey =
+        getManualOrderKey(targetTask)
+
+      const updatedAt =
+        new Date().toISOString()
+
+      return currentTasks.map(
+        (currentTask) => {
+          if (currentTask.id === task.id) {
+            return {
+              ...currentTask,
+              manualOrderKey:
+                targetOrderKey,
+              updatedAt,
+              revision:
+                currentTask.revision + 1,
+            }
+          }
+
+          if (
+            currentTask.id ===
+            targetTask.id
+          ) {
+            return {
+              ...currentTask,
+              manualOrderKey:
+                taskOrderKey,
+              updatedAt,
+              revision:
+                currentTask.revision + 1,
+            }
+          }
+
+          return currentTask
+        },
+      )
+    })
   }
 
   function taskListsMatch(

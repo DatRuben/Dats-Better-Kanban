@@ -30,6 +30,7 @@ export interface Task {
   assigneeId: string | null
   deadline: string | null
   tags?: string[]
+  manualOrderKey?: string
   attachments: Attachment[]
   createdAt: string
   updatedAt: string
