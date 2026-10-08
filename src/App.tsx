@@ -869,6 +869,13 @@ function App() {
     assigneeFilter,
     setAssigneeFilter,
   ] = useState<string>('all')
+
+  const [
+    taskSortMode,
+    setTaskSortMode,
+  ] = useState<'priority' | 'assignee'>(
+    'priority',
+  )
   const orderedColumns = [...columns].sort(
     (firstColumn, secondColumn) =>
       firstColumn.order - secondColumn.order,
@@ -936,7 +943,7 @@ function App() {
 
       return !taskColumn?.countsAsCompleted
     })
-    .sort(compareTasks)
+    .sort(compareVisibleTasks)
 
   const timelineGroups: Task[][] = []
 
@@ -1000,6 +1007,65 @@ function App() {
     } else {
       timelineGroups.push([task])
     }
+  }
+
+  function compareTasksByAssignee(
+    firstTask: Task,
+    secondTask: Task,
+  ) {
+    const firstAssignee =
+      currentProject.members.find(
+        (member) =>
+          member.id === firstTask.assigneeId,
+      )
+
+    const secondAssignee =
+      currentProject.members.find(
+        (member) =>
+          member.id === secondTask.assigneeId,
+      )
+
+    if (firstAssignee && !secondAssignee) {
+      return -1
+    }
+
+    if (!firstAssignee && secondAssignee) {
+      return 1
+    }
+
+    if (
+      firstAssignee &&
+      secondAssignee
+    ) {
+      const nameDifference =
+        firstAssignee.displayName.localeCompare(
+          secondAssignee.displayName,
+        )
+
+      if (nameDifference !== 0) {
+        return nameDifference
+      }
+    }
+
+    return compareTasks(
+      firstTask,
+      secondTask,
+    )
+  }
+
+  function compareVisibleTasks(
+    firstTask: Task,
+    secondTask: Task,
+  ) {
+    return taskSortMode === 'assignee'
+      ? compareTasksByAssignee(
+        firstTask,
+        secondTask,
+      )
+      : compareTasks(
+        firstTask,
+        secondTask,
+      )
   }
 
   function handleTimelineWheel(event: WheelEvent<HTMLElement>) {
@@ -1362,6 +1428,7 @@ function App() {
     loadedDriveProject: LoadedDriveProject,
   ) {
     setAssigneeFilter('all')
+    setTaskSortMode('priority')
     const activeProject =
       loadedDriveProject.project
 
@@ -2786,6 +2853,33 @@ function App() {
           </label>
         )}
 
+        {(
+          activeView === 'board' ||
+          activeView === 'timeline'
+        ) && (
+            <label className="task-sort">
+              <span>Sort</span>
+
+              <select
+                value={taskSortMode}
+                onChange={(event) =>
+                  setTaskSortMode(
+                    event.target.value as
+                    'priority' | 'assignee',
+                  )
+                }
+              >
+                <option value="priority">
+                  Priority / Deadline
+                </option>
+
+                <option value="assignee">
+                  Assignee
+                </option>
+              </select>
+            </label>
+          )}
+
         {activeView === 'board' &&
           canCurrentUserEditProject && (
             <div className="board-toolbar__edit-controls">
@@ -2903,9 +2997,10 @@ function App() {
               const sortedColumnTasks =
                 [...columnTasks].sort(
                   column.countsAsCompleted &&
-                    column.usePriorityDeadlineOrdering !== true
+                    column.usePriorityDeadlineOrdering !== true &&
+                    taskSortMode === 'priority'
                     ? compareCompletedTasks
-                    : compareTasks,
+                    : compareVisibleTasks,
                 )
 
               return (

@@ -1244,3 +1244,21 @@
   background: #252a35;
   font: inherit;
 }
+
+.task-sort {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #8f99aa;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.task-sort select {
+  padding: 0.45rem 0.6rem;
+  border: 1px solid #384155;
+  border-radius: 0.45rem;
+  color: #dce3ef;
+  background: #252a35;
+  font: inherit;
+}
