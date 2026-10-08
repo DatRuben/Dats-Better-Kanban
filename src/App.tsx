@@ -865,6 +865,10 @@ function App() {
       'timeline' |
       'history'
     >('board')
+  const [
+    assigneeFilter,
+    setAssigneeFilter,
+  ] = useState<string>('all')
   const orderedColumns = [...columns].sort(
     (firstColumn, secondColumn) =>
       firstColumn.order - secondColumn.order,
@@ -889,6 +893,27 @@ function App() {
 
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
 
+  useEffect(() => {
+    if (
+      assigneeFilter === 'all' ||
+      assigneeFilter === 'unassigned'
+    ) {
+      return
+    }
+
+    const memberStillExists =
+      currentProject.members.some(
+        (member) =>
+          member.id === assigneeFilter,
+      )
+
+    if (!memberStillExists) {
+      setAssigneeFilter('all')
+    }
+  }, [
+    assigneeFilter,
+    currentProject.members,
+  ])
 
   useEffect(() => {
     if (canCurrentUserEditProject) {
@@ -902,6 +927,7 @@ function App() {
   }, [canCurrentUserEditProject])
 
   const timelineTasks = tasks
+    .filter(matchesAssigneeFilter)
     .filter((task) => {
       const taskColumn = columns.find(
         (column) => column.id === task.columnId,
@@ -936,7 +962,21 @@ function App() {
         .sort(compareTasks)
       : []
 
+  function matchesAssigneeFilter(
+    task: Task,
+  ) {
+    if (assigneeFilter === 'all') {
+      return true
+    }
+
+    if (assigneeFilter === 'unassigned') {
+      return task.assigneeId === null
+    }
+
+    return task.assigneeId === assigneeFilter
+  }
   const completedTasks = tasks
+    .filter(matchesAssigneeFilter)
     .filter((task) => {
       const taskColumn = columns.find(
         (column) => column.id === task.columnId,
@@ -1070,9 +1110,12 @@ function App() {
       return
     }
 
-    const columnTasks = tasks.filter(
-      (task) => task.columnId === columnId,
-    )
+    const columnTasks =
+      tasks.filter(
+        (task) =>
+          task.columnId === column.id &&
+          matchesAssigneeFilter(task),
+      )
 
     if (columnTasks.length > 0) {
       const message = countsAsCompleted
@@ -1319,6 +1362,7 @@ function App() {
   function activateDriveProject(
     loadedDriveProject: LoadedDriveProject,
   ) {
+    setAssigneeFilter('all')
     const activeProject =
       loadedDriveProject.project
 
@@ -2704,6 +2748,44 @@ function App() {
             Completed History
           </button>
         </nav>
+
+        {activeView !== 'mine' && (
+          <label className="assignee-filter">
+            <span>Assignee</span>
+
+            <select
+              value={assigneeFilter}
+              onChange={(event) =>
+                setAssigneeFilter(
+                  event.target.value,
+                )
+              }
+            >
+              <option value="all">
+                Everyone
+              </option>
+
+              <option value="unassigned">
+                Unassigned
+              </option>
+
+              {[...currentProject.members]
+                .sort((firstMember, secondMember) =>
+                  firstMember.displayName.localeCompare(
+                    secondMember.displayName,
+                  ),
+                )
+                .map((member) => (
+                  <option
+                    key={member.id}
+                    value={member.id}
+                  >
+                    {member.displayName}
+                  </option>
+                ))}
+            </select>
+          </label>
+        )}
 
         {activeView === 'board' &&
           canCurrentUserEditProject && (

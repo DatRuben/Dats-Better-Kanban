@@ -1225,3 +1225,22 @@
 .my-tasks-view__empty {
   color: #717b8d;
 }
+
+.assignee-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+  color: #8f99aa;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.assignee-filter select {
+  padding: 0.45rem 0.6rem;
+  border: 1px solid #384155;
+  border-radius: 0.45rem;
+  color: #dce3ef;
+  background: #252a35;
+  font: inherit;
+}
