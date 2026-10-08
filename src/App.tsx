@@ -1113,8 +1113,7 @@ function App() {
     const columnTasks =
       tasks.filter(
         (task) =>
-          task.columnId === column.id &&
-          matchesAssigneeFilter(task),
+          task.columnId === column.id,
       )
 
     if (columnTasks.length > 0) {
@@ -2891,9 +2890,15 @@ function App() {
             aria-label={`${currentProject.name} Kanban board`}
           >
             {orderedColumns.map((column) => {
-              const columnTasks = tasks.filter(
-                (task) => task.columnId === column.id,
-              )
+              const columnTasks =
+                tasks.filter(
+                  (task) =>
+                    task.columnId === column.id &&
+                    (
+                      isPipelineEditing ||
+                      matchesAssigneeFilter(task)
+                    ),
+                )
 
               const sortedColumnTasks =
                 [...columnTasks].sort(
