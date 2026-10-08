@@ -63,6 +63,11 @@ export interface DriveProjectReference {
   projectFolderId: string
 }
 
+export interface DriveProjectSummary {
+  projectFolderId: string
+  metadata: StoredProjectMetadata
+}
+
 export async function verifyGoogleDriveAccess(
   accessToken: string,
 ): Promise<void> {
@@ -537,57 +542,97 @@ export async function loadProjectFromDriveFolder(
   }
 }
 
+async function listOwnedProjectFolderIds(
+  accessToken: string,
+  projectsFolderId: string,
+): Promise<string[]> {
+  const projectFolderIds: string[] = []
+
+  let pageToken: string | null = null
+
+  do {
+    const foldersUrl =
+      new URL(GOOGLE_DRIVE_FILES_URL)
+
+    foldersUrl.searchParams.set(
+      'q',
+      [
+        `'${projectsFolderId}' in parents`,
+        `mimeType = '${GOOGLE_DRIVE_FOLDER_MIME_TYPE}'`,
+        'trashed = false',
+      ].join(' and '),
+    )
+
+    foldersUrl.searchParams.set(
+      'fields',
+      'nextPageToken,files(id)',
+    )
+
+    foldersUrl.searchParams.set(
+      'pageSize',
+      '100',
+    )
+
+    if (pageToken) {
+      foldersUrl.searchParams.set(
+        'pageToken',
+        pageToken,
+      )
+    }
+
+    const foldersResponse =
+      await fetch(foldersUrl, {
+        headers: {
+          Authorization:
+            `Bearer ${accessToken}`,
+        },
+      })
+
+    if (!foldersResponse.ok) {
+      throw new Error(
+        `Google Drive project search failed with status ${foldersResponse.status}.`,
+      )
+    }
+
+    const foldersData =
+      await foldersResponse.json() as {
+        files: Array<{
+          id: string
+        }>
+        nextPageToken?: string
+      }
+
+    projectFolderIds.push(
+      ...foldersData.files.map(
+        (folder) => folder.id,
+      ),
+    )
+
+    pageToken =
+      foldersData.nextPageToken ?? null
+  } while (pageToken)
+
+  return projectFolderIds
+}
+
 export async function loadFirstProjectFromDrive(
   accessToken: string,
   projectsFolderId: string,
 ): Promise<LoadedDriveProject | null> {
-  const foldersUrl =
-    new URL(GOOGLE_DRIVE_FILES_URL)
-
-  foldersUrl.searchParams.set(
-    'q',
-    [
-      `'${projectsFolderId}' in parents`,
-      `mimeType = '${GOOGLE_DRIVE_FOLDER_MIME_TYPE}'`,
-      'trashed = false',
-    ].join(' and '),
-  )
-
-  foldersUrl.searchParams.set(
-    'fields',
-    'files(id)',
-  )
-
-  foldersUrl.searchParams.set(
-    'pageSize',
-    '100',
-  )
-
-  const foldersResponse =
-    await fetch(foldersUrl, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    })
-
-  if (!foldersResponse.ok) {
-    throw new Error(
-      `Google Drive project search failed with status ${foldersResponse.status}.`,
+  const projectFolderIds =
+    await listOwnedProjectFolderIds(
+      accessToken,
+      projectsFolderId,
     )
-  }
 
-  const foldersData =
-    await foldersResponse.json() as {
-      files: Array<{
-        id: string
-      }>
-    }
-
-  for (const folder of foldersData.files) {
+  for (
+    const projectFolderId
+    of projectFolderIds
+  ) {
     const loadedProject =
       await loadProjectFromDriveFolder(
         accessToken,
-        folder.id,
+        projectFolderId,
         true,
       )
 
@@ -1504,6 +1549,119 @@ export async function loadProjectIndexFromDrive(
     )
 
   return projectIndex ?? []
+}
+
+export async function loadAvailableProjectSummariesFromDrive(
+  accessToken: string,
+  projectsFolderId: string,
+): Promise<DriveProjectSummary[]> {
+  const projectIndex =
+    await loadProjectIndexFromDrive(
+      accessToken,
+      projectsFolderId,
+    )
+
+  const ownedProjectFolderIds =
+    await listOwnedProjectFolderIds(
+      accessToken,
+      projectsFolderId,
+    )
+
+  const rememberedProjectFolderIds =
+    new Set(
+      projectIndex.map(
+        (reference) =>
+          reference.projectFolderId,
+      ),
+    )
+
+  const projectFolderIds = [
+    ...new Set([
+      ...projectIndex.map(
+        (reference) =>
+          reference.projectFolderId,
+      ),
+      ...ownedProjectFolderIds,
+    ]),
+  ]
+
+  let cleanedProjectIndex =
+    [...projectIndex]
+
+  let projectIndexChanged = false
+
+  const summaries: DriveProjectSummary[] = []
+
+  for (
+    const projectFolderId
+    of projectFolderIds
+  ) {
+    try {
+      const metadata =
+        await loadProjectMetadataFromDrive(
+          accessToken,
+          projectFolderId,
+        )
+
+      if (!metadata) {
+        if (
+          rememberedProjectFolderIds.has(
+            projectFolderId,
+          )
+        ) {
+          cleanedProjectIndex =
+            cleanedProjectIndex.filter(
+              (reference) =>
+                reference.projectFolderId !==
+                projectFolderId,
+            )
+
+          projectIndexChanged = true
+        }
+
+        continue
+      }
+
+      summaries.push({
+        projectFolderId,
+        metadata,
+      })
+    } catch (error) {
+      if (
+        !isUnavailableProjectReferenceError(
+          error,
+        )
+      ) {
+        throw error
+      }
+
+      if (
+        rememberedProjectFolderIds.has(
+          projectFolderId,
+        )
+      ) {
+        cleanedProjectIndex =
+          cleanedProjectIndex.filter(
+            (reference) =>
+              reference.projectFolderId !==
+              projectFolderId,
+          )
+
+        projectIndexChanged = true
+      }
+    }
+  }
+
+  if (projectIndexChanged) {
+    await writeJsonFile(
+      accessToken,
+      projectsFolderId,
+      PROJECT_INDEX_FILE_NAME,
+      cleanedProjectIndex,
+    )
+  }
+
+  return summaries
 }
 
 export async function rememberProjectFolder(
