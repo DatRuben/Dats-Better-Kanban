@@ -49,6 +49,7 @@ import {
   shareProjectFolderWithUser,
   removeProjectFolderPermission,
   updateProjectFolderPermission,
+  saveProjectDocumentToDrive,
 } from './storage/googleDriveApi'
 import type {
   GoogleDriveUser,
@@ -1604,6 +1605,12 @@ function App() {
           migratedProject,
         )
 
+        await saveProjectDocumentToDrive(
+          googleAccessToken,
+          loadedDriveProject.projectFileId,
+          migratedProject,
+        )
+
         loadedDriveProject = {
           ...loadedDriveProject,
           project: migratedProject,
@@ -1628,6 +1635,7 @@ function App() {
       googleAccessToken,
       googleProjectsFolderId,
       loadedDriveProject.projectFolderId,
+      loadedDriveProject.projectFileId,
     )
 
     activateDriveProject(
@@ -1903,10 +1911,24 @@ function App() {
       ]
     }
 
+    await saveProjectMetadataToDrive(
+      accessToken,
+      projectsFolderId,
+      loadedDriveProject.projectFolderId,
+      activeProject,
+    )
+
+    await saveProjectDocumentToDrive(
+      accessToken,
+      loadedDriveProject.projectFileId,
+      activeProject,
+    )
+
     await rememberProjectFolder(
       accessToken,
       projectsFolderId,
       loadedDriveProject.projectFolderId,
+      loadedDriveProject.projectFileId,
     )
 
     activateDriveProject(

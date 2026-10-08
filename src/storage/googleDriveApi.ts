@@ -52,6 +52,7 @@ export interface StoredProjectMetadata {
 export interface LoadedDriveProject {
   project: Project
   projectFolderId: string
+  projectFileId: string
   tasksFolderId: string
   attachmentsFolderId: string
 }
@@ -64,10 +65,12 @@ export interface GoogleDriveUser {
 
 export interface DriveProjectReference {
   projectFolderId: string
+  projectFileId?: string
 }
 
 export interface DriveProjectSummary {
   projectFolderId: string
+  projectFileId?: string
   metadata: StoredProjectMetadata
   isOwned: boolean
 }
@@ -388,15 +391,22 @@ export async function createProjectOnDrive(
   project: Project,
 ): Promise<{
   projectFolderId: string
+  projectFileId: string
   tasksFolderId: string
   attachmentsFolderId: string
 }> {
+  const normalizedProject: Project = {
+    ...project,
+    schemaVersion:
+      CURRENT_SCHEMA_VERSION,
+  }
+
   const projectFolderName =
     await getProjectFolderName(
       accessToken,
       projectsFolderId,
-      project.name,
-      project.id,
+      normalizedProject.name,
+      normalizedProject.id,
     )
 
   const projectFolderId =
@@ -423,11 +433,11 @@ export async function createProjectOnDrive(
   await saveColumnsToDrive(
     accessToken,
     projectFolderId,
-    project.columns,
+    normalizedProject.columns,
   )
 
   await Promise.all(
-    project.tasks.map((task) =>
+    normalizedProject.tasks.map((task) =>
       saveTaskToDrive(
         accessToken,
         tasksFolderId,
@@ -440,15 +450,19 @@ export async function createProjectOnDrive(
     accessToken,
     projectsFolderId,
     projectFolderId,
-    {
-      ...project,
-      schemaVersion:
-        CURRENT_SCHEMA_VERSION,
-    },
+    normalizedProject,
   )
+
+  const projectFileId =
+    await ensureProjectDocumentOnDrive(
+      accessToken,
+      projectFolderId,
+      normalizedProject,
+    )
 
   return {
     projectFolderId,
+    projectFileId,
     tasksFolderId,
     attachmentsFolderId,
   }
@@ -538,9 +552,17 @@ export async function loadProjectFromDriveFolder(
     tasks,
   }
 
+  const projectFileId =
+    await ensureProjectDocumentOnDrive(
+      accessToken,
+      projectFolderId,
+      project,
+    )
+
   return {
     project,
     projectFolderId,
+    projectFileId,
     tasksFolderId,
     attachmentsFolderId,
   }
@@ -1721,7 +1743,7 @@ export async function deleteAttachmentFromDrive(
   }
 }
 
-export async function loadProjectIndexFromDrive(
+async function loadProjectIndexFromDrive(
   accessToken: string,
   projectsFolderId: string,
 ): Promise<DriveProjectReference[]> {
@@ -1752,7 +1774,19 @@ export async function loadAvailableProjectSummariesFromDrive(
     )
 
   const ownedProjectFolderIdSet =
-    new Set(ownedProjectFolderIds)
+    new Set(
+      ownedProjectFolderIds,
+    )
+
+  const referenceByFolderId =
+    new Map(
+      projectIndex.map(
+        (reference) => [
+          reference.projectFolderId,
+          reference,
+        ],
+      ),
+    )
 
   const rememberedProjectFolderIds =
     new Set(
@@ -1811,7 +1845,14 @@ export async function loadAvailableProjectSummariesFromDrive(
 
       summaries.push({
         projectFolderId,
+
+        projectFileId:
+          referenceByFolderId.get(
+            projectFolderId,
+          )?.projectFileId,
+
         metadata,
+
         isOwned:
           ownedProjectFolderIdSet.has(
             projectFolderId,
@@ -1859,6 +1900,7 @@ export async function rememberProjectFolder(
   accessToken: string,
   projectsFolderId: string,
   projectFolderId: string,
+  projectFileId?: string,
 ): Promise<void> {
   const projectIndex =
     await loadProjectIndexFromDrive(
@@ -1866,10 +1908,28 @@ export async function rememberProjectFolder(
       projectsFolderId,
     )
 
+  const existingReference =
+    projectIndex.find(
+      (reference) =>
+        reference.projectFolderId ===
+        projectFolderId,
+    )
+
+  const rememberedProjectFileId =
+    projectFileId ??
+    existingReference?.projectFileId
+
+  const nextReference: DriveProjectReference = {
+    projectFolderId,
+  }
+
+  if (rememberedProjectFileId) {
+    nextReference.projectFileId =
+      rememberedProjectFileId
+  }
+
   const nextProjectIndex = [
-    {
-      projectFolderId,
-    },
+    nextReference,
 
     ...projectIndex.filter(
       (reference) =>
@@ -1921,6 +1981,26 @@ export async function loadFirstRememberedProjectFromDrive(
         projectIndexChanged = true
 
         continue
+      }
+
+      if (
+        reference.projectFileId !==
+        loadedProject.projectFileId
+      ) {
+        cleanedProjectIndex =
+          cleanedProjectIndex.map(
+            (savedReference) =>
+              savedReference.projectFolderId ===
+                reference.projectFolderId
+                ? {
+                  ...savedReference,
+                  projectFileId:
+                    loadedProject.projectFileId,
+                }
+                : savedReference,
+          )
+
+        projectIndexChanged = true
       }
 
       if (projectIndexChanged) {
