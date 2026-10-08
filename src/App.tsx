@@ -1502,6 +1502,9 @@ function App() {
     setMemberAccessRole('editor')
     setMemberInviteError(null)
 
+    setIsProjectChooserOpen(false)
+    setProjectChooserError(null)
+
     setActiveView('board')
     setIsDemoMode(false)
   }
