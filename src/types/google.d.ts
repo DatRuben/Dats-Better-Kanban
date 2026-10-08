@@ -28,6 +28,7 @@ declare global {
 
         ViewId: {
           FOLDERS: string
+          DOCS: string
         }
 
         DocsView: new (
@@ -53,11 +54,15 @@ declare global {
     error?: string
   }
 
+  interface GooglePickerDocument {
+    id?: string
+    name?: string
+    mimeType?: string
+  }
+
   interface GooglePickerCallbackData {
     action: string
-    docs?: Array<{
-      id?: string
-    }>
+    docs?: GooglePickerDocument[]
   }
 
   interface GooglePickerDocsView {
@@ -67,6 +72,10 @@ declare global {
 
     setSelectFolderEnabled: (
       enabled: boolean,
+    ) => GooglePickerDocsView
+
+    setMimeTypes: (
+      mimeTypes: string,
     ) => GooglePickerDocsView
   }
 
