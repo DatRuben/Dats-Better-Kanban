@@ -1902,27 +1902,30 @@ function App() {
       activeProject.members = [
         ...activeProject.members,
         {
-          id: connectedGoogleUser.permissionId,
-          displayName: connectedGoogleUser.displayName,
+          id:
+            connectedGoogleUser.permissionId,
+          displayName:
+            connectedGoogleUser.displayName,
           role: '',
-          email: connectedGoogleUser.emailAddress,
+          email:
+            connectedGoogleUser.emailAddress,
           accessRole: 'owner',
         },
       ]
+
+      await saveProjectMetadataToDrive(
+        accessToken,
+        projectsFolderId,
+        loadedDriveProject.projectFolderId,
+        activeProject,
+      )
+
+      await saveProjectDocumentToDrive(
+        accessToken,
+        loadedDriveProject.projectFileId,
+        activeProject,
+      )
     }
-
-    await saveProjectMetadataToDrive(
-      accessToken,
-      projectsFolderId,
-      loadedDriveProject.projectFolderId,
-      activeProject,
-    )
-
-    await saveProjectDocumentToDrive(
-      accessToken,
-      loadedDriveProject.projectFileId,
-      activeProject,
-    )
 
     await rememberProjectFolder(
       accessToken,

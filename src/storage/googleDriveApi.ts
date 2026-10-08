@@ -53,8 +53,8 @@ export interface LoadedDriveProject {
   project: Project
   projectFolderId: string
   projectFileId: string
-  tasksFolderId: string
-  attachmentsFolderId: string
+  tasksFolderId: string | null
+  attachmentsFolderId: string | null
 }
 
 export interface GoogleDriveUser {
@@ -473,6 +473,82 @@ export async function loadProjectFromDriveFolder(
   projectFolderId: string,
   createMissingFolders = false,
 ): Promise<LoadedDriveProject | null> {
+  const existingProjectFileId =
+    await findFile(
+      accessToken,
+      DATS_PROJECT_DOCUMENT_FILE_NAME,
+      projectFolderId,
+    )
+
+  if (existingProjectFileId) {
+    const projectDocument =
+      await loadProjectDocumentFromDrive(
+        accessToken,
+        existingProjectFileId,
+      )
+
+    let tasksFolderId =
+      await findFolder(
+        accessToken,
+        TASKS_FOLDER_NAME,
+        projectFolderId,
+      )
+
+    let attachmentsFolderId =
+      await findFolder(
+        accessToken,
+        ATTACHMENTS_FOLDER_NAME,
+        projectFolderId,
+      )
+
+    if (
+      createMissingFolders &&
+      !tasksFolderId
+    ) {
+      tasksFolderId =
+        await createFolder(
+          accessToken,
+          TASKS_FOLDER_NAME,
+          projectFolderId,
+        )
+    }
+
+    if (
+      createMissingFolders &&
+      !attachmentsFolderId
+    ) {
+      attachmentsFolderId =
+        await createFolder(
+          accessToken,
+          ATTACHMENTS_FOLDER_NAME,
+          projectFolderId,
+        )
+    }
+
+    return {
+      project:
+        projectDocument.project,
+
+      projectFolderId,
+
+      projectFileId:
+        existingProjectFileId,
+
+      tasksFolderId,
+
+      attachmentsFolderId,
+    }
+  }
+
+  /*
+   * Legacy project migration.
+   *
+   * Projects created before dats-project.json
+   * still load from project.json / columns.json /
+   * tasks, then receive a canonical project
+   * document.
+   */
+
   const storedProject =
     await loadProjectMetadataFromDrive(
       accessToken,
@@ -984,6 +1060,66 @@ export async function loadProjectDocumentFromDrive(
     projectFileId,
     projectFolderId,
     project,
+  }
+}
+
+export async function loadProjectFromDriveDocument(
+  accessToken: string,
+  projectFileId: string,
+): Promise<LoadedDriveProject> {
+  const projectDocument =
+    await loadProjectDocumentFromDrive(
+      accessToken,
+      projectFileId,
+    )
+
+  if (!projectDocument.projectFolderId) {
+    throw new Error(
+      'The Dat’s project document is not inside a project folder.',
+    )
+  }
+
+  const projectFolderId =
+    projectDocument.projectFolderId
+
+  let tasksFolderId: string | null = null
+  let attachmentsFolderId: string | null = null
+
+  try {
+    tasksFolderId =
+      await findFolder(
+        accessToken,
+        TASKS_FOLDER_NAME,
+        projectFolderId,
+      )
+
+    attachmentsFolderId =
+      await findFolder(
+        accessToken,
+        ATTACHMENTS_FOLDER_NAME,
+        projectFolderId,
+      )
+  } catch (error) {
+    if (
+      !isUnavailableProjectReferenceError(
+        error,
+      )
+    ) {
+      throw error
+    }
+  }
+
+  return {
+    project:
+      projectDocument.project,
+
+    projectFolderId,
+
+    projectFileId,
+
+    tasksFolderId,
+
+    attachmentsFolderId,
   }
 }
 
@@ -1963,12 +2099,47 @@ export async function loadFirstRememberedProjectFromDrive(
 
   for (const reference of projectIndex) {
     try {
-      const loadedProject =
-        await loadProjectFromDriveFolder(
-          accessToken,
-          reference.projectFolderId,
-          false,
-        )
+      let loadedProject:
+        LoadedDriveProject | null = null
+
+      if (reference.projectFileId) {
+        try {
+          loadedProject =
+            await loadProjectFromDriveDocument(
+              accessToken,
+              reference.projectFileId,
+            )
+        } catch (error) {
+          if (
+            !isUnavailableProjectReferenceError(
+              error,
+            )
+          ) {
+            throw error
+          }
+
+          /*
+           * The remembered document may have been
+           * removed or replaced.
+           *
+           * Owned legacy projects can still recover
+           * from their remembered folder.
+           */
+          loadedProject =
+            await loadProjectFromDriveFolder(
+              accessToken,
+              reference.projectFolderId,
+              false,
+            )
+        }
+      } else {
+        loadedProject =
+          await loadProjectFromDriveFolder(
+            accessToken,
+            reference.projectFolderId,
+            false,
+          )
+      }
 
       if (!loadedProject) {
         cleanedProjectIndex =
@@ -1994,6 +2165,7 @@ export async function loadFirstRememberedProjectFromDrive(
                 reference.projectFolderId
                 ? {
                   ...savedReference,
+
                   projectFileId:
                     loadedProject.projectFileId,
                 }
