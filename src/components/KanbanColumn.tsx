@@ -74,6 +74,8 @@ export function KanbanColumn({
   onUploadMedia,
   onLoadAttachment,
   onColumnOrderingChange,
+  allowManualTaskOrdering,
+  onMoveTiedTask,
 }: KanbanColumnProps) {
   const {
     ref,

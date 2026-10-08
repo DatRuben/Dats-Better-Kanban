@@ -1428,7 +1428,7 @@ function App() {
                 task.deadline ===
                 taskInput.deadline
                 ? task.manualOrderKey
-                : undefined,
+                : `${updatedAt}:${task.id}`,
 
             tags: taskInput.tags,
             updatedAt,
@@ -3421,6 +3421,10 @@ function App() {
                       onLoadAttachment={
                         handleLoadAttachment
                       }
+                      canMoveManualUp={false}
+                      canMoveManualDown={false}
+                      onMoveManualUp={() => { }}
+                      onMoveManualDown={() => { }}
                     />
                   </div>
                 )

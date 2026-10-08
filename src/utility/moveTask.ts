@@ -34,6 +34,6 @@ export function moveTaskToColumn(
     manualOrderKey:
       currentColumn.id === targetColumn.id
         ? task.manualOrderKey
-        : undefined,
+        : `${completionTime}:${task.id}`,
   }
 }
