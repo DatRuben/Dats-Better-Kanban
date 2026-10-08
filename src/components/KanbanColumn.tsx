@@ -76,10 +76,6 @@ export function KanbanColumn({
   onColumnOrderingChange,
   allowManualTaskOrdering,
   onMoveTiedTask,
-  onColumnOrderingChange,
-  allowManualTaskOrdering,
-  onMoveTiedTask,
-}: KanbanColumnProps) {
 }: KanbanColumnProps) {
   const {
     ref,
