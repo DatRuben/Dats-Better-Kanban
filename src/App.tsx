@@ -1759,18 +1759,6 @@ function App() {
       return
     }
 
-    useEffect(() => {
-      if (
-        activeView === 'mine' &&
-        !googleUser
-      ) {
-        setActiveView('board')
-      }
-    }, [
-      activeView,
-      googleUser,
-    ])
-
     const accessToken =
       googleAccessToken
 
@@ -2017,6 +2005,18 @@ function App() {
     isDemoMode,
     googleAccessToken,
     googleTasksFolderId,
+  ])
+
+  useEffect(() => {
+    if (
+      activeView === 'mine' &&
+      !googleUser
+    ) {
+      setActiveView('board')
+    }
+  }, [
+    activeView,
+    googleUser,
   ])
 
   async function handleConnectGoogle(
@@ -2686,6 +2686,17 @@ function App() {
             Timeline
           </button>
 
+          {!isDemoMode && googleUser && (
+            <button
+              type="button"
+              onClick={() =>
+                setActiveView('mine')
+              }
+            >
+              My Tasks
+            </button>
+          )}
+
           <button
             type="button"
             onClick={() => setActiveView('history')}
@@ -2856,17 +2867,6 @@ function App() {
             })}
           </section>
         </DragDropProvider>
-      )}
-
-      {!isDemoMode && googleUser && (
-        <button
-          type="button"
-          onClick={() =>
-            setActiveView('mine')
-          }
-        >
-          My Tasks
-        </button>
       )}
 
       {activeView === 'mine' && (
