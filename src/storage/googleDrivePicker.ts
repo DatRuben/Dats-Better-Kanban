@@ -3,6 +3,11 @@ import {
   GOOGLE_PICKER_API_KEY,
 } from '../config/google'
 
+export interface PickedGoogleDriveFile {
+  id: string
+  name: string
+}
+
 function loadGooglePickerApi(): Promise<void> {
   return new Promise((resolve, reject) => {
     if (!window.gapi) {
@@ -22,20 +27,7 @@ function loadGooglePickerApi(): Promise<void> {
   })
 }
 
-export async function pickGoogleDriveFolder(
-  accessToken: string,
-): Promise<string | null> {
-  if (
-    !GOOGLE_PICKER_API_KEY ||
-    !GOOGLE_APP_ID
-  ) {
-    throw new Error(
-      'Google Picker is not configured.',
-    )
-  }
-
-  await loadGooglePickerApi()
-
+function getGooglePickerApi() {
   const pickerApi =
     window.google?.picker
 
@@ -44,6 +36,30 @@ export async function pickGoogleDriveFolder(
       'Google Picker could not be loaded.',
     )
   }
+
+  return pickerApi
+}
+
+function verifyPickerConfiguration() {
+  if (
+    !GOOGLE_PICKER_API_KEY ||
+    !GOOGLE_APP_ID
+  ) {
+    throw new Error(
+      'Google Picker is not configured.',
+    )
+  }
+}
+
+export async function pickGoogleDriveFolder(
+  accessToken: string,
+): Promise<string | null> {
+  verifyPickerConfiguration()
+
+  await loadGooglePickerApi()
+
+  const pickerApi =
+    getGooglePickerApi()
 
   return new Promise(
     (resolve, reject) => {
@@ -83,6 +99,81 @@ export async function pickGoogleDriveFolder(
               }
 
               resolve(folderId)
+
+              return
+            }
+
+            if (
+              data.action ===
+              pickerApi.Action.CANCEL
+            ) {
+              resolve(null)
+            }
+          })
+          .build()
+
+      picker.setVisible(true)
+    },
+  )
+}
+
+export async function pickGoogleDriveProjectFile(
+  accessToken: string,
+): Promise<PickedGoogleDriveFile | null> {
+  verifyPickerConfiguration()
+
+  await loadGooglePickerApi()
+
+  const pickerApi =
+    getGooglePickerApi()
+
+  return new Promise(
+    (resolve, reject) => {
+      const projectView =
+        new pickerApi.DocsView(
+          pickerApi.ViewId.DOCS,
+        )
+          .setIncludeFolders(true)
+          .setSelectFolderEnabled(false)
+          .setMimeTypes(
+            'application/json',
+          )
+
+      const picker =
+        new pickerApi.PickerBuilder()
+          .addView(projectView)
+          .setOAuthToken(accessToken)
+          .setDeveloperKey(
+            GOOGLE_PICKER_API_KEY,
+          )
+          .setAppId(
+            GOOGLE_APP_ID,
+          )
+          .setCallback((data) => {
+            if (
+              data.action ===
+              pickerApi.Action.PICKED
+            ) {
+              const document =
+                data.docs?.[0]
+
+              if (
+                !document?.id ||
+                !document.name
+              ) {
+                reject(
+                  new Error(
+                    'Google Picker did not return a project file.',
+                  ),
+                )
+
+                return
+              }
+
+              resolve({
+                id: document.id,
+                name: document.name,
+              })
 
               return
             }

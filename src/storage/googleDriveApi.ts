@@ -21,6 +21,9 @@ const PROJECTS_FOLDER_NAME =
 const PROJECT_FILE_NAME =
   'project.json'
 
+export const DATS_PROJECT_DOCUMENT_FILE_NAME =
+  'dats-project.json'
+
 const PROJECT_INDEX_FILE_NAME =
   'project-index.json'
 
@@ -841,6 +844,186 @@ async function readJsonFile<T>(
       `Google Drive file "${fileName}" contains invalid JSON.`,
     )
   }
+}
+
+export interface DriveProjectDocument {
+  projectFileId: string
+  projectFolderId: string | null
+  project: Project
+}
+
+async function downloadJsonFileById<T>(
+  accessToken: string,
+  fileId: string,
+): Promise<T> {
+  const response =
+    await fetch(
+      `${GOOGLE_DRIVE_FILES_URL}/${fileId}?alt=media`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${accessToken}`,
+        },
+      },
+    )
+
+  if (!response.ok) {
+    throw new Error(
+      `Google Drive file download failed with status ${response.status}.`,
+    )
+  }
+
+  const fileContents =
+    await response.text()
+
+  if (!fileContents.trim()) {
+    throw new Error(
+      'Google Drive file is empty.',
+    )
+  }
+
+  try {
+    return JSON.parse(
+      fileContents,
+    ) as T
+  } catch {
+    throw new Error(
+      'Google Drive file contains invalid JSON.',
+    )
+  }
+}
+
+async function getDriveFileParentId(
+  accessToken: string,
+  fileId: string,
+): Promise<string | null> {
+  const url =
+    new URL(
+      `${GOOGLE_DRIVE_FILES_URL}/${fileId}`,
+    )
+
+  url.searchParams.set(
+    'fields',
+    'parents',
+  )
+
+  const response =
+    await fetch(url, {
+      headers: {
+        Authorization:
+          `Bearer ${accessToken}`,
+      },
+    })
+
+  if (!response.ok) {
+    throw new Error(
+      `Google Drive file metadata request failed with status ${response.status}.`,
+    )
+  }
+
+  const data =
+    await response.json() as {
+      parents?: string[]
+    }
+
+  return data.parents?.[0] ?? null
+}
+
+export async function loadProjectDocumentFromDrive(
+  accessToken: string,
+  projectFileId: string,
+): Promise<DriveProjectDocument> {
+  const project =
+    await downloadJsonFileById<Project>(
+      accessToken,
+      projectFileId,
+    )
+
+  if (
+    !project ||
+    typeof project.id !== 'string' ||
+    typeof project.name !== 'string' ||
+    !Array.isArray(project.columns) ||
+    !Array.isArray(project.tasks) ||
+    !Array.isArray(project.members)
+  ) {
+    throw new Error(
+      'The selected file is not a valid Dat’s project.',
+    )
+  }
+
+  const projectFolderId =
+    await getDriveFileParentId(
+      accessToken,
+      projectFileId,
+    )
+
+  return {
+    projectFileId,
+    projectFolderId,
+    project,
+  }
+}
+
+export async function saveProjectDocumentToDrive(
+  accessToken: string,
+  projectFileId: string,
+  project: Project,
+): Promise<void> {
+  const response =
+    await fetch(
+      `https://www.googleapis.com/upload/drive/v3/files/${projectFileId}?uploadType=media`,
+      {
+        method: 'PATCH',
+
+        headers: {
+          Authorization:
+            `Bearer ${accessToken}`,
+          'Content-Type':
+            'application/json',
+        },
+
+        body: JSON.stringify(
+          project,
+          null,
+          2,
+        ),
+      },
+    )
+
+  if (!response.ok) {
+    throw new Error(
+      `Google Drive project document save failed with status ${response.status}.`,
+    )
+  }
+}
+
+export async function ensureProjectDocumentOnDrive(
+  accessToken: string,
+  projectFolderId: string,
+  project: Project,
+): Promise<string> {
+  await writeJsonFile(
+    accessToken,
+    projectFolderId,
+    DATS_PROJECT_DOCUMENT_FILE_NAME,
+    project,
+  )
+
+  const projectFileId =
+    await findFile(
+      accessToken,
+      DATS_PROJECT_DOCUMENT_FILE_NAME,
+      projectFolderId,
+    )
+
+  if (!projectFileId) {
+    throw new Error(
+      'Google Drive project document could not be found after saving.',
+    )
+  }
+
+  return projectFileId
 }
 
 export async function loadProjectMetadataFromDrive(
