@@ -56,7 +56,7 @@ import type {
 import {
   pickGoogleDriveFolder,
 } from './storage/googleDrivePicker'
-
+import { TaskCard } from './components/TaskCard'
 
 const priorityOrder = {
   critical: 0,
@@ -859,7 +859,12 @@ function App() {
   ])
 
   const [activeView, setActiveView] =
-    useState<'board' | 'timeline' | 'history'>('board')
+    useState<
+      'board' |
+      'mine' |
+      'timeline' |
+      'history'
+    >('board')
   const orderedColumns = [...columns].sort(
     (firstColumn, secondColumn) =>
       firstColumn.order - secondColumn.order,
@@ -908,6 +913,28 @@ function App() {
     .sort(compareTasks)
 
   const timelineGroups: Task[][] = []
+
+  const myTasks =
+    googleUser
+      ? tasks
+        .filter((task) => {
+          if (
+            task.assigneeId !==
+            googleUser.permissionId
+          ) {
+            return false
+          }
+
+          const taskColumn =
+            columns.find(
+              (column) =>
+                column.id === task.columnId,
+            )
+
+          return !taskColumn?.countsAsCompleted
+        })
+        .sort(compareTasks)
+      : []
 
   const completedTasks = tasks
     .filter((task) => {
@@ -1731,6 +1758,18 @@ function App() {
     ) {
       return
     }
+
+    useEffect(() => {
+      if (
+        activeView === 'mine' &&
+        !googleUser
+      ) {
+        setActiveView('board')
+      }
+    }, [
+      activeView,
+      googleUser,
+    ])
 
     const accessToken =
       googleAccessToken
@@ -2819,6 +2858,69 @@ function App() {
         </DragDropProvider>
       )}
 
+      {!isDemoMode && googleUser && (
+        <button
+          type="button"
+          onClick={() =>
+            setActiveView('mine')
+          }
+        >
+          My Tasks
+        </button>
+      )}
+
+      {activeView === 'mine' && (
+        <section className="my-tasks-view">
+          <h2>My Tasks</h2>
+
+          {myTasks.length === 0 ? (
+            <p className="my-tasks-view__empty">
+              No active tasks are assigned to you.
+            </p>
+          ) : (
+            <div className="my-tasks-list">
+              {myTasks.map((task, index) => {
+                const taskColumn =
+                  columns.find(
+                    (column) =>
+                      column.id === task.columnId,
+                  )
+
+                const assignee =
+                  currentProject.members.find(
+                    (member) =>
+                      member.id === task.assigneeId,
+                  ) ?? null
+
+                return (
+                  <div
+                    key={task.id}
+                    className="my-tasks-item"
+                  >
+                    <p className="my-tasks-item__column">
+                      {taskColumn?.title ??
+                        'Unknown section'}
+                    </p>
+
+                    <TaskCard
+                      task={task}
+                      assignee={assignee}
+                      taskNumber={index + 1}
+                      isPipelineEditing={false}
+                      isEditing={false}
+                      isTaskEditing={false}
+                      onEdit={() => { }}
+                      onLoadAttachment={
+                        handleLoadAttachment
+                      }
+                    />
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </section>
+      )}
 
       {activeView === 'timeline' && (
         <section

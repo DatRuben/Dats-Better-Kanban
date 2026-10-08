@@ -1187,3 +1187,41 @@
   font-size: 0.7rem;
   cursor: pointer;
 }
+
+.my-tasks-view {
+  min-height: 32rem;
+  padding: 1rem;
+  border: 1px solid #303746;
+  border-radius: 0.75rem;
+  background: #171a21;
+}
+
+.my-tasks-view h2 {
+  margin-top: 0;
+}
+
+.my-tasks-list {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fill,
+      minmax(16rem, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.my-tasks-item {
+  min-width: 0;
+}
+
+.my-tasks-item__column {
+  margin: 0 0 0.4rem;
+  color: #8f99aa;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.my-tasks-view__empty {
+  color: #717b8d;
+}
