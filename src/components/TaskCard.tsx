@@ -8,9 +8,6 @@ import type {
   DemoUser,
   Task,
 } from '../types/board'
-import {
-  TaskDetailsDialog,
-} from './components/TaskDetailsDialog'
 
 interface TaskCardProps {
   task: Task
