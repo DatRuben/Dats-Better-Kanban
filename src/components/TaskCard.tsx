@@ -83,6 +83,14 @@ export function TaskCard({
   ] =
     useState<string | null>(null)
 
+  const fileAttachments =
+    task.attachments.filter(
+      (attachment) =>
+        !isPreviewableMedia(
+          attachment.mimeType,
+        ),
+    )
+
   const previewedGlb =
     fileAttachments.find(
       (attachment) =>
@@ -92,14 +100,6 @@ export function TaskCard({
           attachment.fileName,
         ),
     ) ?? null
-
-  const fileAttachments =
-    task.attachments.filter(
-      (attachment) =>
-        !isPreviewableMedia(
-          attachment.mimeType,
-        ),
-    )
 
   const mediaAttachmentIds =
     mediaAttachments

@@ -2291,8 +2291,16 @@ function App() {
       'application/octet-stream'
 
     if (isDemoMode) {
+      const canPreviewLocally =
+        isPreviewableMedia(
+          file.type,
+        ) ||
+        isGlbFileName(
+          file.name,
+        )
+
       const previewUrl =
-        isPreviewableMedia(file.type)
+        canPreviewLocally
           ? URL.createObjectURL(file)
           : undefined
 
