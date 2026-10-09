@@ -1748,8 +1748,10 @@ function App() {
             taskSyncConflictIdsRef.current,
           )
 
-        projectDocumentConflictRef.current =
-          mergeResult.projectConflict
+        if (mergeResult.projectConflict) {
+          projectDocumentConflictRef.current =
+            true
+        }
 
         taskSyncConflictIdsRef.current =
           new Set(
@@ -1781,7 +1783,10 @@ function App() {
           mergeResult.localProject.tasks,
         )
 
-        if (mergeResult.projectConflict) {
+        if (
+          mergeResult.projectConflict ||
+          projectDocumentConflictRef.current
+        ) {
           setProjectSyncError(
             'The pipeline or project settings changed in two places at the same time. Reload the project before continuing.',
           )
