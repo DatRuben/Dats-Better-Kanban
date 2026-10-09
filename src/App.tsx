@@ -769,26 +769,15 @@ function App() {
     }
 
     for (const attachment of attachments) {
-      if (attachment.driveFileId) {
-        pendingAttachmentDeletionFileIdsRef
-          .current
-          .add(
-            attachment.driveFileId,
-          )
+      if (!attachment.driveFileId) {
+        continue
       }
 
-      const outputDriveFileId =
-        attachment.processing
-          ?.output
-          ?.driveFileId
-
-      if (outputDriveFileId) {
-        pendingAttachmentDeletionFileIdsRef
-          .current
-          .add(
-            outputDriveFileId,
-          )
-      }
+      pendingAttachmentDeletionFileIdsRef
+        .current
+        .add(
+          attachment.driveFileId,
+        )
     }
   }
 
@@ -2293,52 +2282,52 @@ function App() {
     )
   }
 
-async function handleUploadAttachment(
-  file: File,
-): Promise<Attachment> {
-  const mimeType =
-    file.type ||
-    'application/octet-stream'
+  async function handleUploadAttachment(
+    file: File,
+  ): Promise<Attachment> {
+    const mimeType =
+      file.type ||
+      'application/octet-stream'
 
-  if (isDemoMode) {
-    const previewUrl =
-      isPreviewableMedia(file.type)
-        ? URL.createObjectURL(file)
-        : undefined
+    if (isDemoMode) {
+      const previewUrl =
+        isPreviewableMedia(file.type)
+          ? URL.createObjectURL(file)
+          : undefined
+
+      return {
+        id: crypto.randomUUID(),
+        fileName: file.name,
+        mimeType,
+        ...(previewUrl
+          ? { previewUrl }
+          : {}),
+      }
+    }
+
+    if (
+      !googleAccessToken ||
+      !googleAttachmentsFolderId
+    ) {
+      throw new Error(
+        'Google Drive is not ready for attachment uploads.',
+      )
+    }
+
+    const driveFileId =
+      await uploadAttachmentToDrive(
+        googleAccessToken,
+        googleAttachmentsFolderId,
+        file,
+      )
 
     return {
       id: crypto.randomUUID(),
       fileName: file.name,
       mimeType,
-      ...(previewUrl
-        ? { previewUrl }
-        : {}),
+      driveFileId,
     }
   }
-
-  if (
-    !googleAccessToken ||
-    !googleAttachmentsFolderId
-  ) {
-    throw new Error(
-      'Google Drive is not ready for attachment uploads.',
-    )
-  }
-
-  const driveFileId =
-    await uploadAttachmentToDrive(
-      googleAccessToken,
-      googleAttachmentsFolderId,
-      file,
-    )
-
-  return {
-    id: crypto.randomUUID(),
-    fileName: file.name,
-    mimeType,
-    driveFileId,
-  }
-}
 
   async function handleUploadAttachments(
     files: File[],
