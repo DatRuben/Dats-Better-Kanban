@@ -51,6 +51,10 @@ interface KanbanColumnProps {
     taskId: string,
     direction: 'up' | 'down',
   ) => void
+  onColumnPriorityVisibilityChange: (
+    columnId: string,
+    hidePriorityOnCards: boolean,
+  ) => void
 }
 
 export function KanbanColumn({
@@ -76,6 +80,7 @@ export function KanbanColumn({
   onColumnOrderingChange,
   allowManualTaskOrdering,
   onMoveTiedTask,
+  onColumnPriorityVisibilityChange,
 }: KanbanColumnProps) {
   const {
     ref,
@@ -159,6 +164,22 @@ export function KanbanColumn({
                   Priority/Deadline Ordering
                 </label>
               )}
+
+              <label className="kanban-column__completion-setting">
+                <input
+                  type="checkbox"
+                  checked={
+                    column.hidePriorityOnCards === true
+                  }
+                  onChange={(event) =>
+                    onColumnPriorityVisibilityChange(
+                      column.id,
+                      event.target.checked,
+                    )
+                  }
+                />
+                Hide priority on cards
+              </label>
 
               <button
                 type="button"
@@ -277,6 +298,10 @@ export function KanbanColumn({
                   task.id,
                   'down',
                 )
+              }
+              hidePriority={
+                column.countsAsCompleted &&
+                column.hidePriorityOnCards === true
               }
             />
           )

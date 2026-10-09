@@ -936,6 +936,26 @@ function App() {
     )
   }
 
+  function handleColumnPriorityVisibilityChange(
+    columnId: string,
+    hidePriorityOnCards: boolean,
+  ) {
+    if (!canCurrentUserEditProject) {
+      return
+    }
+
+    setColumns((currentColumns) =>
+      currentColumns.map((column) =>
+        column.id === columnId
+          ? {
+            ...column,
+            hidePriorityOnCards,
+          }
+          : column,
+      ),
+    )
+  }
+
   function handleColumnCompletionChange(
     columnId: string,
     countsAsCompleted: boolean,
@@ -2895,6 +2915,9 @@ function App() {
                     handleColumnOrderingChange
                   }
                   isTaskEditing={isTaskEditing}
+                  onColumnPriorityVisibilityChange={
+                    handleColumnPriorityVisibilityChange
+                  }
                   allowManualTaskOrdering={
                     taskSortMode === 'priority' &&
                     assigneeFilter === 'all' &&

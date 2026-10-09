@@ -54,6 +54,7 @@ export interface BoardColumn {
   order: number
   countsAsCompleted: boolean
   usePriorityDeadlineOrdering?: boolean
+  hidePriorityOnCards?: boolean
 }
 
 export interface Project {

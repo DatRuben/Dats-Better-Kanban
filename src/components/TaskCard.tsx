@@ -24,6 +24,7 @@ interface TaskCardProps {
   canMoveManualDown: boolean
   onMoveManualUp: () => void
   onMoveManualDown: () => void
+  hidePriority?: boolean
 }
 
 function getInitials(displayName: string) {
@@ -60,6 +61,7 @@ export function TaskCard({
   canMoveManualDown,
   onMoveManualUp,
   onMoveManualDown,
+  hidePriority = false,
 }: TaskCardProps) {
   const assigneeInitials = assignee
     ? getInitials(assignee.displayName)
@@ -184,11 +186,13 @@ export function TaskCard({
       className="task-card"
     >
       <div className="task-card__top">
-        <p
-          className={`task-card__priority task-card__priority--${task.priority}`}
-        >
-          {task.priority}
-        </p>
+        {!hidePriority && (
+          <p
+            className={`task-card__priority task-card__priority--${task.priority}`}
+          >
+            {task.priority}
+          </p>
+        )}
 
         <div className="task-card__ranking">
           <p className="task-card__number">
@@ -267,8 +271,8 @@ export function TaskCard({
               <button
                 type="button"
                 className={`task-card__edit-button ${isEditing
-                    ? 'task-card__edit-button--active'
-                    : ''
+                  ? 'task-card__edit-button--active'
+                  : ''
                   }`}
                 onPointerDown={(event) =>
                   event.stopPropagation()
