@@ -65,6 +65,22 @@ Dat's: Better Kanban
             └── video.mp4
 ```
 
+Older project storage formats can be migrated into the canonical project document.
+
+## Collaboration
+
+Projects can be shared through Google Drive.
+
+Dat's supports owner, editor, and viewer roles.
+
+Editors can modify project tasks and workflow data while viewers receive read-only access inside the application.
+
+Project changes are saved to the shared `dats-project.json` document and other sessions periodically check for updates.
+
+When different tasks are changed independently, Dat's attempts to merge both changes.
+
+When conflicting edits are detected, Dat's blocks unsafe automatic overwrites rather than silently replacing another user's work.
+
 ## Tech Stack
 
 - React
@@ -74,6 +90,7 @@ Dat's: Better Kanban
 - dnd-kit
 - Google Identity Services
 - Google Drive API
+- Google Picker API
 
 ## Running Locally
 
@@ -90,6 +107,14 @@ npm run dev
 ```
 
 Then open the local address shown by Vite in your browser.
+
+
+To create a production build:
+
+```bash
+npm run build
+```
+
 
 ## Current Status
 
