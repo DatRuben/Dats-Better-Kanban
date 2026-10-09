@@ -1220,56 +1220,6 @@
   font-size: 0.75rem;
 }
 
-@media (max-width: 600px) {
-  .welcome-screen__choices {
-    grid-template-columns: 1fr;
-  }
-
-  .task-creator__field-row {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 900px) {
-  .app-shell {
-    padding: 1rem;
-  }
-
-  .app-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .app-header__actions {
-    flex-wrap: wrap;
-  }
-
-  .view-tabs {
-    flex-wrap: wrap;
-  }
-
-  .kanban-board {
-    grid-auto-flow: row;
-    grid-auto-columns: unset;
-    grid-template-columns: minmax(0, 1fr);
-    overflow-x: visible;
-  }
-
-  .kanban-column {
-    width: 100%;
-    min-width: 0;
-    min-height: 0;
-  }
-
-  .board-toolbar {
-    flex-wrap: wrap;
-  }
-
-  .board-toolbar__edit-controls {
-    flex-wrap: wrap;
-  }
-}
-
 .google-session-warning {
   display: flex;
   align-items: center;
@@ -1544,4 +1494,205 @@
 .task-card__manual-order button:disabled {
   cursor: default;
   opacity: 0.35;
+}
+
+.kanban-column--editing .kanban-column__header {
+  height: auto;
+  min-height: 5.75rem;
+}
+
+.kanban-column__editor-options {
+  flex-wrap: wrap;
+}
+
+.task-card,
+.task-card__top,
+.task-card__ranking,
+.history-item,
+.project-chooser__project {
+  min-width: 0;
+}
+
+.task-card h3,
+.task-card__description,
+.history-item h3,
+.task-details-dialog h2,
+.task-details-dialog__attachment strong {
+  overflow-wrap: anywhere;
+}
+
+.task-card__deadline {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .app-shell {
+    padding: 1rem;
+  }
+
+  .app-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .app-header__actions {
+    flex-wrap: wrap;
+  }
+
+  .board-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .view-tabs {
+    flex-wrap: wrap;
+  }
+
+  .assignee-filter,
+  .task-sort {
+    width: 100%;
+    margin-left: 0;
+    justify-content: space-between;
+  }
+
+  .assignee-filter select,
+  .task-sort select {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .board-toolbar__edit-controls {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .kanban-board,
+  .kanban-board--scrolling {
+    grid-auto-flow: row;
+    grid-auto-columns: unset;
+    grid-template-columns:
+      minmax(0, 1fr);
+    overflow-x: visible;
+  }
+
+  .kanban-column {
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .kanban-column__editor-options {
+    justify-content: flex-start;
+  }
+
+  .kanban-column__delete-button {
+    margin-left: auto;
+  }
+
+  .project-chooser__header {
+    flex-wrap: wrap;
+  }
+
+  .my-tasks-list {
+    grid-template-columns:
+      repeat(
+        auto-fill,
+        minmax(
+          min(16rem, 100%),
+          1fr
+        )
+      );
+  }
+
+  .task-details-dialog {
+    width: 100%;
+    max-height:
+      calc(100dvh - 2rem);
+  }
+}
+
+@media (max-width: 600px) {
+  .app-shell,
+  .welcome-screen {
+    padding: 0.75rem;
+  }
+
+  .welcome-screen__choices {
+    grid-template-columns: 1fr;
+  }
+
+  .task-creator__field-row {
+    grid-template-columns: 1fr;
+  }
+
+  .project-title-input {
+    font-size: 1.5rem;
+  }
+
+  .app-header__actions {
+    align-items: stretch;
+  }
+
+  .assignee-filter,
+  .task-sort {
+    display: grid;
+    grid-template-columns:
+      auto minmax(0, 1fr);
+  }
+
+  .assignee-filter select,
+  .task-sort select {
+    width: 100%;
+  }
+
+  .board-toolbar__edit-controls {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .pipeline-controls__button {
+    width: 100%;
+  }
+
+  .kanban-column__header {
+    padding: 0.75rem;
+  }
+
+  .kanban-column__content {
+    padding: 0.75rem;
+  }
+
+  .task-card__top {
+    gap: 0.5rem;
+  }
+
+  .task-card__ranking {
+    max-width: 50%;
+  }
+
+  .history-item {
+    align-items: flex-start;
+  }
+
+  .task-details-backdrop {
+    padding: 0.5rem;
+  }
+
+  .task-details-dialog {
+    max-height:
+      calc(100dvh - 1rem);
+    padding: 1rem;
+  }
+
+  .task-details-dialog__metadata {
+    grid-template-columns: 1fr;
+  }
+
+  .task-details-dialog__attachment {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
