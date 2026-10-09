@@ -235,23 +235,35 @@ export function TaskDetailsDialog({
                         0 ? (
                         <div className="task-details-dialog__attachments">
                             {task.attachments.map(
-                                (attachment) => (
-                                    <div
-                                        key={attachment.id}
-                                        className="task-details-dialog__attachment"
-                                    >
-                                        <strong>
-                                            {attachment.fileName}
-                                        </strong>
+                                (attachment) => {
+                                    const processingLabel =
+                                        getAttachmentProcessingLabel(
+                                            attachment.fileName,
+                                            attachment.processing,
+                                        )
 
-                                        <span>
-                                            {getAttachmentTypeLabel(
-                                                attachment.fileName,
-                                                attachment.mimeType,
-                                            )}
-                                        </span>
-                                    </div>
-                                ),
+                                    return (
+                                        <div
+                                            key={attachment.id}
+                                            className="task-details-dialog__attachment"
+                                        >
+                                            <strong>
+                                                {attachment.fileName}
+                                            </strong>
+
+                                            <span>
+                                                {getAttachmentTypeLabel(
+                                                    attachment.fileName,
+                                                    attachment.mimeType,
+                                                )}
+
+                                                {processingLabel
+                                                    ? ` · ${processingLabel}`
+                                                    : ''}
+                                            </span>
+                                        </div>
+                                    )
+                                },
                             )}
                         </div>
                     ) : (
