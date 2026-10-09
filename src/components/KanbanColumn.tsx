@@ -55,11 +55,6 @@ interface KanbanColumnProps {
     columnId: string,
     hidePriorityOnCards: boolean,
   ) => void
-  onConvertAttachment: (
-    taskId: string,
-    attachmentId: string,
-  ) => Promise<void>
-  isBlendConversionAvailable: boolean
 }
 
 export function KanbanColumn({
@@ -81,8 +76,6 @@ export function KanbanColumn({
   onCancelEditingTask,
   onDeleteTask,
   onUploadAttachments,
-  onConvertAttachment,
-  isBlendConversionAvailable,
   onLoadAttachment,
   onColumnOrderingChange,
   allowManualTaskOrdering,
@@ -283,16 +276,6 @@ export function KanbanColumn({
                 }
                 onUploadAttachments={
                   onUploadAttachments
-                }
-                onConvertAttachment={
-                  (attachmentId) =>
-                    onConvertAttachment(
-                      task.id,
-                      attachmentId,
-                    )
-                }
-                isBlendConversionAvailable={
-                  isBlendConversionAvailable
                 }
               />
             )

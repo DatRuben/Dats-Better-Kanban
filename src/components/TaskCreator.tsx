@@ -8,8 +8,6 @@ import type {
     Task,
 } from '../types/board'
 import {
-    getAttachmentProcessingLabel,
-    isBlenderFileName,
     isSupportedAttachmentFile,
 } from '../utility/attachmentTypes'
 
@@ -23,10 +21,6 @@ interface TaskCreatorProps {
     onUploadAttachments: (
         files: File[],
     ) => Promise<Attachment[]>
-    onConvertAttachment?: (
-        attachmentId: string,
-    ) => Promise<void>
-    isBlendConversionAvailable?: boolean
 }
 
 export function TaskCreator({
@@ -37,8 +31,6 @@ export function TaskCreator({
     onCancel,
     onDelete,
     onUploadAttachments,
-    onConvertAttachment,
-    isBlendConversionAvailable = false,
 }: TaskCreatorProps) {
     const [title, setTitle] = useState(
         initialTask?.title ?? '',
@@ -423,8 +415,8 @@ export function TaskCreator({
 
                 <small>
                     Images, GIFs, MP4
-                    videos, and Blender
-                    .blend files
+                    videos, Blender .blend,
+                    and GLB 3D models
                 </small>
 
                 {existingAttachments.length >
@@ -442,35 +434,6 @@ export function TaskCreator({
                                                 attachment.id,
                                             )
 
-                                    const isBlendFile =
-                                        isBlenderFileName(
-                                            attachment.fileName,
-                                        )
-
-                                    const processingStatus =
-                                        attachment.processing
-                                            ?.status ??
-                                        (
-                                            isBlendFile
-                                                ? 'uploaded'
-                                                : null
-                                        )
-
-                                    const processingLabel =
-                                        getAttachmentProcessingLabel(
-                                            attachment.fileName,
-                                            attachment.processing,
-                                        )
-
-                                    const canRequestConversion =
-                                        isBlendFile &&
-                                        (
-                                            processingStatus ===
-                                            'uploaded' ||
-                                            processingStatus ===
-                                            'failed'
-                                        )
-
                                     return (
                                         <div
                                             key={
@@ -481,49 +444,7 @@ export function TaskCreator({
                                                 {
                                                     attachment.fileName
                                                 }
-
-                                                {processingLabel
-                                                    ? ` — ${processingLabel}`
-                                                    : ''}
                                             </small>
-
-                                            {attachment.processing
-                                                ?.errorMessage && (
-                                                    <small>
-                                                        {' — '}
-                                                        {
-                                                            attachment
-                                                                .processing
-                                                                .errorMessage
-                                                        }
-                                                    </small>
-                                                )}
-
-                                            {!isRemoved &&
-                                                canRequestConversion &&
-                                                onConvertAttachment && (
-                                                    <button
-                                                        type="button"
-                                                        disabled={
-                                                            !isBlendConversionAvailable
-                                                        }
-                                                        title={
-                                                            isBlendConversionAvailable
-                                                                ? 'Convert Blender file to GLB'
-                                                                : 'Blender conversion service is not configured.'
-                                                        }
-                                                        onClick={() => {
-                                                            void onConvertAttachment(
-                                                                attachment.id,
-                                                            )
-                                                        }}
-                                                    >
-                                                        {processingStatus ===
-                                                            'failed'
-                                                            ? 'Retry Conversion'
-                                                            : 'Convert to GLB'}
-                                                    </button>
-                                                )}
 
                                             {isRemoved ? (
                                                 <>
@@ -574,13 +495,13 @@ export function TaskCreator({
                                         </div>
                                     )
                                 },
-                            )}
+                            )}f
                         </div>
                     )}
 
                 <input
                     type="file"
-                    accept="image/*,video/mp4,.blend"
+                    accept="image/*,video/mp4,.blend,.glb"
                     multiple
                     onChange={(event) => {
                         const selectedFiles =

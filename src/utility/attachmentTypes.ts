@@ -1,7 +1,3 @@
-import type {
-    AttachmentProcessing,
-} from '../types/board'
-
 export function isPreviewableMedia(
     mimeType: string,
 ) {
@@ -19,12 +15,21 @@ export function isBlenderFileName(
         .endsWith('.blend')
 }
 
+export function isGlbFileName(
+    fileName: string,
+) {
+    return fileName
+        .toLowerCase()
+        .endsWith('.glb')
+}
+
 export function isSupportedAttachmentFile(
     file: File,
 ) {
     return (
         isPreviewableMedia(file.type) ||
-        isBlenderFileName(file.name)
+        isBlenderFileName(file.name) ||
+        isGlbFileName(file.name)
     )
 }
 
@@ -36,6 +41,10 @@ export function getAttachmentTypeLabel(
         return 'Blender file'
     }
 
+    if (isGlbFileName(fileName)) {
+        return 'GLB 3D model'
+    }
+
     if (mimeType.startsWith('image/')) {
         return 'Image'
     }
@@ -45,49 +54,4 @@ export function getAttachmentTypeLabel(
     }
 
     return mimeType || 'File'
-}
-
-export function createInitialAttachmentProcessing(
-    fileName: string,
-): AttachmentProcessing | undefined {
-    if (!isBlenderFileName(fileName)) {
-        return undefined
-    }
-
-    return {
-        kind: 'blend-to-glb',
-        status: 'uploaded',
-        updatedAt:
-            new Date().toISOString(),
-    }
-}
-
-export function getAttachmentProcessingLabel(
-    fileName: string,
-    processing:
-        AttachmentProcessing | undefined,
-) {
-    if (!isBlenderFileName(fileName)) {
-        return null
-    }
-
-    const status =
-        processing?.status ?? 'uploaded'
-
-    switch (status) {
-        case 'uploaded':
-            return 'Uploaded'
-
-        case 'queued':
-            return 'Queued'
-
-        case 'converting':
-            return 'Converting'
-
-        case 'ready':
-            return 'Ready'
-
-        case 'failed':
-            return 'Conversion failed'
-    }
 }
