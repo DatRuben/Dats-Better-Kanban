@@ -525,13 +525,33 @@
 
 .history-item {
   display: flex;
+  width: 100%;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
   padding: 0.875rem;
   border: 1px solid #303746;
   border-radius: 0.625rem;
+  color: inherit;
   background: #222630;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    background 120ms ease,
+    transform 120ms ease;
+}
+
+.history-item:hover,
+.history-item:focus-visible {
+  border-color: #6d86b8;
+  background: #2a303c;
+  transform: translateY(-1px);
+}
+
+.history-item:focus-visible {
+  outline: none;
 }
 
 .history-item h3 {

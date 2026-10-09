@@ -3067,9 +3067,13 @@ function App() {
 
           <div className="history-list">
             {completedTasks.map((task) => (
-              <article
+              <button
                 key={task.id}
+                type="button"
                 className="history-item"
+                onClick={() =>
+                  setSelectedTaskId(task.id)
+                }
               >
                 <div>
                   <h3>{task.title}</h3>
@@ -3086,7 +3090,7 @@ function App() {
                 >
                   {task.priority}
                 </span>
-              </article>
+              </button>
             ))}
           </div>
         </section>
