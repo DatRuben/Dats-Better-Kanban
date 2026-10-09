@@ -176,6 +176,81 @@ function formatCompletedAt(completedAt: string) {
   })
 }
 
+async function cleanupPendingAttachmentDeletions(
+  accessToken: string,
+  savedProject: Project,
+  pendingDeletionFileIds: Set<string>,
+) {
+  if (pendingDeletionFileIds.size === 0) {
+    return
+  }
+
+  const referencedFileIds =
+    new Set<string>()
+
+  for (const task of savedProject.tasks) {
+    for (const attachment of task.attachments) {
+      if (attachment.driveFileId) {
+        referencedFileIds.add(
+          attachment.driveFileId,
+        )
+      }
+    }
+  }
+
+  const fileIdsToDelete: string[] = []
+
+  for (
+    const fileId of
+    [...pendingDeletionFileIds]
+  ) {
+    if (referencedFileIds.has(fileId)) {
+      pendingDeletionFileIds.delete(
+        fileId,
+      )
+
+      continue
+    }
+
+    fileIdsToDelete.push(fileId)
+  }
+
+  const deletionResults =
+    await Promise.allSettled(
+      fileIdsToDelete.map(
+        (fileId) =>
+          deleteAttachmentFromDrive(
+            accessToken,
+            fileId,
+          ),
+      ),
+    )
+
+  deletionResults.forEach(
+    (result, index) => {
+      const fileId =
+        fileIdsToDelete[index]
+
+      if (!fileId) {
+        return
+      }
+
+      if (result.status === 'fulfilled') {
+        pendingDeletionFileIds.delete(
+          fileId,
+        )
+
+        return
+      }
+
+      console.error(
+        `Failed to delete removed attachment ${fileId} from Google Drive:`,
+        result.reason,
+      )
+    },
+  )
+}
+
 function App() {
   const [project, setProject] =
     useState(demoProject)
@@ -313,6 +388,11 @@ function App() {
 
   const projectDocumentConflictRef =
     useRef(false)
+
+  const pendingAttachmentDeletionFileIdsRef =
+    useRef<Set<string>>(
+      new Set(),
+    )
 
   const isCurrentUserProjectOwner =
     googleUser !== null &&
@@ -608,6 +688,12 @@ function App() {
             )
           }
 
+          await cleanupPendingAttachmentDeletions(
+            googleAccessToken,
+            mergeResult.projectToSave,
+            pendingAttachmentDeletionFileIdsRef.current,
+          )
+
           if (
             canCurrentUserEditProjectSettings &&
             googleProjectsFolderId &&
@@ -671,6 +757,24 @@ function App() {
     canCurrentUserEditProject,
     canCurrentUserEditProjectSettings,
   ])
+
+  function queueAttachmentDeletions(
+    attachments: Attachment[],
+  ) {
+    if (isDemoMode) {
+      return
+    }
+
+    for (const attachment of attachments) {
+      if (attachment.driveFileId) {
+        pendingAttachmentDeletionFileIdsRef
+          .current
+          .add(
+            attachment.driveFileId,
+          )
+      }
+    }
+  }
 
   const [activeView, setActiveView] =
     useState<
@@ -1170,17 +1274,53 @@ function App() {
       return
     }
 
-    const updatedAt = new Date().toISOString()
+    const existingTask =
+      tasks.find(
+        (task) =>
+          task.id === taskId,
+      )
+
+    if (!existingTask) {
+      return
+    }
+
+    const remainingAttachmentIds =
+      new Set(
+        taskInput.attachments.map(
+          (attachment) =>
+            attachment.id,
+        ),
+      )
+
+    const explicitlyRemovedAttachments =
+      existingTask.attachments.filter(
+        (attachment) =>
+          !remainingAttachmentIds.has(
+            attachment.id,
+          ),
+      )
+
+    queueAttachmentDeletions(
+      explicitlyRemovedAttachments,
+    )
+
+    const updatedAt =
+      new Date().toISOString()
+
     setTasks((currentTasks) =>
       currentTasks.map((task) =>
         task.id === taskId
           ? {
             ...task,
             title: taskInput.title,
-            description: taskInput.description,
-            priority: taskInput.priority,
-            assigneeId: taskInput.assigneeId,
-            deadline: taskInput.deadline,
+            description:
+              taskInput.description,
+            priority:
+              taskInput.priority,
+            assigneeId:
+              taskInput.assigneeId,
+            deadline:
+              taskInput.deadline,
 
             manualOrderKey:
               task.priority ===
@@ -1192,8 +1332,10 @@ function App() {
 
             tags: taskInput.tags,
             updatedAt,
-            revision: task.revision + 1,
-            attachments: taskInput.attachments,
+            revision:
+              task.revision + 1,
+            attachments:
+              taskInput.attachments,
           }
           : task,
       ),
@@ -1223,6 +1365,10 @@ function App() {
       return
     }
 
+    queueAttachmentDeletions(
+      task.attachments,
+    )
+
     setTasks((currentTasks) =>
       currentTasks.filter(
         (task) => task.id !== taskId,
@@ -1251,6 +1397,9 @@ function App() {
       false
 
     taskSyncConflictIdsRef.current =
+      new Set()
+
+    pendingAttachmentDeletionFileIdsRef.current =
       new Set()
 
     setTaskSyncConflicts([])
