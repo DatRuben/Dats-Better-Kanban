@@ -18,7 +18,7 @@ interface TaskCreatorProps {
     onCreate: (task: NewTaskInput) => void
     onCancel: () => void
     onDelete?: () => void
-    onUploadMedia: (
+    onUploadAttachments: (
         files: File[],
     ) => Promise<Attachment[]>
 }
@@ -30,7 +30,7 @@ export function TaskCreator({
     onCreate,
     onCancel,
     onDelete,
-    onUploadMedia,
+    onUploadAttachments,
 }: TaskCreatorProps) {
     const [title, setTitle] = useState(
         initialTask?.title ?? '',
@@ -169,7 +169,7 @@ export function TaskCreator({
                 )
 
                 const uploadedAttachments =
-                    await onUploadMedia(
+                    await onUploadAttachments(
                         attachmentFiles,
                     )
 

@@ -8,6 +8,7 @@ import type {
 } from '../types/board'
 import {
     getAttachmentTypeLabel,
+    getAttachmentProcessingLabel,
 } from '../utility/attachmentTypes'
 
 interface TaskDetailsDialogProps {

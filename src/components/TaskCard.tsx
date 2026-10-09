@@ -11,6 +11,7 @@ import type {
 import {
   getAttachmentTypeLabel,
   isPreviewableMedia,
+  getAttachmentProcessingLabel,
 } from '../utility/attachmentTypes'
 
 
@@ -402,24 +403,36 @@ export function TaskCard({
       {fileAttachments.length > 0 && (
         <div className="task-card__files">
           {fileAttachments.map(
-            (attachment) => (
-              <div
-                key={attachment.id}
-                className="task-card__file"
-                title={attachment.fileName}
-              >
-                <strong>
-                  {attachment.fileName}
-                </strong>
+            (attachment) => {
+              const processingLabel =
+                getAttachmentProcessingLabel(
+                  attachment.fileName,
+                  attachment.processing,
+                )
 
-                <span>
-                  {getAttachmentTypeLabel(
-                    attachment.fileName,
-                    attachment.mimeType,
-                  )}
-                </span>
-              </div>
-            ),
+              return (
+                <div
+                  key={attachment.id}
+                  className="task-card__file"
+                  title={attachment.fileName}
+                >
+                  <strong>
+                    {attachment.fileName}
+                  </strong>
+
+                  <span>
+                    {getAttachmentTypeLabel(
+                      attachment.fileName,
+                      attachment.mimeType,
+                    )}
+
+                    {processingLabel
+                      ? ` · ${processingLabel}`
+                      : ''}
+                  </span>
+                </div>
+              )
+            },
           )}
         </div>
       )}

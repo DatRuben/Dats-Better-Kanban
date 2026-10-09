@@ -67,6 +67,10 @@ import { TaskCard } from './components/TaskCard'
 import {
   TaskDetailsDialog,
 } from './components/TaskDetailsDialog'
+import {
+  createInitialAttachmentProcessing,
+  isPreviewableMedia,
+} from './utility/attachmentTypes'
 
 const priorityOrder = {
   critical: 0,
@@ -193,6 +197,17 @@ async function cleanupPendingAttachmentDeletions(
       if (attachment.driveFileId) {
         referencedFileIds.add(
           attachment.driveFileId,
+        )
+      }
+
+      const outputDriveFileId =
+        attachment.processing
+          ?.output
+          ?.driveFileId
+
+      if (outputDriveFileId) {
+        referencedFileIds.add(
+          outputDriveFileId,
         )
       }
     }
@@ -771,6 +786,19 @@ function App() {
           .current
           .add(
             attachment.driveFileId,
+          )
+      }
+
+      const outputDriveFileId =
+        attachment.processing
+          ?.output
+          ?.driveFileId
+
+      if (outputDriveFileId) {
+        pendingAttachmentDeletionFileIdsRef
+          .current
+          .add(
+            outputDriveFileId,
           )
       }
     }
@@ -2277,16 +2305,34 @@ function App() {
     )
   }
 
-  async function handleUploadImage(
+  async function handleUploadAttachment(
     file: File,
   ): Promise<Attachment> {
+    const mimeType =
+      file.type ||
+      'application/octet-stream'
+
+    const processing =
+      createInitialAttachmentProcessing(
+        file.name,
+      )
+
     if (isDemoMode) {
+      const previewUrl =
+        isPreviewableMedia(file.type)
+          ? URL.createObjectURL(file)
+          : undefined
+
       return {
         id: crypto.randomUUID(),
         fileName: file.name,
-        mimeType: file.type,
-        previewUrl:
-          URL.createObjectURL(file),
+        mimeType,
+        ...(previewUrl
+          ? { previewUrl }
+          : {}),
+        ...(processing
+          ? { processing }
+          : {}),
       }
     }
 
@@ -2295,7 +2341,7 @@ function App() {
       !googleAttachmentsFolderId
     ) {
       throw new Error(
-        'Google Drive is not ready for image uploads.',
+        'Google Drive is not ready for attachment uploads.',
       )
     }
 
@@ -2309,14 +2355,15 @@ function App() {
     return {
       id: crypto.randomUUID(),
       fileName: file.name,
-      mimeType:
-        file.type ||
-        'application/octet-stream',
+      mimeType,
       driveFileId,
+      ...(processing
+        ? { processing }
+        : {}),
     }
   }
 
-  async function handleUploadMedia(
+  async function handleUploadAttachments(
     files: File[],
   ): Promise<Attachment[]> {
     if (!canCurrentUserEditProject) {
@@ -2328,7 +2375,7 @@ function App() {
     const uploadResults =
       await Promise.allSettled(
         files.map((file) =>
-          handleUploadImage(file),
+          handleUploadAttachment(file),
         ),
       )
 
@@ -2400,7 +2447,7 @@ function App() {
     }
 
     throw new Error(
-      'Media upload failed.',
+      'Attachment upload failed.',
     )
   }
 
@@ -3076,7 +3123,7 @@ function App() {
                   onDeleteTask={(taskId) =>
                     handleDeleteTask(taskId)
                   }
-                  onUploadMedia={handleUploadMedia}
+                  onUploadAttachments={handleUploadAttachments}
                   onLoadAttachment={handleLoadAttachment}
                   onColumnOrderingChange={
                     handleColumnOrderingChange

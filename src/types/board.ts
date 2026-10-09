@@ -13,12 +13,37 @@ export interface DemoUser {
   accessRole?: ProjectAccessRole
 }
 
+export type AttachmentProcessingStatus =
+  | 'uploaded'
+  | 'queued'
+  | 'converting'
+  | 'ready'
+  | 'failed'
+
+export type AttachmentProcessingKind =
+  'blend-to-glb'
+
+export interface AttachmentProcessingOutput {
+  fileName: string
+  mimeType: string
+  driveFileId: string
+}
+
+export interface AttachmentProcessing {
+  kind: AttachmentProcessingKind
+  status: AttachmentProcessingStatus
+  output?: AttachmentProcessingOutput
+  errorMessage?: string
+  updatedAt: string
+}
+
 export interface Attachment {
   id: string
   fileName: string
   mimeType: string
   previewUrl?: string
   driveFileId?: string
+  processing?: AttachmentProcessing
 }
 
 export interface Task {
