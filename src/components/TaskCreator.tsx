@@ -23,15 +23,6 @@ interface TaskCreatorProps {
     ) => Promise<Attachment[]>
 }
 
-function isSupportedMedia(
-    mimeType: string,
-) {
-    return (
-        mimeType.startsWith('image/') ||
-        mimeType === 'video/mp4'
-    )
-}
-
 export function TaskCreator({
     columnTitle,
     members,
@@ -45,25 +36,31 @@ export function TaskCreator({
         initialTask?.title ?? '',
     )
 
-    const [description, setDescription] = useState(
-        initialTask?.description ?? '',
-    )
+    const [description, setDescription] =
+        useState(
+            initialTask?.description ?? '',
+        )
 
-    const [priority, setPriority] = useState<Priority>(
-        initialTask?.priority ?? 'medium',
-    )
+    const [priority, setPriority] =
+        useState<Priority>(
+            initialTask?.priority ??
+            'medium',
+        )
 
-    const [assigneeId, setAssigneeId] = useState(
-        initialTask?.assigneeId ?? '',
-    )
+    const [assigneeId, setAssigneeId] =
+        useState(
+            initialTask?.assigneeId ?? '',
+        )
 
-    const [deadline, setDeadline] = useState(
-        initialTask?.deadline ?? '',
-    )
+    const [deadline, setDeadline] =
+        useState(
+            initialTask?.deadline ?? '',
+        )
 
-    const [tags, setTags] = useState<string[]>(
-        initialTask?.tags ?? [],
-    )
+    const [tags, setTags] =
+        useState<string[]>(
+            initialTask?.tags ?? [],
+        )
 
     const [tagInput, setTagInput] =
         useState('')
@@ -126,11 +123,13 @@ export function TaskCreator({
     }
 
     async function handleSubmit(
-        event: SubmitEvent<HTMLFormElement>,
+        event:
+            SubmitEvent<HTMLFormElement>,
     ) {
         event.preventDefault()
 
-        const trimmedTitle = title.trim()
+        const trimmedTitle =
+            title.trim()
 
         if (
             !trimmedTitle ||
@@ -142,21 +141,32 @@ export function TaskCreator({
         let attachments =
             initialTask?.attachments ?? []
 
-        if (removedAttachmentIds.length > 0) {
+        if (
+            removedAttachmentIds.length >
+            0
+        ) {
             attachments =
                 attachments.filter(
                     (attachment) =>
-                        !removedAttachmentIds.includes(
-                            attachment.id,
-                        ),
+                        !removedAttachmentIds
+                            .includes(
+                                attachment.id,
+                            ),
                 )
         }
 
         try {
-            setAttachmentUploadError(null)
+            setAttachmentUploadError(
+                null,
+            )
 
-            if (attachmentFiles.length > 0) {
-                setIsUploadingAttachment(true)
+            if (
+                attachmentFiles.length >
+                0
+            ) {
+                setIsUploadingAttachment(
+                    true,
+                )
 
                 const uploadedAttachments =
                     await onUploadMedia(
@@ -171,10 +181,13 @@ export function TaskCreator({
 
             onCreate({
                 title: trimmedTitle,
-                description: description.trim(),
+                description:
+                    description.trim(),
                 priority,
-                assigneeId: assigneeId || null,
-                deadline: deadline || null,
+                assigneeId:
+                    assigneeId || null,
+                deadline:
+                    deadline || null,
                 tags,
                 attachments,
             })
@@ -185,7 +198,9 @@ export function TaskCreator({
                     : 'Attachment upload failed.',
             )
         } finally {
-            setIsUploadingAttachment(false)
+            setIsUploadingAttachment(
+                false,
+            )
         }
     }
 
@@ -197,7 +212,9 @@ export function TaskCreator({
             <div className="task-creator__header">
                 <div>
                     <p className="task-creator__heading">
-                        {initialTask ? 'Edit task' : 'New task'}
+                        {initialTask
+                            ? 'Edit task'
+                            : 'New task'}
                     </p>
 
                     <p className="task-creator__hint">
@@ -207,6 +224,7 @@ export function TaskCreator({
                     </p>
                 </div>
             </div>
+
             <label className="task-creator__field">
                 <span>Title</span>
 
@@ -216,7 +234,9 @@ export function TaskCreator({
                     placeholder="Task title"
                     autoFocus
                     onChange={(event) =>
-                        setTitle(event.target.value)
+                        setTitle(
+                            event.target.value,
+                        )
                     }
                 />
             </label>
@@ -229,38 +249,58 @@ export function TaskCreator({
                     placeholder="What needs to be done?"
                     rows={3}
                     onChange={(event) =>
-                        setDescription(event.target.value)
+                        setDescription(
+                            event.target.value,
+                        )
                     }
                 />
             </label>
 
             <div className="task-creator__field-row">
                 <label className="task-creator__field">
-                    <span>Priority</span>
+                    <span>
+                        Priority
+                    </span>
 
                     <select
                         value={priority}
                         onChange={(event) =>
                             setPriority(
-                                event.target.value as Priority,
+                                event.target
+                                    .value as Priority,
                             )
                         }
                     >
-                        <option value="critical">Critical</option>
-                        <option value="high">High</option>
-                        <option value="medium">Medium</option>
-                        <option value="low">Low</option>
+                        <option value="critical">
+                            Critical
+                        </option>
+
+                        <option value="high">
+                            High
+                        </option>
+
+                        <option value="medium">
+                            Medium
+                        </option>
+
+                        <option value="low">
+                            Low
+                        </option>
                     </select>
                 </label>
 
                 <label className="task-creator__field">
-                    <span>Deadline</span>
+                    <span>
+                        Deadline
+                    </span>
 
                     <input
                         type="date"
                         value={deadline}
                         onChange={(event) =>
-                            setDeadline(event.target.value)
+                            setDeadline(
+                                event.target.value,
+                            )
                         }
                     />
                 </label>
@@ -272,31 +312,115 @@ export function TaskCreator({
                 <select
                     value={assigneeId}
                     onChange={(event) =>
-                        setAssigneeId(event.target.value)
+                        setAssigneeId(
+                            event.target.value,
+                        )
                     }
                 >
-                    <option value="">Unassigned</option>
+                    <option value="">
+                        Unassigned
+                    </option>
 
-                    {members.map((member) => (
-                        <option
-                            key={member.id}
-                            value={member.id}
-                        >
-                            {member.displayName}
-                        </option>
-                    ))}
+                    {members.map(
+                        (member) => (
+                            <option
+                                key={
+                                    member.id
+                                }
+                                value={
+                                    member.id
+                                }
+                            >
+                                {
+                                    member.displayName
+                                }
+                            </option>
+                        ),
+                    )}
                 </select>
             </label>
 
             <div className="task-creator__field">
-                <span>Attachments</span>
+                <span>Tags</span>
+
+                <div className="task-creator__tag-input">
+                    <input
+                        type="text"
+                        value={tagInput}
+                        placeholder="Add tag"
+                        disabled={
+                            tags.length >= 3
+                        }
+                        onChange={(event) =>
+                            setTagInput(
+                                event.target.value,
+                            )
+                        }
+                    />
+
+                    <button
+                        type="button"
+                        disabled={
+                            !tagInput.trim() ||
+                            tags.length >= 3
+                        }
+                        onClick={
+                            handleAddTag
+                        }
+                    >
+                        Add
+                    </button>
+                </div>
+
+                {tags.length > 0 && (
+                    <div className="task-creator__tags">
+                        {tags.map(
+                            (tag) => (
+                                <button
+                                    key={tag}
+                                    type="button"
+                                    className="task-creator__tag"
+                                    title={`Remove ${tag}`}
+                                    onClick={() =>
+                                        setTags(
+                                            (
+                                                currentTags,
+                                            ) =>
+                                                currentTags.filter(
+                                                    (
+                                                        currentTag,
+                                                    ) =>
+                                                        currentTag !==
+                                                        tag,
+                                                ),
+                                        )
+                                    }
+                                >
+                                    #{tag} ×
+                                </button>
+                            ),
+                        )}
+                    </div>
+                )}
 
                 <small>
-                    Images, GIFs, MP4 videos, and Blender
+                    {tags.length}/3 tags
+                </small>
+            </div>
+
+            <div className="task-creator__field">
+                <span>
+                    Attachments
+                </span>
+
+                <small>
+                    Images, GIFs, MP4
+                    videos, and Blender
                     .blend files
                 </small>
 
-                {existingAttachments.length > 0 && (
+                {existingAttachments.length >
+                    0 && (
                     <div>
                         <small>
                             Current attachments
@@ -305,33 +429,44 @@ export function TaskCreator({
                         {existingAttachments.map(
                             (attachment) => {
                                 const isRemoved =
-                                    removedAttachmentIds.includes(
-                                        attachment.id,
-                                    )
+                                    removedAttachmentIds
+                                        .includes(
+                                            attachment.id,
+                                        )
 
                                 return (
                                     <div
-                                        key={attachment.id}
+                                        key={
+                                            attachment.id
+                                        }
                                     >
                                         <small>
-                                            {attachment.fileName}
+                                            {
+                                                attachment.fileName
+                                            }
                                         </small>
 
                                         {isRemoved ? (
                                             <>
                                                 <small>
                                                     {' '}
-                                                    — will be removed
-                                                    when you save
+                                                    — will be
+                                                    removed
+                                                    when you
+                                                    save
                                                 </small>
 
                                                 <button
                                                     type="button"
                                                     onClick={() =>
                                                         setRemovedAttachmentIds(
-                                                            (currentIds) =>
+                                                            (
+                                                                currentIds,
+                                                            ) =>
                                                                 currentIds.filter(
-                                                                    (id) =>
+                                                                    (
+                                                                        id,
+                                                                    ) =>
                                                                         id !==
                                                                         attachment.id,
                                                                 ),
@@ -346,7 +481,9 @@ export function TaskCreator({
                                                 type="button"
                                                 onClick={() =>
                                                     setRemovedAttachmentIds(
-                                                        (currentIds) => [
+                                                        (
+                                                            currentIds,
+                                                        ) => [
                                                             ...currentIds,
                                                             attachment.id,
                                                         ],
@@ -370,7 +507,8 @@ export function TaskCreator({
                     onChange={(event) => {
                         const selectedFiles =
                             Array.from(
-                                event.target.files ?? [],
+                                event.target
+                                    .files ?? [],
                             )
 
                         const unsupportedFile =
@@ -381,14 +519,20 @@ export function TaskCreator({
                                     ),
                             )
 
-                        if (unsupportedFile) {
-                            setAttachmentFiles([])
+                        if (
+                            unsupportedFile
+                        ) {
+                            setAttachmentFiles(
+                                [],
+                            )
 
                             setAttachmentUploadError(
                                 `${unsupportedFile.name} is not a supported attachment type.`,
                             )
 
-                            event.target.value = ''
+                            event.target.value =
+                                ''
+
                             return
                         }
 
@@ -402,26 +546,34 @@ export function TaskCreator({
                     }}
                 />
 
-                {attachmentFiles.length > 0 && (
+                {attachmentFiles.length >
+                    0 && (
                     <div>
                         <small>
                             New attachments
                         </small>
 
                         {attachmentFiles.map(
-                            (file, index) => (
+                            (
+                                file,
+                                index,
+                            ) => (
                                 <div
                                     key={`${file.name}-${file.size}-${file.lastModified}`}
                                 >
                                     <small>
-                                        {file.name}
+                                        {
+                                            file.name
+                                        }
                                     </small>
 
                                     <button
                                         type="button"
                                         onClick={() =>
                                             setAttachmentFiles(
-                                                (currentFiles) =>
+                                                (
+                                                    currentFiles,
+                                                ) =>
                                                     currentFiles.filter(
                                                         (
                                                             _,
@@ -443,160 +595,27 @@ export function TaskCreator({
 
                 {attachmentUploadError && (
                     <small>
-                        {attachmentUploadError}
-                    </small>
-                )}
-            </div>
-
-            <div className="task-creator__field">
-                <span>Images / GIFs / MP4s</span>
-
-                {existingMedia.length > 0 && (
-                    <div>
-                        <small>
-                            Current attachments
-                        </small>
-
-                        {existingMedia.map((attachment) => {
-                            const isRemoved =
-                                removedImageIds.includes(
-                                    attachment.id,
-                                )
-
-                            return (
-                                <div key={attachment.id}>
-                                    <small>
-                                        {attachment.fileName}
-                                    </small>
-
-                                    {isRemoved ? (
-                                        <>
-                                            <small>
-                                                {' '}
-                                                — will be removed
-                                                when you save
-                                            </small>
-
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    setRemovedImageIds(
-                                                        (currentIds) =>
-                                                            currentIds.filter(
-                                                                (id) =>
-                                                                    id !==
-                                                                    attachment.id,
-                                                            ),
-                                                    )
-                                                }
-                                            >
-                                                Keep
-                                            </button>
-                                        </>
-                                    ) : (
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                setRemovedImageIds(
-                                                    (currentIds) => [
-                                                        ...currentIds,
-                                                        attachment.id,
-                                                    ],
-                                                )
-                                            }
-                                        >
-                                            Remove
-                                        </button>
-                                    )}
-                                </div>
-                            )
-                        })}
-                    </div>
-                )}
-
-                <input
-                    type="file"
-                    accept="image/*,video/mp4"
-                    multiple
-                    onChange={(event) => {
-                        const selectedFiles =
-                            Array.from(
-                                event.target.files ?? [],
-                            )
-
-                        const unsupportedFile =
-                            selectedFiles.find(
-                                (file) =>
-                                    !isSupportedMedia(file.type),
-                            )
-
-                        if (unsupportedFile) {
-                            setImageFiles([])
-
-                            setImageUploadError(
-                                `${unsupportedFile.name} is not a supported media type.`,
-                            )
-
-                            event.target.value = ''
-                            return
+                        {
+                            attachmentUploadError
                         }
-
-                        setImageFiles(selectedFiles)
-                        setImageUploadError(null)
-                    }}
-                />
-
-                {imageFiles.length > 0 && (
-                    <div>
-                        <small>
-                            New attachments
-                        </small>
-
-                        {imageFiles.map((file, index) => (
-                            <div
-                                key={`${file.name}-${file.size}-${file.lastModified}`}
-                            >
-                                <small>
-                                    {file.name}
-                                </small>
-
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        setImageFiles(
-                                            (currentFiles) =>
-                                                currentFiles.filter(
-                                                    (_, currentIndex) =>
-                                                        currentIndex !== index,
-                                                ),
-                                        )
-                                    }
-                                >
-                                    Remove
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {imageUploadError && (
-                    <small>
-                        {imageUploadError}
                     </small>
                 )}
             </div>
 
             <div className="task-creator__actions">
                 <div>
-                    {initialTask && onDelete && (
-                        <button
-                            type="button"
-                            className="task-creator__delete"
-                            onClick={onDelete}
-                        >
-                            Delete
-                        </button>
-                    )}
+                    {initialTask &&
+                        onDelete && (
+                            <button
+                                type="button"
+                                className="task-creator__delete"
+                                onClick={
+                                    onDelete
+                                }
+                            >
+                                Delete
+                            </button>
+                        )}
                 </div>
 
                 <div className="task-creator__actions-right">
@@ -604,7 +623,9 @@ export function TaskCreator({
                         type="button"
                         className="task-creator__cancel"
                         onClick={onCancel}
-                        disabled={isUploadingAttachment}
+                        disabled={
+                            isUploadingAttachment
+                        }
                     >
                         Cancel
                     </button>
