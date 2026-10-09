@@ -14,7 +14,6 @@ import type {
   Task,
 } from './types/board'
 import {
-  getRemovedAttachmentFileIds,
   mergeProjectDocuments,
 } from './storage/projectDocumentMerge'
 import type {
@@ -602,38 +601,6 @@ function App() {
               googleProjectFileId,
               mergeResult.projectToSave,
             )
-          }
-
-          const removedAttachmentIds =
-            getRemovedAttachmentFileIds(
-              latestBaseline,
-              mergeResult.projectToSave,
-            )
-
-          const cleanupResults =
-            await Promise.allSettled(
-              removedAttachmentIds.map(
-                (fileId) =>
-                  deleteAttachmentFromDrive(
-                    googleAccessToken,
-                    fileId,
-                  ),
-              ),
-            )
-
-          for (
-            const cleanupResult
-            of cleanupResults
-          ) {
-            if (
-              cleanupResult.status ===
-              'rejected'
-            ) {
-              console.error(
-                'Failed to clean up an unused attachment:',
-                cleanupResult.reason,
-              )
-            }
           }
 
           if (
