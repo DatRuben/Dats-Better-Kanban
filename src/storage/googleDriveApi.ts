@@ -1947,18 +1947,62 @@ export async function loadAvailableProjectSummariesFromDrive(
 
   let projectIndexChanged = false
 
-  const summaries: DriveProjectSummary[] = []
+  const summaries:
+    DriveProjectSummary[] = []
 
   for (
     const projectFolderId
     of projectFolderIds
   ) {
     try {
-      const metadata =
-        await loadProjectMetadataFromDrive(
-          accessToken,
+      const reference =
+        referenceByFolderId.get(
           projectFolderId,
         )
+
+      let metadata:
+        StoredProjectMetadata | null = null
+
+      let usableProjectFileId =
+        reference?.projectFileId
+
+      if (usableProjectFileId) {
+        try {
+          const projectDocument =
+            await loadProjectDocumentFromDrive(
+              accessToken,
+              usableProjectFileId,
+            )
+
+          metadata =
+            createStoredProjectMetadata(
+              projectDocument.project,
+            )
+        } catch (error) {
+          if (
+            !isUnavailableProjectReferenceError(
+              error,
+            )
+          ) {
+            throw error
+          }
+
+          metadata =
+            await loadProjectMetadataFromDrive(
+              accessToken,
+              projectFolderId,
+            )
+
+          usableProjectFileId =
+            undefined
+        }
+      } else {
+        metadata =
+          await loadProjectMetadataFromDrive(
+            accessToken,
+            projectFolderId,
+          )
+      }
 
       if (!metadata) {
         if (
@@ -1983,9 +2027,7 @@ export async function loadAvailableProjectSummariesFromDrive(
         projectFolderId,
 
         projectFileId:
-          referenceByFolderId.get(
-            projectFolderId,
-          )?.projectFileId,
+          usableProjectFileId,
 
         metadata,
 
