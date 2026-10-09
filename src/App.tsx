@@ -68,6 +68,7 @@ import {
   TaskDetailsDialog,
 } from './components/TaskDetailsDialog'
 import {
+  isGlbFileName,
   isPreviewableMedia,
 } from './utility/attachmentTypes'
 

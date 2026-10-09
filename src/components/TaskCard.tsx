@@ -10,8 +10,12 @@ import type {
 } from '../types/board'
 import {
   getAttachmentTypeLabel,
+  isGlbFileName,
   isPreviewableMedia,
 } from '../utility/attachmentTypes'
+import {
+  GlbPreview,
+} from './GlbPreview'
 
 
 interface TaskCardProps {
@@ -72,6 +76,22 @@ export function TaskCard({
           ),
       )
       .reverse()
+
+  const [
+    previewedGlbId,
+    setPreviewedGlbId,
+  ] =
+    useState<string | null>(null)
+
+  const previewedGlb =
+    fileAttachments.find(
+      (attachment) =>
+        attachment.id ===
+        previewedGlbId &&
+        isGlbFileName(
+          attachment.fileName,
+        ),
+    ) ?? null
 
   const fileAttachments =
     task.attachments.filter(
@@ -402,24 +422,84 @@ export function TaskCard({
       {fileAttachments.length > 0 && (
         <div className="task-card__files">
           {fileAttachments.map(
-            (attachment) => (
-              <div
-                key={attachment.id}
-                className="task-card__file"
-                title={attachment.fileName}
-              >
-                <strong>
-                  {attachment.fileName}
-                </strong>
+            (attachment) => {
+              const isGlb =
+                isGlbFileName(
+                  attachment.fileName,
+                )
 
-                <span>
-                  {getAttachmentTypeLabel(
-                    attachment.fileName,
-                    attachment.mimeType,
-                  )}
-                </span>
-              </div>
-            ),
+              const isPreviewOpen =
+                previewedGlbId ===
+                attachment.id
+
+              return (
+                <div
+                  key={attachment.id}
+                  className="task-card__file-entry"
+                >
+                  <div
+                    className="task-card__file"
+                    title={
+                      attachment.fileName
+                    }
+                  >
+                    <div className="task-card__file-info">
+                      <strong>
+                        {
+                          attachment.fileName
+                        }
+                      </strong>
+
+                      <span>
+                        {getAttachmentTypeLabel(
+                          attachment.fileName,
+                          attachment.mimeType,
+                        )}
+                      </span>
+                    </div>
+
+                    {isGlb && (
+                      <button
+                        type="button"
+                        className="task-card__file-action"
+                        onPointerDown={
+                          (event) =>
+                            event.stopPropagation()
+                        }
+                        onClick={() =>
+                          setPreviewedGlbId(
+                            isPreviewOpen
+                              ? null
+                              : attachment.id,
+                          )
+                        }
+                      >
+                        {isPreviewOpen
+                          ? 'Close'
+                          : 'Preview 3D'}
+                      </button>
+                    )}
+                  </div>
+
+                  {isPreviewOpen &&
+                    previewedGlb && (
+                      <GlbPreview
+                        attachment={
+                          previewedGlb
+                        }
+                        onLoadAttachment={
+                          onLoadAttachment
+                        }
+                        onClose={() =>
+                          setPreviewedGlbId(
+                            null,
+                          )
+                        }
+                      />
+                    )}
+                </div>
+              )
+            },
           )}
         </div>
       )}
