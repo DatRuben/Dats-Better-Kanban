@@ -3414,8 +3414,24 @@ function App() {
                   onDeleteTask={(taskId) =>
                     handleDeleteTask(taskId)
                   }
-                  onUploadAttachments={handleUploadAttachments}
-                  onLoadAttachment={handleLoadAttachment}
+                  onUploadAttachments={
+                    handleUploadAttachments
+                  }
+
+                  onConvertAttachment={
+                    handleConvertBlendAttachment
+                  }
+
+                  isBlendConversionAvailable={
+                    !isDemoMode &&
+                    isBlendConverterConfigured &&
+                    googleAccessToken !== null &&
+                    googleAttachmentsFolderId !== null
+                  }
+
+                  onLoadAttachment={
+                    handleLoadAttachment
+                  }
                   onColumnOrderingChange={
                     handleColumnOrderingChange
                   }

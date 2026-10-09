@@ -55,6 +55,11 @@ interface KanbanColumnProps {
     columnId: string,
     hidePriorityOnCards: boolean,
   ) => void
+  onConvertAttachment: (
+    taskId: string,
+    attachmentId: string,
+  ) => Promise<void>
+  isBlendConversionAvailable: boolean
 }
 
 export function KanbanColumn({
@@ -76,6 +81,8 @@ export function KanbanColumn({
   onCancelEditingTask,
   onDeleteTask,
   onUploadAttachments,
+  onConvertAttachment,
+  isBlendConversionAvailable,
   onLoadAttachment,
   onColumnOrderingChange,
   allowManualTaskOrdering,
@@ -149,7 +156,7 @@ export function KanbanColumn({
 
               {column.countsAsCompleted && (
                 <>
-                  <label className="kanban-colum1n__completion-setting">
+                  <label className="kanban-column__completion-setting">
                     <input
                       type="checkbox"
                       checked={
@@ -263,11 +270,30 @@ export function KanbanColumn({
                 members={members}
                 initialTask={task}
                 onCreate={(taskInput) =>
-                  onUpdateTask(task.id, taskInput)
+                  onUpdateTask(
+                    task.id,
+                    taskInput,
+                  )
                 }
-                onCancel={onCancelEditingTask}
-                onDelete={() => onDeleteTask(task.id)}
-                onUploadAttachments={onUploadAttachments}
+                onCancel={
+                  onCancelEditingTask
+                }
+                onDelete={() =>
+                  onDeleteTask(task.id)
+                }
+                onUploadAttachments={
+                  onUploadAttachments
+                }
+                onConvertAttachment={
+                  (attachmentId) =>
+                    onConvertAttachment(
+                      task.id,
+                      attachmentId,
+                    )
+                }
+                isBlendConversionAvailable={
+                  isBlendConversionAvailable
+                }
               />
             )
           }
