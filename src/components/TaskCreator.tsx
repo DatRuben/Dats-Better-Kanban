@@ -7,6 +7,9 @@ import type {
     Priority,
     Task,
 } from '../types/board'
+import {
+    isSupportedAttachmentFile,
+} from '../utility/attachmentTypes'
 
 interface TaskCreatorProps {
     columnTitle: string
@@ -65,25 +68,28 @@ export function TaskCreator({
     const [tagInput, setTagInput] =
         useState('')
 
-    const [imageFiles, setImageFiles] =
-        useState<File[]>([])
+    const [
+        attachmentFiles,
+        setAttachmentFiles,
+    ] = useState<File[]>([])
 
-    const [removedImageIds, setRemovedImageIds] =
-        useState<string[]>([])
+    const [
+        removedAttachmentIds,
+        setRemovedAttachmentIds,
+    ] = useState<string[]>([])
 
-    const [isUploadingImage, setIsUploadingImage] =
-        useState(false)
+    const [
+        isUploadingAttachment,
+        setIsUploadingAttachment,
+    ] = useState(false)
 
-    const [imageUploadError, setImageUploadError] =
-        useState<string | null>(null)
+    const [
+        attachmentUploadError,
+        setAttachmentUploadError,
+    ] = useState<string | null>(null)
 
-    const existingMedia =
-        initialTask?.attachments.filter(
-            (attachment) =>
-                isSupportedMedia(
-                    attachment.mimeType,
-                ),
-        ) ?? []
+    const existingAttachments =
+        initialTask?.attachments ?? []
 
     function handleAddTag() {
         const normalizedTag =
@@ -126,32 +132,35 @@ export function TaskCreator({
 
         const trimmedTitle = title.trim()
 
-        if (!trimmedTitle || isUploadingImage) {
+        if (
+            !trimmedTitle ||
+            isUploadingAttachment
+        ) {
             return
         }
 
         let attachments =
             initialTask?.attachments ?? []
 
-        if (removedImageIds.length > 0) {
+        if (removedAttachmentIds.length > 0) {
             attachments =
                 attachments.filter(
                     (attachment) =>
-                        !removedImageIds.includes(
+                        !removedAttachmentIds.includes(
                             attachment.id,
                         ),
                 )
         }
 
         try {
-            setImageUploadError(null)
+            setAttachmentUploadError(null)
 
-            if (imageFiles.length > 0) {
-                setIsUploadingImage(true)
+            if (attachmentFiles.length > 0) {
+                setIsUploadingAttachment(true)
 
                 const uploadedAttachments =
                     await onUploadMedia(
-                        imageFiles,
+                        attachmentFiles,
                     )
 
                 attachments = [
@@ -159,6 +168,7 @@ export function TaskCreator({
                     ...uploadedAttachments,
                 ]
             }
+
             onCreate({
                 title: trimmedTitle,
                 description: description.trim(),
@@ -169,13 +179,13 @@ export function TaskCreator({
                 attachments,
             })
         } catch (error) {
-            setImageUploadError(
+            setAttachmentUploadError(
                 error instanceof Error
                     ? error.message
-                    : 'Media upload failed.',
+                    : 'Attachment upload failed.',
             )
         } finally {
-            setIsUploadingImage(false)
+            setIsUploadingAttachment(false)
         }
     }
 
@@ -279,57 +289,163 @@ export function TaskCreator({
             </label>
 
             <div className="task-creator__field">
-                <span>Tags</span>
+                <span>Attachments</span>
 
-                <div className="task-creator__tag-input">
-                    <input
-                        type="text"
-                        value={tagInput}
-                        placeholder="Add tag"
-                        disabled={tags.length >= 3}
-                        onChange={(event) =>
-                            setTagInput(event.target.value)
-                        }
-                    />
+                <small>
+                    Images, GIFs, MP4 videos, and Blender
+                    .blend files
+                </small>
 
-                    <button
-                        type="button"
-                        disabled={
-                            !tagInput.trim() ||
-                            tags.length >= 3
-                        }
-                        onClick={handleAddTag}
-                    >
-                        Add
-                    </button>
-                </div>
+                {existingAttachments.length > 0 && (
+                    <div>
+                        <small>
+                            Current attachments
+                        </small>
 
-                {tags.length > 0 && (
-                    <div className="task-creator__tags">
-                        {tags.map((tag) => (
-                            <button
-                                key={tag}
-                                type="button"
-                                className="task-creator__tag"
-                                title={`Remove ${tag}`}
-                                onClick={() =>
-                                    setTags((currentTags) =>
-                                        currentTags.filter(
-                                            (currentTag) =>
-                                                currentTag !== tag,
-                                        ),
+                        {existingAttachments.map(
+                            (attachment) => {
+                                const isRemoved =
+                                    removedAttachmentIds.includes(
+                                        attachment.id,
                                     )
-                                }
-                            >
-                                #{tag} ×
-                            </button>
-                        ))}
+
+                                return (
+                                    <div
+                                        key={attachment.id}
+                                    >
+                                        <small>
+                                            {attachment.fileName}
+                                        </small>
+
+                                        {isRemoved ? (
+                                            <>
+                                                <small>
+                                                    {' '}
+                                                    — will be removed
+                                                    when you save
+                                                </small>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setRemovedAttachmentIds(
+                                                            (currentIds) =>
+                                                                currentIds.filter(
+                                                                    (id) =>
+                                                                        id !==
+                                                                        attachment.id,
+                                                                ),
+                                                        )
+                                                    }
+                                                >
+                                                    Keep
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setRemovedAttachmentIds(
+                                                        (currentIds) => [
+                                                            ...currentIds,
+                                                            attachment.id,
+                                                        ],
+                                                    )
+                                                }
+                                            >
+                                                Remove
+                                            </button>
+                                        )}
+                                    </div>
+                                )
+                            },
+                        )}
                     </div>
                 )}
 
-                <small>
-                    {tags.length}/3 tags
-                </small>
+                <input
+                    type="file"
+                    accept="image/*,video/mp4,.blend"
+                    multiple
+                    onChange={(event) => {
+                        const selectedFiles =
+                            Array.from(
+                                event.target.files ?? [],
+                            )
+
+                        const unsupportedFile =
+                            selectedFiles.find(
+                                (file) =>
+                                    !isSupportedAttachmentFile(
+                                        file,
+                                    ),
+                            )
+
+                        if (unsupportedFile) {
+                            setAttachmentFiles([])
+
+                            setAttachmentUploadError(
+                                `${unsupportedFile.name} is not a supported attachment type.`,
+                            )
+
+                            event.target.value = ''
+                            return
+                        }
+
+                        setAttachmentFiles(
+                            selectedFiles,
+                        )
+
+                        setAttachmentUploadError(
+                            null,
+                        )
+                    }}
+                />
+
+                {attachmentFiles.length > 0 && (
+                    <div>
+                        <small>
+                            New attachments
+                        </small>
+
+                        {attachmentFiles.map(
+                            (file, index) => (
+                                <div
+                                    key={`${file.name}-${file.size}-${file.lastModified}`}
+                                >
+                                    <small>
+                                        {file.name}
+                                    </small>
+
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setAttachmentFiles(
+                                                (currentFiles) =>
+                                                    currentFiles.filter(
+                                                        (
+                                                            _,
+                                                            currentIndex,
+                                                        ) =>
+                                                            currentIndex !==
+                                                            index,
+                                                    ),
+                                            )
+                                        }
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
+                            ),
+                        )}
+                    </div>
+                )}
+
+                {attachmentUploadError && (
+                    <small>
+                        {attachmentUploadError}
+                    </small>
+                )}
             </div>
 
             <div className="task-creator__field">
@@ -488,7 +604,7 @@ export function TaskCreator({
                         type="button"
                         className="task-creator__cancel"
                         onClick={onCancel}
-                        disabled={isUploadingImage}
+                        disabled={isUploadingAttachment}
                     >
                         Cancel
                     </button>
@@ -498,10 +614,10 @@ export function TaskCreator({
                         className="task-creator__create"
                         disabled={
                             !title.trim() ||
-                            isUploadingImage
+                            isUploadingAttachment
                         }
                     >
-                        {isUploadingImage
+                        {isUploadingAttachment
                             ? 'Uploading...'
                             : initialTask
                                 ? 'Save Changes'

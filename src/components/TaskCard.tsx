@@ -8,6 +8,11 @@ import type {
   DemoUser,
   Task,
 } from '../types/board'
+import {
+  getAttachmentTypeLabel,
+  isPreviewableMedia,
+} from '../utility/attachmentTypes'
+
 
 interface TaskCardProps {
   task: Task
@@ -39,15 +44,6 @@ function getInitials(displayName: string) {
   return `${firstInitial}${lastInitial}`.toUpperCase()
 }
 
-function isSupportedMedia(
-  mimeType: string,
-) {
-  return (
-    mimeType.startsWith('image/') ||
-    mimeType === 'video/mp4'
-  )
-}
-
 export function TaskCard({
   task,
   assignee,
@@ -71,11 +67,19 @@ export function TaskCard({
     task.attachments
       .filter(
         (attachment) =>
-          isSupportedMedia(
+          isPreviewableMedia(
             attachment.mimeType,
           ),
       )
       .reverse()
+
+  const fileAttachments =
+    task.attachments.filter(
+      (attachment) =>
+        !isPreviewableMedia(
+          attachment.mimeType,
+        ),
+    )
 
   const mediaAttachmentIds =
     mediaAttachments
@@ -391,6 +395,31 @@ export function TaskCard({
                 ),
               )}
             </div>
+          )}
+        </div>
+      )}
+
+      {fileAttachments.length > 0 && (
+        <div className="task-card__files">
+          {fileAttachments.map(
+            (attachment) => (
+              <div
+                key={attachment.id}
+                className="task-card__file"
+                title={attachment.fileName}
+              >
+                <strong>
+                  {attachment.fileName}
+                </strong>
+
+                <span>
+                  {getAttachmentTypeLabel(
+                    attachment.fileName,
+                    attachment.mimeType,
+                  )}
+                </span>
+              </div>
+            ),
           )}
         </div>
       )}

@@ -1696,3 +1696,35 @@
     align-items: flex-start;
   }
 }
+
+.task-card__files {
+  display: grid;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+}
+
+.task-card__file {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid #303746;
+  border-radius: 0.45rem;
+  background: #1b1f27;
+}
+
+.task-card__file strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-card__file span {
+  flex: 0 0 auto;
+  color: #8f99aa;
+  font-size: 0.65rem;
+}
