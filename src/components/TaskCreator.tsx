@@ -8,6 +8,8 @@ import type {
     Task,
 } from '../types/board'
 import {
+    getAttachmentProcessingLabel,
+    isBlenderFileName,
     isSupportedAttachmentFile,
 } from '../utility/attachmentTypes'
 
@@ -21,6 +23,10 @@ interface TaskCreatorProps {
     onUploadAttachments: (
         files: File[],
     ) => Promise<Attachment[]>
+    onConvertAttachment?: (
+        attachmentId: string,
+    ) => Promise<void>
+    isBlendConversionAvailable?: boolean
 }
 
 export function TaskCreator({
@@ -31,6 +37,8 @@ export function TaskCreator({
     onCancel,
     onDelete,
     onUploadAttachments,
+    onConvertAttachment,
+    isBlendConversionAvailable = false,
 }: TaskCreatorProps) {
     const [title, setTitle] = useState(
         initialTask?.title ?? '',
@@ -421,84 +429,154 @@ export function TaskCreator({
 
                 {existingAttachments.length >
                     0 && (
-                    <div>
-                        <small>
-                            Current attachments
-                        </small>
+                        <div>
+                            <small>
+                                Current attachments
+                            </small>
 
-                        {existingAttachments.map(
-                            (attachment) => {
-                                const isRemoved =
-                                    removedAttachmentIds
-                                        .includes(
-                                            attachment.id,
+                            {existingAttachments.map(
+                                (attachment) => {
+                                    const isRemoved =
+                                        removedAttachmentIds
+                                            .includes(
+                                                attachment.id,
+                                            )
+
+                                    const isBlendFile =
+                                        isBlenderFileName(
+                                            attachment.fileName,
                                         )
 
-                                return (
-                                    <div
-                                        key={
-                                            attachment.id
-                                        }
-                                    >
-                                        <small>
-                                            {
-                                                attachment.fileName
+                                    const processingStatus =
+                                        attachment.processing
+                                            ?.status ??
+                                        (
+                                            isBlendFile
+                                                ? 'uploaded'
+                                                : null
+                                        )
+
+                                    const processingLabel =
+                                        getAttachmentProcessingLabel(
+                                            attachment.fileName,
+                                            attachment.processing,
+                                        )
+
+                                    const canRequestConversion =
+                                        isBlendFile &&
+                                        (
+                                            processingStatus ===
+                                            'uploaded' ||
+                                            processingStatus ===
+                                            'failed'
+                                        )
+
+                                    return (
+                                        <div
+                                            key={
+                                                attachment.id
                                             }
-                                        </small>
+                                        >
+                                            <small>
+                                                {
+                                                    attachment.fileName
+                                                }
 
-                                        {isRemoved ? (
-                                            <>
-                                                <small>
-                                                    {' '}
-                                                    — will be
-                                                    removed
-                                                    when you
-                                                    save
-                                                </small>
+                                                {processingLabel
+                                                    ? ` — ${processingLabel}`
+                                                    : ''}
+                                            </small>
 
+                                            {attachment.processing
+                                                ?.errorMessage && (
+                                                    <small>
+                                                        {' — '}
+                                                        {
+                                                            attachment
+                                                                .processing
+                                                                .errorMessage
+                                                        }
+                                                    </small>
+                                                )}
+
+                                            {!isRemoved &&
+                                                canRequestConversion &&
+                                                onConvertAttachment && (
+                                                    <button
+                                                        type="button"
+                                                        disabled={
+                                                            !isBlendConversionAvailable
+                                                        }
+                                                        title={
+                                                            isBlendConversionAvailable
+                                                                ? 'Convert Blender file to GLB'
+                                                                : 'Blender conversion service is not configured.'
+                                                        }
+                                                        onClick={() => {
+                                                            void onConvertAttachment(
+                                                                attachment.id,
+                                                            )
+                                                        }}
+                                                    >
+                                                        {processingStatus ===
+                                                            'failed'
+                                                            ? 'Retry Conversion'
+                                                            : 'Convert to GLB'}
+                                                    </button>
+                                                )}
+
+                                            {isRemoved ? (
+                                                <>
+                                                    <small>
+                                                        {' '}
+                                                        — will be
+                                                        removed when
+                                                        you save
+                                                    </small>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setRemovedAttachmentIds(
+                                                                (
+                                                                    currentIds,
+                                                                ) =>
+                                                                    currentIds.filter(
+                                                                        (
+                                                                            id,
+                                                                        ) =>
+                                                                            id !==
+                                                                            attachment.id,
+                                                                    ),
+                                                            )
+                                                        }
+                                                    >
+                                                        Keep
+                                                    </button>
+                                                </>
+                                            ) : (
                                                 <button
                                                     type="button"
                                                     onClick={() =>
                                                         setRemovedAttachmentIds(
                                                             (
                                                                 currentIds,
-                                                            ) =>
-                                                                currentIds.filter(
-                                                                    (
-                                                                        id,
-                                                                    ) =>
-                                                                        id !==
-                                                                        attachment.id,
-                                                                ),
+                                                            ) => [
+                                                                    ...currentIds,
+                                                                    attachment.id,
+                                                                ],
                                                         )
                                                     }
                                                 >
-                                                    Keep
+                                                    Remove
                                                 </button>
-                                            </>
-                                        ) : (
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    setRemovedAttachmentIds(
-                                                        (
-                                                            currentIds,
-                                                        ) => [
-                                                            ...currentIds,
-                                                            attachment.id,
-                                                        ],
-                                                    )
-                                                }
-                                            >
-                                                Remove
-                                            </button>
-                                        )}
-                                    </div>
-                                )
-                            },
-                        )}
-                    </div>
-                )}
+                                            )}
+                                        </div>
+                                    )
+                                },
+                            )}
+                        </div>
+                    )}
 
                 <input
                     type="file"
@@ -548,50 +626,50 @@ export function TaskCreator({
 
                 {attachmentFiles.length >
                     0 && (
-                    <div>
-                        <small>
-                            New attachments
-                        </small>
+                        <div>
+                            <small>
+                                New attachments
+                            </small>
 
-                        {attachmentFiles.map(
-                            (
-                                file,
-                                index,
-                            ) => (
-                                <div
-                                    key={`${file.name}-${file.size}-${file.lastModified}`}
-                                >
-                                    <small>
-                                        {
-                                            file.name
-                                        }
-                                    </small>
-
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            setAttachmentFiles(
-                                                (
-                                                    currentFiles,
-                                                ) =>
-                                                    currentFiles.filter(
-                                                        (
-                                                            _,
-                                                            currentIndex,
-                                                        ) =>
-                                                            currentIndex !==
-                                                            index,
-                                                    ),
-                                            )
-                                        }
+                            {attachmentFiles.map(
+                                (
+                                    file,
+                                    index,
+                                ) => (
+                                    <div
+                                        key={`${file.name}-${file.size}-${file.lastModified}`}
                                     >
-                                        Remove
-                                    </button>
-                                </div>
-                            ),
-                        )}
-                    </div>
-                )}
+                                        <small>
+                                            {
+                                                file.name
+                                            }
+                                        </small>
+
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setAttachmentFiles(
+                                                    (
+                                                        currentFiles,
+                                                    ) =>
+                                                        currentFiles.filter(
+                                                            (
+                                                                _,
+                                                                currentIndex,
+                                                            ) =>
+                                                                currentIndex !==
+                                                                index,
+                                                        ),
+                                                )
+                                            }
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                ),
+                            )}
+                        </div>
+                    )}
 
                 {attachmentUploadError && (
                     <small>

@@ -9,10 +9,18 @@ import { KanbanColumn } from './components/KanbanColumn'
 import { demoProject } from './data/demoProject'
 import type {
   Attachment,
+  AttachmentProcessingOutput,
+  AttachmentProcessingStatus,
   NewTaskInput,
   Project,
   Task,
 } from './types/board'
+import {
+  isBlendConverterConfigured,
+} from './config/conversion'
+import {
+  convertBlendToGlb,
+} from './conversion/blendConversionApi'
 import {
   mergeProjectDocuments,
 } from './storage/projectDocumentMerge'
@@ -70,6 +78,7 @@ import {
 import {
   createInitialAttachmentProcessing,
   isPreviewableMedia,
+  isBlenderFileName
 } from './utility/attachmentTypes'
 
 const priorityOrder = {
@@ -409,6 +418,11 @@ function App() {
       new Set(),
     )
 
+  const activeBlendConversionKeysRef =
+    useRef<Set<string>>(
+      new Set(),
+    )
+
   const isCurrentUserProjectOwner =
     googleUser !== null &&
     currentProject.members.some(
@@ -504,6 +518,283 @@ function App() {
       scheduledSavesRef.current > 0 ||
       pendingSavesRef.current > 0
     )
+  }
+
+  function updateBlendAttachmentProcessing(
+    taskId: string,
+    attachmentId: string,
+    status: AttachmentProcessingStatus,
+    options?: {
+      output?: AttachmentProcessingOutput
+      errorMessage?: string
+    },
+  ) {
+    const updatedAt =
+      new Date().toISOString()
+
+    setTasks((currentTasks) =>
+      currentTasks.map((task) => {
+        if (task.id !== taskId) {
+          return task
+        }
+
+        return {
+          ...task,
+
+          updatedAt,
+
+          revision:
+            task.revision + 1,
+
+          attachments:
+            task.attachments.map(
+              (attachment) => {
+                if (
+                  attachment.id !==
+                  attachmentId
+                ) {
+                  return attachment
+                }
+
+                return {
+                  ...attachment,
+
+                  processing: {
+                    kind:
+                      'blend-to-glb',
+
+                    status,
+
+                    updatedAt,
+
+                    ...(options?.output
+                      ? {
+                        output:
+                          options.output,
+                      }
+                      : {}),
+
+                    ...(options
+                      ?.errorMessage
+                      ? {
+                        errorMessage:
+                          options.errorMessage,
+                      }
+                      : {}),
+                  },
+                }
+              },
+            ),
+        }
+      }),
+    )
+  }
+
+  async function handleConvertBlendAttachment(
+    taskId: string,
+    attachmentId: string,
+  ) {
+    if (
+      !canCurrentUserEditProject ||
+      isDemoMode ||
+      !isBlendConverterConfigured
+    ) {
+      return
+    }
+
+    const task =
+      tasks.find(
+        (task) =>
+          task.id === taskId,
+      )
+
+    const attachment =
+      task?.attachments.find(
+        (attachment) =>
+          attachment.id ===
+          attachmentId,
+      )
+
+    if (
+      !task ||
+      !attachment ||
+      !attachment.driveFileId ||
+      !isBlenderFileName(
+        attachment.fileName,
+      )
+    ) {
+      return
+    }
+
+    const processingStatus =
+      attachment.processing
+        ?.status ?? 'uploaded'
+
+    if (
+      processingStatus ===
+      'queued' ||
+      processingStatus ===
+      'converting' ||
+      processingStatus ===
+      'ready'
+    ) {
+      return
+    }
+
+    if (
+      !googleAccessToken ||
+      !googleAttachmentsFolderId
+    ) {
+      return
+    }
+
+    const conversionKey =
+      `${taskId}:${attachmentId}`
+
+    if (
+      activeBlendConversionKeysRef
+        .current
+        .has(conversionKey)
+    ) {
+      return
+    }
+
+    activeBlendConversionKeysRef
+      .current
+      .add(conversionKey)
+
+    const sourceProjectId =
+      currentProject.id
+
+    updateBlendAttachmentProcessing(
+      taskId,
+      attachmentId,
+      'converting',
+    )
+
+    try {
+      const sourceBlob =
+        await downloadAttachmentFromDrive(
+          googleAccessToken,
+          attachment.driveFileId,
+        )
+
+      const conversionResult =
+        await convertBlendToGlb(
+          sourceBlob,
+          attachment.fileName,
+        )
+
+      /*
+       * Do not upload a result if the user
+       * changed projects or removed the source
+       * attachment while conversion was running.
+       */
+      const sourceStillExists =
+        currentProjectRef.current.id ===
+        sourceProjectId &&
+        currentProjectRef.current.tasks.some(
+          (currentTask) =>
+            currentTask.id === taskId &&
+            currentTask.attachments.some(
+              (currentAttachment) =>
+                currentAttachment.id ===
+                attachmentId,
+            ),
+        )
+
+      if (!sourceStillExists) {
+        return
+      }
+
+      const outputFile =
+        new File(
+          [
+            conversionResult.glbBlob,
+          ],
+          conversionResult.outputFileName,
+          {
+            type:
+              'model/gltf-binary',
+          },
+        )
+
+      const outputDriveFileId =
+        await uploadAttachmentToDrive(
+          googleAccessToken,
+          googleAttachmentsFolderId,
+          outputFile,
+        )
+
+      const attachmentStillExists =
+        currentProjectRef.current.id ===
+        sourceProjectId &&
+        currentProjectRef.current.tasks.some(
+          (currentTask) =>
+            currentTask.id === taskId &&
+            currentTask.attachments.some(
+              (currentAttachment) =>
+                currentAttachment.id ===
+                attachmentId,
+            ),
+        )
+
+      if (!attachmentStillExists) {
+        await deleteAttachmentFromDrive(
+          googleAccessToken,
+          outputDriveFileId,
+        )
+
+        return
+      }
+
+      updateBlendAttachmentProcessing(
+        taskId,
+        attachmentId,
+        'ready',
+        {
+          output: {
+            fileName:
+              conversionResult
+                .outputFileName,
+
+            mimeType:
+              'model/gltf-binary',
+
+            driveFileId:
+              outputDriveFileId,
+          },
+        },
+      )
+    } catch (error) {
+      if (
+        isGoogleUnauthorizedError(
+          error,
+        )
+      ) {
+        expireGoogleSession()
+        return
+      }
+
+      updateBlendAttachmentProcessing(
+        taskId,
+        attachmentId,
+        'failed',
+        {
+          errorMessage:
+            error instanceof Error
+              ? error.message.slice(
+                0,
+                500,
+              )
+              : 'Blender conversion failed.',
+        },
+      )
+    } finally {
+      activeBlendConversionKeysRef
+        .current
+        .delete(conversionKey)
+    }
   }
 
   function completeSave() {

@@ -5,6 +5,15 @@ import {
 const GLB_MIME_TYPE =
   'model/gltf-binary'
 
+const GLB_MAGIC =
+  0x46546c67
+
+const GLB_VERSION =
+  2
+
+const MAX_ERROR_MESSAGE_LENGTH =
+  500
+
 export interface BlendConversionResult {
   outputFileName: string
   glbBlob: Blob
@@ -36,16 +45,64 @@ async function getConversionErrorMessage(
     const responseText =
       await response.text()
 
-    if (responseText.trim()) {
-      return responseText
+    const trimmedResponse =
+      responseText.trim()
+
+    if (trimmedResponse) {
+      return trimmedResponse.slice(
+        0,
+        MAX_ERROR_MESSAGE_LENGTH,
+      )
     }
   } catch {
-    // Fall through to generic message.
+    // Use the generic message below.
   }
 
   return (
     `Blender conversion failed ` +
     `with status ${response.status}.`
+  )
+}
+
+async function isValidGlbBlob(
+  blob: Blob,
+) {
+  if (blob.size < 12) {
+    return false
+  }
+
+  const headerBuffer =
+    await blob
+      .slice(0, 12)
+      .arrayBuffer()
+
+  const header =
+    new DataView(
+      headerBuffer,
+    )
+
+  const magic =
+    header.getUint32(
+      0,
+      true,
+    )
+
+  const version =
+    header.getUint32(
+      4,
+      true,
+    )
+
+  const declaredLength =
+    header.getUint32(
+      8,
+      true,
+    )
+
+  return (
+    magic === GLB_MAGIC &&
+    version === GLB_VERSION &&
+    declaredLength === blob.size
   )
 }
 
@@ -107,14 +164,29 @@ export async function convertBlendToGlb(
     )
   }
 
-  const glbBlob =
+  const receivedBlob =
     await response.blob()
 
-  if (glbBlob.size === 0) {
+  if (
+    !await isValidGlbBlob(
+      receivedBlob,
+    )
+  ) {
     throw new Error(
-      'Blender conversion returned an empty GLB file.',
+      'Blender conversion did not return a valid GLB file.',
     )
   }
+
+  const glbBlob =
+    receivedBlob.type ===
+      GLB_MIME_TYPE
+      ? receivedBlob
+      : new Blob(
+        [receivedBlob],
+        {
+          type: GLB_MIME_TYPE,
+        },
+      )
 
   return {
     outputFileName:
@@ -122,15 +194,6 @@ export async function convertBlendToGlb(
         sourceFileName,
       ),
 
-    glbBlob:
-      glbBlob.type ===
-        GLB_MIME_TYPE
-        ? glbBlob
-        : new Blob(
-          [glbBlob],
-          {
-            type: GLB_MIME_TYPE,
-          },
-        ),
+    glbBlob,
   }
 }

@@ -149,7 +149,7 @@ export function KanbanColumn({
 
               {column.countsAsCompleted && (
                 <>
-                  <label className="kanban-column__completion-setting">
+                  <label className="kanban-colum1n__completion-setting">
                     <input
                       type="checkbox"
                       checked={
