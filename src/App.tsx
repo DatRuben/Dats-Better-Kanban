@@ -68,7 +68,6 @@ import {
   TaskDetailsDialog,
 } from './components/TaskDetailsDialog'
 import {
-  isBlenderFileName,
   isPreviewableMedia,
 } from './utility/attachmentTypes'
 
@@ -3103,17 +3102,6 @@ async function handleUploadAttachment(
                   }
                   onUploadAttachments={
                     handleUploadAttachments
-                  }
-
-                  onConvertAttachment={
-                    handleConvertBlendAttachment
-                  }
-
-                  isBlendConversionAvailable={
-                    !isDemoMode &&
-                    isBlendConverterConfigured &&
-                    googleAccessToken !== null &&
-                    googleAttachmentsFolderId !== null
                   }
 
                   onLoadAttachment={

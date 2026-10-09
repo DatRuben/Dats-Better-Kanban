@@ -495,7 +495,7 @@ export function TaskCreator({
                                         </div>
                                     )
                                 },
-                            )}f
+                            )}
                         </div>
                     )}
 
