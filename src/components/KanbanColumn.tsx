@@ -148,38 +148,40 @@ export function KanbanColumn({
               </label>
 
               {column.countsAsCompleted && (
-                <label className="kanban-column__completion-setting">
-                  <input
-                    type="checkbox"
-                    checked={
-                      column.usePriorityDeadlineOrdering === true
-                    }
-                    onChange={(event) =>
-                      onColumnOrderingChange(
-                        column.id,
-                        event.target.checked,
-                      )
-                    }
-                  />
-                  Priority/Deadline Ordering
-                </label>
-              )}
+                <>
+                  <label className="kanban-column__completion-setting">
+                    <input
+                      type="checkbox"
+                      checked={
+                        column.usePriorityDeadlineOrdering === true
+                      }
+                      onChange={(event) =>
+                        onColumnOrderingChange(
+                          column.id,
+                          event.target.checked,
+                        )
+                      }
+                    />
+                    Priority/Deadline Ordering
+                  </label>
 
-              <label className="kanban-column__completion-setting">
-                <input
-                  type="checkbox"
-                  checked={
-                    column.hidePriorityOnCards === true
-                  }
-                  onChange={(event) =>
-                    onColumnPriorityVisibilityChange(
-                      column.id,
-                      event.target.checked,
-                    )
-                  }
-                />
-                Hide priority on cards
-              </label>
+                  <label className="kanban-column__completion-setting">
+                    <input
+                      type="checkbox"
+                      checked={
+                        column.hidePriorityOnCards === true
+                      }
+                      onChange={(event) =>
+                        onColumnPriorityVisibilityChange(
+                          column.id,
+                          event.target.checked,
+                        )
+                      }
+                    />
+                    Hide priority on cards
+                  </label>
+                </>
+              )}
 
               <button
                 type="button"
