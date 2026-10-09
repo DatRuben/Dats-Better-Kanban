@@ -2,7 +2,7 @@
 
 A customizable Kanban project-management application built with React and TypeScript.
 
-Dat's: Better Kanban focuses on giving users control over their workflow while keeping their project data in their own Google Drive instead of a central Dat's project database.
+Dat's: Better Kanban focuses on customizable workflows, Google Drive-based project ownership, and lightweight collaboration without requiring a central Dat's project database.
 
 ## Live Demo
 
@@ -14,40 +14,55 @@ You can explore the application using Demo Mode without connecting Google Drive.
 
 - Customizable Kanban pipeline sections
 - Drag-and-drop tasks and pipeline sections
-- Task priorities, deadlines, descriptions, and assignees
-- Automatic task sorting by priority and deadline
-- Task image attachments
+- Task priorities, deadlines, descriptions, tags, and assignees
+- Priority/deadline and assignee sorting
+- Manual ordering for tied tasks
+- Image, GIF, and MP4 task attachments
 - Timeline view for upcoming work
+- Clickable Timeline task details
 - Completed-task history
+- Clickable Completed History task details
 - Configurable completion sections
-- Responsive layout for smaller screens
-- Google Drive project persistence
+- Optional priority display for completed sections
+- My Tasks view
+- Owner, editor, and viewer project roles
+- Shared Google Drive projects
+- Project switching and remembered projects
 - Near-live synchronization between sessions
+- Conflict detection for simultaneous edits
+- Responsive layouts for smaller screens
 - Demo Mode for trying the application without saving data
 
 ## Google Drive Storage
 
-When Google Drive mode is used, project files are stored inside the user's own Google Drive.
+When Google Drive mode is used, project data is stored in the user's own Google Drive.
 
-Dat's creates its own project folder containing project metadata, column data, individual task files, and attachment files.
+Dat's uses Google's `drive.file` permission rather than requesting general access to the user's entire Drive.
 
-The application uses Google's `drive.file` permission so it can work with files created for the application without requesting general access to the user's entire Drive.
+Each project uses a canonical `dats-project.json` document containing the project's Kanban state, including:
+
+- project information
+- members
+- pipeline sections
+- tasks
+- task metadata
+
+Attachments are stored as separate Drive files and referenced by the project document.
+
+Using one canonical project document allows a collaborator to explicitly authorize the shared project file while Dat's continues to use the narrower `drive.file` permission.
 
 ## Project Structure
 
-A saved project is organized approximately like this:
+A project is organized approximately like this:
 
 ```text
 Dat's: Better Kanban
 └── Projects
-    └── Project Name
-        ├── project.json
-        ├── columns.json
-        ├── tasks
-        │   └── Task Name.json
+    └── Project
+        ├── dats-project.json
         └── attachments
-            └── image.png
-
+            ├── image.png
+            └── video.mp4
 ```
 
 ## Tech Stack
