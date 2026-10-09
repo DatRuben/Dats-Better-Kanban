@@ -64,6 +64,9 @@ import {
   pickGoogleDriveProjectFile,
 } from './storage/googleDrivePicker'
 import { TaskCard } from './components/TaskCard'
+import {
+  TaskDetailsDialog,
+} from './components/TaskDetailsDialog'
 
 const priorityOrder = {
   critical: 0,
@@ -564,8 +567,10 @@ function App() {
               taskSyncConflictIdsRef.current,
             )
 
-          projectDocumentConflictRef.current =
-            mergeResult.projectConflict
+          if (mergeResult.projectConflict) {
+            projectDocumentConflictRef.current =
+              true
+          }
 
           if (mergeResult.projectConflict) {
             setProjectSyncError(
@@ -708,6 +713,19 @@ function App() {
   const [creatingTaskColumnId, setCreatingTaskColumnId] = useState<string | null>(null)
 
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
+
+  const [
+    selectedTaskId,
+    setSelectedTaskId,
+  ] = useState<string | null>(null)
+
+  const selectedTask =
+    selectedTaskId
+      ? tasks.find(
+        (task) =>
+          task.id === selectedTaskId,
+      ) ?? null
+      : null
 
   const timelineTasks = tasks
     .filter(matchesAssigneeFilter)
@@ -1868,7 +1886,7 @@ function App() {
     const interval =
       window.setInterval(() => {
         void syncRemoteProjectDocument()
-      }, 3000)
+      }, 5000)
 
     return () => {
       isCancelled = true
@@ -3009,9 +3027,13 @@ function App() {
               >
                 <div className="timeline-group__cards">
                   {group.map((task) => (
-                    <article
+                    <button
                       key={task.id}
+                      type="button"
                       className="timeline-item"
+                      onClick={() =>
+                        setSelectedTaskId(task.id)
+                      }
                     >
                       <div className="timeline-item__content">
                         {task.deadline && (
@@ -3028,7 +3050,7 @@ function App() {
                           {task.priority}
                         </p>
                       </div>
-                    </article>
+                    </button>
                   ))}
                 </div>
 
@@ -3069,6 +3091,15 @@ function App() {
           </div>
         </section>
       )}
+
+      <TaskDetailsDialog
+        task={selectedTask}
+        members={currentProject.members}
+        columns={columns}
+        onClose={() =>
+          setSelectedTaskId(null)
+        }
+      />
     </main>
   )
 
