@@ -463,13 +463,6 @@
   outline: none;
 }
 
-.timeline-item__content {
-  padding: 0.875rem;
-  border: 1px solid #303746;
-  border-radius: 0.625rem;
-  background: #222630;
-}
-
 .timeline-group__marker {
   position: absolute;
   top: 50%;
