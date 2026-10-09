@@ -10,8 +10,16 @@ import { demoProject } from './data/demoProject'
 import type {
   Attachment,
   NewTaskInput,
+  Project,
   Task,
 } from './types/board'
+import {
+  getRemovedAttachmentFileIds,
+  mergeProjectDocuments,
+} from './storage/projectDocumentMerge'
+import type {
+  TaskSyncConflict,
+} from './storage/projectDocumentMerge'
 import type { WheelEvent } from 'react'
 import { moveTaskToColumn } from './utility/moveTask'
 import { DragDropProvider } from '@dnd-kit/react'
@@ -27,21 +35,15 @@ import { createBlankProject } from './data/createBlankProject'
 import { APP_VERSION } from './config/app'
 import {
   createProjectOnDrive,
-  deleteTaskFromDrive,
   downloadAttachmentFromDrive,
   ensureDatsDriveFolder,
   ensureProjectsDriveFolder,
   loadFirstProjectFromDrive,
   loadFirstRememberedProjectFromDrive,
-  loadTaskFromDrive,
-  loadTasksFromDrive,
   loadProjectFromDriveFolder,
-  loadProjectMetadataFromDrive,
   loadAvailableProjectSummariesFromDrive,
   rememberProjectFolder,
-  saveColumnsToDrive,
   saveProjectMetadataToDrive,
-  saveTaskToDrive,
   uploadAttachmentToDrive,
   verifyGoogleDriveAccess,
   deleteAttachmentFromDrive,
@@ -50,6 +52,9 @@ import {
   removeProjectFolderPermission,
   updateProjectFolderPermission,
   saveProjectDocumentToDrive,
+  DATS_PROJECT_DOCUMENT_FILE_NAME,
+  loadProjectDocumentFromDrive,
+  loadProjectFromDriveDocument,
 } from './storage/googleDriveApi'
 import type {
   GoogleDriveUser,
@@ -57,7 +62,7 @@ import type {
   DriveProjectSummary,
 } from './storage/googleDriveApi'
 import {
-  pickGoogleDriveFolder,
+  pickGoogleDriveProjectFile,
 } from './storage/googleDrivePicker'
 import { TaskCard } from './components/TaskCard'
 
@@ -169,12 +174,6 @@ function formatCompletedAt(completedAt: string) {
   })
 }
 
-interface TaskSyncConflict {
-  taskId: string
-  localTask: Task | null
-  remoteTask: Task | null
-}
-
 function App() {
   const [project, setProject] =
     useState(demoProject)
@@ -209,19 +208,15 @@ function App() {
   const [googleProjectFolderId, setGoogleProjectFolderId] =
     useState<string | null>(null)
 
-  const [googleTasksFolderId, setGoogleTasksFolderId] =
-    useState<string | null>(null)
+  const [
+    googleProjectFileId,
+    setGoogleProjectFileId,
+  ] = useState<string | null>(null)
 
   const [
     googleAttachmentsFolderId,
     setGoogleAttachmentsFolderId,
   ] = useState<string | null>(null)
-
-  const lastSavedTasksRef =
-    useRef<Task[]>([])
-
-  const tasksRef =
-    useRef<Task[]>(tasks)
 
   const [
     taskSyncConflicts,
@@ -303,6 +298,19 @@ function App() {
     columns,
     tasks,
   )
+
+  const currentProjectRef =
+    useRef<Project>(
+      currentProject,
+    )
+
+  const lastSyncedProjectRef =
+    useRef<Project | null>(
+      null,
+    )
+
+  const projectDocumentConflictRef =
+    useRef(false)
 
   const isCurrentUserProjectOwner =
     googleUser !== null &&
@@ -440,53 +448,6 @@ function App() {
 
   useEffect(() => {
     if (
-      !canCurrentUserEditProjectSettings ||
-      !googleAccessToken ||
-      !googleProjectsFolderId ||
-      !googleProjectFolderId
-    ) {
-      return
-    }
-
-    const releaseScheduledSave =
-      registerScheduledSave()
-
-    const timeout =
-      window.setTimeout(() => {
-        releaseScheduledSave()
-
-        if (!beginSave()) {
-          return
-        }
-
-        void saveProjectMetadataToDrive(
-          googleAccessToken,
-          googleProjectsFolderId,
-          googleProjectFolderId,
-          project,
-        )
-          .then(() => {
-            completeSave()
-          })
-          .catch((error) => {
-            failSave(error)
-          })
-      }, 1000)
-
-    return () => {
-      window.clearTimeout(timeout)
-      releaseScheduledSave()
-    }
-  }, [
-    project,
-    canCurrentUserEditProjectSettings,
-    googleAccessToken,
-    googleProjectsFolderId,
-    googleProjectFolderId,
-  ])
-
-  useEffect(() => {
-    if (
       !googleAccessToken ||
       !googleTokenExpiresAt
     ) {
@@ -531,54 +492,38 @@ function App() {
   ])
 
   useEffect(() => {
-    if (
-      isDemoMode ||
-      !googleAccessToken ||
-      !googleProjectFolderId
-    ) {
-      return
-    }
-
-    const releaseScheduledSave =
-      registerScheduledSave()
-
-    const timeout =
-      window.setTimeout(() => {
-        releaseScheduledSave()
-
-        if (!beginSave()) {
-          return
-        }
-
-        void saveColumnsToDrive(
-          googleAccessToken,
-          googleProjectFolderId,
-          columns,
-        )
-          .then(() => {
-            completeSave()
-          })
-          .catch((error) => {
-            failSave(error)
-          })
-      }, 1000)
-
-    return () => {
-      window.clearTimeout(timeout)
-      releaseScheduledSave()
-    }
+    currentProjectRef.current =
+      currentProject
   }, [
+    project,
     columns,
-    isDemoMode,
-    googleAccessToken,
-    googleProjectFolderId,
+    tasks,
   ])
 
   useEffect(() => {
     if (
       isDemoMode ||
       !googleAccessToken ||
-      !googleTasksFolderId
+      !googleProjectFileId ||
+      !canCurrentUserEditProject ||
+      projectDocumentConflictRef.current
+    ) {
+      return
+    }
+
+    const baseline =
+      lastSyncedProjectRef.current
+
+    if (!baseline) {
+      return
+    }
+
+    const localProject =
+      currentProject
+
+    if (
+      JSON.stringify(localProject) ===
+      JSON.stringify(baseline)
     ) {
       return
     }
@@ -590,283 +535,100 @@ function App() {
       window.setTimeout(() => {
         releaseScheduledSave()
 
-        const previousTasks =
-          lastSavedTasksRef.current
-
-        const previousById =
-          new Map(
-            previousTasks.map(
-              (task) => [task.id, task],
-            ),
-          )
-
-        const currentIds =
-          new Set(
-            tasks.map((task) => task.id),
-          )
-
-        const changedTasks =
-          tasks.filter((task) => {
-            if (
-              taskSyncConflictIdsRef.current.has(
-                task.id,
-              )
-            ) {
-              return false
-            }
-
-            const previousTask =
-              previousById.get(task.id)
-
-            return (
-              !previousTask ||
-              JSON.stringify(previousTask) !==
-              JSON.stringify(task)
-            )
-          })
-
-        const deletedTaskIds =
-          previousTasks
-            .filter(
-              (task) =>
-                !currentIds.has(task.id) &&
-                !taskSyncConflictIdsRef.current.has(
-                  task.id,
-                ),
-            )
-            .map((task) => task.id)
-
-        if (
-          changedTasks.length === 0 &&
-          deletedTaskIds.length === 0
-        ) {
-          return
-        }
-
         if (!beginSave()) {
           return
         }
 
         void (async () => {
-          const safeChangedTasks: Task[] = []
-          const safeDeletedTaskIds: string[] = []
+          const latestLocalProject =
+            currentProjectRef.current
 
-          const alreadySyncedChangedTasks: Task[] = []
-          const alreadyDeletedTaskIds: string[] = []
+          const latestBaseline =
+            lastSyncedProjectRef.current
 
-          const detectedConflicts: TaskSyncConflict[] = []
-
-          for (const task of changedTasks) {
-            const previousTask =
-              previousById.get(task.id) ?? null
-
-            const remoteTask =
-              await loadTaskFromDrive(
-                googleAccessToken,
-                googleTasksFolderId,
-                task.id,
-              )
-
-            const remoteMatchesBaseline =
-              taskVersionsMatch(
-                remoteTask,
-                previousTask,
-              )
-
-            const remoteAlreadyMatchesLocal =
-              taskVersionsMatch(
-                remoteTask,
-                task,
-              )
-
-            if (remoteAlreadyMatchesLocal) {
-              alreadySyncedChangedTasks.push(task)
-              continue
-            }
-
-            if (!remoteMatchesBaseline) {
-              detectedConflicts.push({
-                taskId: task.id,
-                localTask: task,
-                remoteTask,
-              })
-
-              continue
-            }
-
-            safeChangedTasks.push(task)
+          if (!latestBaseline) {
+            completeSave()
+            return
           }
 
-          for (const taskId of deletedTaskIds) {
-            const previousTask =
-              previousById.get(taskId)
+          const remoteDocument =
+            await loadProjectDocumentFromDrive(
+              googleAccessToken,
+              googleProjectFileId,
+            )
 
-            if (!previousTask) {
-              continue
-            }
+          const mergeResult =
+            mergeProjectDocuments(
+              latestBaseline,
+              latestLocalProject,
+              remoteDocument.project,
+              taskSyncConflictIdsRef.current,
+            )
 
-            const remoteTask =
-              await loadTaskFromDrive(
-                googleAccessToken,
-                googleTasksFolderId,
-                taskId,
-              )
+          projectDocumentConflictRef.current =
+            mergeResult.projectConflict
 
-            if (remoteTask === null) {
-              alreadyDeletedTaskIds.push(taskId)
-              continue
-            }
+          if (mergeResult.projectConflict) {
+            setProjectSyncError(
+              'The pipeline or project settings changed in two places at the same time. Reload the project before continuing.',
+            )
 
-            if (
-              !taskVersionsMatch(
-                remoteTask,
-                previousTask,
-              )
-            ) {
-              detectedConflicts.push({
-                taskId,
-                localTask: null,
-                remoteTask,
-              })
-
-              continue
-            }
-
-            safeDeletedTaskIds.push(taskId)
+            completeSave()
+            return
           }
 
-          for (const conflict of detectedConflicts) {
-            taskSyncConflictIdsRef.current.add(
-              conflict.taskId,
+          taskSyncConflictIdsRef.current =
+            new Set(
+              mergeResult.taskConflicts.map(
+                (conflict) =>
+                  conflict.taskId,
+              ),
+            )
+
+          setTaskSyncConflicts(
+            mergeResult.taskConflicts,
+          )
+
+          if (
+            JSON.stringify(
+              mergeResult.projectToSave,
+            ) !==
+            JSON.stringify(
+              remoteDocument.project,
+            )
+          ) {
+            await saveProjectDocumentToDrive(
+              googleAccessToken,
+              googleProjectFileId,
+              mergeResult.projectToSave,
             )
           }
 
-          setTaskSyncConflicts(
-            (currentConflicts) => {
-              const conflictsById =
-                new Map(
-                  currentConflicts.map(
-                    (conflict) => [
-                      conflict.taskId,
-                      conflict,
-                    ],
-                  ),
-                )
+          const removedAttachmentIds =
+            getRemovedAttachmentFileIds(
+              latestBaseline,
+              mergeResult.projectToSave,
+            )
 
-              for (const conflict of detectedConflicts) {
-                conflictsById.set(
-                  conflict.taskId,
-                  conflict,
-                )
-              }
-
-              return [...conflictsById.values()]
-            },
-          )
-
-          await Promise.all([
-            ...safeChangedTasks.map((task) =>
-              saveTaskToDrive(
-                googleAccessToken,
-                googleTasksFolderId,
-                task,
-              ),
-            ),
-
-            ...safeDeletedTaskIds.map((taskId) =>
-              deleteTaskFromDrive(
-                googleAccessToken,
-                googleTasksFolderId,
-                taskId,
-              ),
-            ),
-          ])
-
-          const syncedChangedTasks = [
-            ...safeChangedTasks,
-            ...alreadySyncedChangedTasks,
-          ]
-
-          const syncedDeletedTaskIds = [
-            ...safeDeletedTaskIds,
-            ...alreadyDeletedTaskIds,
-          ]
-
-          const attachmentIdsToDelete: string[] = []
-
-          for (const task of syncedChangedTasks) {
-            const previousTask =
-              previousById.get(task.id)
-
-            if (!previousTask) {
-              continue
-            }
-
-            const currentAttachmentIds =
-              new Set(
-                task.attachments
-                  .map(
-                    (attachment) =>
-                      attachment.driveFileId,
-                  )
-                  .filter(
-                    (fileId): fileId is string =>
-                      Boolean(fileId),
-                  ),
-              )
-
-            for (
-              const previousAttachment
-              of previousTask.attachments
-            ) {
-              if (
-                previousAttachment.driveFileId &&
-                !currentAttachmentIds.has(
-                  previousAttachment.driveFileId,
-                )
-              ) {
-                attachmentIdsToDelete.push(
-                  previousAttachment.driveFileId,
-                )
-              }
-            }
-          }
-
-          for (const taskId of syncedDeletedTaskIds) {
-            const deletedTask =
-              previousById.get(taskId)
-
-            if (!deletedTask) {
-              continue
-            }
-
-            for (
-              const attachment
-              of deletedTask.attachments
-            ) {
-              if (attachment.driveFileId) {
-                attachmentIdsToDelete.push(
-                  attachment.driveFileId,
-                )
-              }
-            }
-          }
-
-          const attachmentCleanupResults =
+          const cleanupResults =
             await Promise.allSettled(
-              attachmentIdsToDelete.map((fileId) =>
-                deleteAttachmentFromDrive(
-                  googleAccessToken,
-                  fileId,
-                ),
+              removedAttachmentIds.map(
+                (fileId) =>
+                  deleteAttachmentFromDrive(
+                    googleAccessToken,
+                    fileId,
+                  ),
               ),
             )
 
           for (
             const cleanupResult
-            of attachmentCleanupResults
+            of cleanupResults
           ) {
-            if (cleanupResult.status === 'rejected') {
+            if (
+              cleanupResult.status ===
+              'rejected'
+            ) {
               console.error(
                 'Failed to clean up an unused attachment:',
                 cleanupResult.reason,
@@ -874,27 +636,46 @@ function App() {
             }
           }
 
-          const nextSavedTasksById =
-            new Map(
-              lastSavedTasksRef.current.map(
-                (task) => [task.id, task],
-              ),
-            )
-          for (const task of syncedChangedTasks) {
-            nextSavedTasksById.set(
-              task.id,
-              task,
-            )
+          if (
+            canCurrentUserEditProjectSettings &&
+            googleProjectsFolderId &&
+            googleProjectFolderId
+          ) {
+            try {
+              await saveProjectMetadataToDrive(
+                googleAccessToken,
+                googleProjectsFolderId,
+                googleProjectFolderId,
+                mergeResult.projectToSave,
+              )
+            } catch (error) {
+              console.error(
+                'Failed to mirror legacy project metadata:',
+                error,
+              )
+            }
           }
 
-          for (const taskId of syncedDeletedTaskIds) {
-            nextSavedTasksById.delete(
-              taskId,
-            )
-          }
+          lastSyncedProjectRef.current =
+            mergeResult.projectToSave
 
-          lastSavedTasksRef.current =
-            [...nextSavedTasksById.values()]
+          currentProjectRef.current =
+            mergeResult.localProject
+
+          setProject(
+            mergeResult.localProject,
+          )
+
+          setColumns(
+            mergeResult.localProject.columns,
+          )
+
+          setTasks(
+            mergeResult.localProject.tasks,
+          )
+
+          setProjectSyncError(null)
+          setSyncError(null)
 
           completeSave()
         })().catch((error) => {
@@ -907,10 +688,16 @@ function App() {
       releaseScheduledSave()
     }
   }, [
+    project,
+    columns,
     tasks,
     isDemoMode,
     googleAccessToken,
-    googleTasksFolderId,
+    googleProjectFileId,
+    googleProjectFolderId,
+    googleProjectsFolderId,
+    canCurrentUserEditProject,
+    canCurrentUserEditProjectSettings,
   ])
 
   const [activeView, setActiveView] =
@@ -954,39 +741,6 @@ function App() {
   const [creatingTaskColumnId, setCreatingTaskColumnId] = useState<string | null>(null)
 
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (
-      assigneeFilter === 'all' ||
-      assigneeFilter === 'unassigned'
-    ) {
-      return
-    }
-
-    const memberStillExists =
-      currentProject.members.some(
-        (member) =>
-          member.id === assigneeFilter,
-      )
-
-    if (!memberStillExists) {
-      setAssigneeFilter('all')
-    }
-  }, [
-    assigneeFilter,
-    currentProject.members,
-  ])
-
-  useEffect(() => {
-    if (canCurrentUserEditProject) {
-      return
-    }
-
-    setIsPipelineEditing(false)
-    setIsTaskEditing(false)
-    setEditingTaskId(null)
-    setCreatingTaskColumnId(null)
-  }, [canCurrentUserEditProject])
 
   const timelineTasks = tasks
     .filter(matchesAssigneeFilter)
@@ -1443,21 +1197,6 @@ function App() {
     setEditingTaskId(null)
   }
 
-  function taskVersionsMatch(
-    firstTask: Task | null | undefined,
-    secondTask: Task | null | undefined,
-  ) {
-    if (!firstTask || !secondTask) {
-      return firstTask == null &&
-        secondTask == null
-    }
-
-    return (
-      JSON.stringify(firstTask) ===
-      JSON.stringify(secondTask)
-    )
-  }
-
   function handleDeleteTask(taskId: string) {
     if (!canCurrentUserEditProject) {
       return
@@ -1493,14 +1232,18 @@ function App() {
   ) {
     setAssigneeFilter('all')
     setTaskSortMode('priority')
+
     const activeProject =
       loadedDriveProject.project
 
-    lastSavedTasksRef.current =
-      activeProject.tasks
+    currentProjectRef.current =
+      activeProject
 
-    tasksRef.current =
-      activeProject.tasks
+    lastSyncedProjectRef.current =
+      activeProject
+
+    projectDocumentConflictRef.current =
+      false
 
     taskSyncConflictIdsRef.current =
       new Set()
@@ -1511,8 +1254,8 @@ function App() {
       loadedDriveProject.projectFolderId,
     )
 
-    setGoogleTasksFolderId(
-      loadedDriveProject.tasksFolderId,
+    setGoogleProjectFileId(
+      loadedDriveProject.projectFileId,
     )
 
     setGoogleAttachmentsFolderId(
@@ -1547,8 +1290,9 @@ function App() {
   }
 
   async function openDriveProject(
-    projectFolderId: string,
+    projectFolderId: string | null,
     isOwned: boolean,
+    projectFileId?: string,
   ) {
     if (
       !googleAccessToken ||
@@ -1560,16 +1304,31 @@ function App() {
       )
     }
 
-    let loadedDriveProject =
-      await loadProjectFromDriveFolder(
-        googleAccessToken,
-        projectFolderId,
-        isOwned,
+    let loadedDriveProject:
+      LoadedDriveProject | null
+
+    if (projectFileId) {
+      loadedDriveProject =
+        await loadProjectFromDriveDocument(
+          googleAccessToken,
+          projectFileId,
+        )
+    } else if (projectFolderId) {
+      loadedDriveProject =
+        await loadProjectFromDriveFolder(
+          googleAccessToken,
+          projectFolderId,
+          isOwned,
+        )
+    } else {
+      throw new Error(
+        'No Dat’s project was selected.',
       )
+    }
 
     if (!loadedDriveProject) {
       throw new Error(
-        'The selected folder is not a Dat’s project.',
+        'The selected item is not a Dat’s project.',
       )
     }
 
@@ -1581,19 +1340,20 @@ function App() {
         )
 
       if (!hasProjectOwner) {
-        const migratedProject = {
+        const migratedProject: Project = {
           ...loadedDriveProject.project,
 
           members: [
             ...loadedDriveProject.project.members,
             {
-              id: googleUser.permissionId,
+              id:
+                googleUser.permissionId,
               displayName:
                 googleUser.displayName,
               role: '',
               email:
                 googleUser.emailAddress,
-              accessRole: 'owner' as const,
+              accessRole: 'owner',
             },
           ],
         }
@@ -1601,7 +1361,7 @@ function App() {
         await saveProjectMetadataToDrive(
           googleAccessToken,
           googleProjectsFolderId,
-          projectFolderId,
+          loadedDriveProject.projectFolderId,
           migratedProject,
         )
 
@@ -1613,7 +1373,8 @@ function App() {
 
         loadedDriveProject = {
           ...loadedDriveProject,
-          project: migratedProject,
+          project:
+            migratedProject,
         }
       }
     } else {
@@ -1641,50 +1402,6 @@ function App() {
     activateDriveProject(
       loadedDriveProject,
     )
-  }
-
-  async function handleToggleProjectChooser() {
-    if (isProjectChooserOpen) {
-      setIsProjectChooserOpen(false)
-      return
-    }
-
-    if (
-      !googleAccessToken ||
-      !googleProjectsFolderId
-    ) {
-      return
-    }
-
-    setIsMemberPanelOpen(false)
-    setIsProjectChooserOpen(true)
-    setIsLoadingProjectSummaries(true)
-    setProjectChooserError(null)
-
-    try {
-      const summaries =
-        await loadAvailableProjectSummariesFromDrive(
-          googleAccessToken,
-          googleProjectsFolderId,
-        )
-
-      setAvailableProjectSummaries(
-        summaries,
-      )
-    } catch (error) {
-      if (isGoogleUnauthorizedError(error)) {
-        expireGoogleSession()
-        return
-      }
-
-      setProjectChooserError(
-        error instanceof Error
-          ? error.message
-          : 'Failed to load projects.',
-      )
-    } finally {
-      setIsLoadingProjectSummaries(false)
-    }
   }
 
   async function handleSelectProject(
@@ -1726,6 +1443,7 @@ function App() {
       await openDriveProject(
         summary.projectFolderId,
         summary.isOwned,
+        summary.projectFileId,
       )
 
       setIsProjectChooserOpen(false)
@@ -1742,6 +1460,52 @@ function App() {
       )
     } finally {
       setOpeningProjectFolderId(null)
+    }
+  }
+
+  async function handleToggleProjectChooser() {
+    if (isProjectChooserOpen) {
+      setIsProjectChooserOpen(false)
+      return
+    }
+
+    if (
+      !googleAccessToken ||
+      !googleProjectsFolderId
+    ) {
+      return
+    }
+
+    setIsMemberPanelOpen(false)
+    setIsProjectChooserOpen(true)
+    setIsLoadingProjectSummaries(true)
+    setProjectChooserError(null)
+
+    try {
+      const summaries =
+        await loadAvailableProjectSummariesFromDrive(
+          googleAccessToken,
+          googleProjectsFolderId,
+        )
+
+      setAvailableProjectSummaries(
+        summaries,
+      )
+    } catch (error) {
+      if (
+        isGoogleUnauthorizedError(error)
+      ) {
+        expireGoogleSession()
+        return
+      }
+
+      setProjectChooserError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to load projects.',
+      )
+    } finally {
+      setIsLoadingProjectSummaries(false)
     }
   }
 
@@ -1778,13 +1542,22 @@ function App() {
     setSharedProjectError(null)
 
     try {
-      const projectFolderId =
-        await pickGoogleDriveFolder(
+      const pickedProject =
+        await pickGoogleDriveProjectFile(
           googleAccessToken,
         )
 
-      if (!projectFolderId) {
+      if (!pickedProject) {
         return
+      }
+
+      if (
+        pickedProject.name !==
+        DATS_PROJECT_DOCUMENT_FILE_NAME
+      ) {
+        throw new Error(
+          `Select the "${DATS_PROJECT_DOCUMENT_FILE_NAME}" file inside the shared Dat’s project folder.`,
+        )
       }
 
       if (hasPendingProjectSaves()) {
@@ -1796,11 +1569,14 @@ function App() {
       }
 
       await openDriveProject(
-        projectFolderId,
+        null,
         false,
+        pickedProject.id,
       )
     } catch (error) {
-      if (isGoogleUnauthorizedError(error)) {
+      if (
+        isGoogleUnauthorizedError(error)
+      ) {
         expireGoogleSession()
         return
       }
@@ -1942,14 +1718,10 @@ function App() {
   }
 
   useEffect(() => {
-    tasksRef.current = tasks
-  }, [tasks])
-
-  useEffect(() => {
     if (
       isDemoMode ||
       !googleAccessToken ||
-      !googleProjectFolderId ||
+      !googleProjectFileId ||
       !googleUser
     ) {
       return
@@ -1958,8 +1730,8 @@ function App() {
     const accessToken =
       googleAccessToken
 
-    const projectFolderId =
-      googleProjectFolderId
+    const projectFileId =
+      googleProjectFileId
 
     const googlePermissionId =
       googleUser.permissionId
@@ -1967,7 +1739,7 @@ function App() {
     let isChecking = false
     let isCancelled = false
 
-    async function syncRemoteProjectMetadata() {
+    async function syncRemoteProjectDocument() {
       if (
         isChecking ||
         hasPendingProjectSaves() ||
@@ -1981,335 +1753,73 @@ function App() {
       isChecking = true
 
       try {
-        const remoteMetadata =
-          await loadProjectMetadataFromDrive(
+        const remoteDocument =
+          await loadProjectDocumentFromDrive(
             accessToken,
-            projectFolderId,
+            projectFileId,
           )
 
         if (isCancelled) {
           return
         }
 
-        if (!remoteMetadata) {
-          setProjectSyncError(
-            'Google Drive project metadata could not be found.',
+        const remoteProject =
+          remoteDocument.project
+
+        const localProject =
+          currentProjectRef.current
+
+        const baseline =
+          lastSyncedProjectRef.current ??
+          remoteProject
+
+        const mergeResult =
+          mergeProjectDocuments(
+            baseline,
+            localProject,
+            remoteProject,
+            taskSyncConflictIdsRef.current,
           )
 
-          return
-        }
-
-        setProject((currentProject) => {
-          const metadataMatches =
-            currentProject.schemaVersion ===
-            remoteMetadata.schemaVersion &&
-            currentProject.id ===
-            remoteMetadata.id &&
-            currentProject.name ===
-            remoteMetadata.name &&
-            JSON.stringify(
-              currentProject.members,
-            ) ===
-            JSON.stringify(
-              remoteMetadata.members,
-            )
-
-          if (metadataMatches) {
-            return currentProject
-          }
-
-          return {
-            ...currentProject,
-            schemaVersion:
-              remoteMetadata.schemaVersion,
-            id:
-              remoteMetadata.id,
-            name:
-              remoteMetadata.name,
-            members:
-              remoteMetadata.members,
-          }
-        })
-
-        setProjectSyncError(null)
-      } catch (error) {
-        if (isCancelled) {
-          return
-        }
-
-        if (isGoogleUnauthorizedError(error)) {
-          expireGoogleSession()
-          return
-        }
-
-        if (
-          error instanceof Error &&
-          error.message.includes('status 403')
-        ) {
-          setProject((currentProject) => ({
-            ...currentProject,
-
-            members:
-              currentProject.members.filter(
-                (member) =>
-                  member.id !==
-                  googlePermissionId,
-              ),
-          }))
-
-          setProjectSyncError(
-            'You no longer have access to this project.',
-          )
-
-          return
-        }
-
-        setProjectSyncError(
-          error instanceof Error
-            ? error.message
-            : 'Project metadata sync failed.',
-        )
-      } finally {
-        isChecking = false
-      }
-    }
-
-    void syncRemoteProjectMetadata()
-
-    const interval =
-      window.setInterval(() => {
-        void syncRemoteProjectMetadata()
-      }, 3000)
-
-    return () => {
-      isCancelled = true
-      window.clearInterval(interval)
-    }
-  }, [
-    isDemoMode,
-    googleAccessToken,
-    googleProjectFolderId,
-    googleUser,
-    isInvitingMember,
-    removingMemberId,
-    updatingMemberId,
-  ])
-
-  useEffect(() => {
-    if (
-      isDemoMode ||
-      !googleAccessToken ||
-      !googleTasksFolderId
-    ) {
-      return
-    }
-
-    const accessToken =
-      googleAccessToken
-
-    const tasksFolderId =
-      googleTasksFolderId
-
-    let isChecking = false
-    let isCancelled = false
-
-    async function syncRemoteTasks() {
-      if (
-        isChecking ||
-        hasPendingProjectSaves()
-      ) {
-        return
-      }
-
-      isChecking = true
-
-      try {
-        const remoteTasks =
-          await loadTasksFromDrive(
-            accessToken,
-            tasksFolderId,
-            false,
-          )
-
-        if (isCancelled) {
-          return
-        }
-
-        const localTasks =
-          tasksRef.current
-
-        const lastSyncedTasks =
-          lastSavedTasksRef.current
-
-        const baseById =
-          new Map(
-            lastSyncedTasks.map(
-              (task) => [task.id, task],
-            ),
-          )
-
-        const localById =
-          new Map(
-            localTasks.map(
-              (task) => [task.id, task],
-            ),
-          )
-
-        const remoteById =
-          new Map(
-            remoteTasks.map(
-              (task) => [task.id, task],
-            ),
-          )
-
-        const allTaskIds =
-          new Set([
-            ...baseById.keys(),
-            ...localById.keys(),
-            ...remoteById.keys(),
-          ])
-
-        const mergedTasks: Task[] = []
-        const nextSyncedTasks: Task[] = []
-        const conflicts: TaskSyncConflict[] = []
-
-        for (const taskId of allTaskIds) {
-          const baseTask =
-            baseById.get(taskId)
-
-          const localTask =
-            localById.get(taskId)
-
-          const remoteTask =
-            remoteById.get(taskId)
-
-          const localChanged =
-            !taskVersionsMatch(
-              localTask,
-              baseTask,
-            )
-
-          const remoteChanged =
-            !taskVersionsMatch(
-              remoteTask,
-              baseTask,
-            )
-
-          const localAndRemoteMatch =
-            taskVersionsMatch(
-              localTask,
-              remoteTask,
-            )
-
-          if (
-            localChanged &&
-            remoteChanged &&
-            !localAndRemoteMatch
-          ) {
-            conflicts.push({
-              taskId,
-              localTask:
-                localTask ?? null,
-              remoteTask:
-                remoteTask ?? null,
-            })
-
-            if (localTask) {
-              mergedTasks.push(localTask)
-            }
-
-            if (baseTask) {
-              nextSyncedTasks.push(baseTask)
-            }
-
-            continue
-          }
-
-          if (
-            remoteChanged &&
-            !localChanged
-          ) {
-            if (remoteTask) {
-              mergedTasks.push(remoteTask)
-              nextSyncedTasks.push(remoteTask)
-            }
-
-            continue
-          }
-
-          if (
-            localChanged &&
-            !remoteChanged
-          ) {
-            if (localTask) {
-              mergedTasks.push(localTask)
-            }
-
-            if (baseTask) {
-              nextSyncedTasks.push(baseTask)
-            }
-
-            continue
-          }
-
-          if (
-            localChanged &&
-            remoteChanged &&
-            localAndRemoteMatch
-          ) {
-            if (localTask) {
-              mergedTasks.push(localTask)
-              nextSyncedTasks.push(localTask)
-            }
-
-            continue
-          }
-
-          if (localTask) {
-            mergedTasks.push(localTask)
-          }
-
-          if (baseTask) {
-            nextSyncedTasks.push(baseTask)
-          }
-        }
-
-        if (
-          !taskListsMatch(
-            tasksRef.current,
-            localTasks,
-          ) ||
-          !taskListsMatch(
-            lastSavedTasksRef.current,
-            lastSyncedTasks,
-          )
-        ) {
-          return
-        }
+        projectDocumentConflictRef.current =
+          mergeResult.projectConflict
 
         taskSyncConflictIdsRef.current =
           new Set(
-            conflicts.map(
+            mergeResult.taskConflicts.map(
               (conflict) =>
                 conflict.taskId,
             ),
           )
 
-        setTaskSyncConflicts(conflicts)
+        setTaskSyncConflicts(
+          mergeResult.taskConflicts,
+        )
 
-        lastSavedTasksRef.current =
-          nextSyncedTasks
+        lastSyncedProjectRef.current =
+          remoteProject
 
-        if (
-          !taskListsMatch(
-            mergedTasks,
-            localTasks,
+        currentProjectRef.current =
+          mergeResult.localProject
+
+        setProject(
+          mergeResult.localProject,
+        )
+
+        setColumns(
+          mergeResult.localProject.columns,
+        )
+
+        setTasks(
+          mergeResult.localProject.tasks,
+        )
+
+        if (mergeResult.projectConflict) {
+          setProjectSyncError(
+            'The pipeline or project settings changed in two places at the same time. Reload the project before continuing.',
           )
-        ) {
-          tasksRef.current =
-            mergedTasks
-
-          setTasks(mergedTasks)
+        } else {
+          setProjectSyncError(null)
         }
 
         setSyncError(null)
@@ -2325,6 +1835,32 @@ function App() {
           return
         }
 
+        if (
+          error instanceof Error &&
+          error.message.includes(
+            'status 403',
+          )
+        ) {
+          setProject(
+            (currentValue) => ({
+              ...currentValue,
+
+              members:
+                currentValue.members.filter(
+                  (member) =>
+                    member.id !==
+                    googlePermissionId,
+                ),
+            }),
+          )
+
+          setProjectSyncError(
+            'You no longer have access to this project.',
+          )
+
+          return
+        }
+
         setSyncError(
           error instanceof Error
             ? error.message
@@ -2335,11 +1871,11 @@ function App() {
       }
     }
 
-    void syncRemoteTasks()
+    void syncRemoteProjectDocument()
 
     const interval =
       window.setInterval(() => {
-        void syncRemoteTasks()
+        void syncRemoteProjectDocument()
       }, 3000)
 
     return () => {
@@ -2349,7 +1885,11 @@ function App() {
   }, [
     isDemoMode,
     googleAccessToken,
-    googleTasksFolderId,
+    googleProjectFileId,
+    googleUser,
+    isInvitingMember,
+    removingMemberId,
+    updatingMemberId,
   ])
 
   useEffect(() => {
@@ -3683,36 +3223,6 @@ function App() {
 
           return currentTask
         },
-      )
-    })
-  }
-
-  function taskListsMatch(
-    firstTasks: Task[],
-    secondTasks: Task[],
-  ) {
-    if (
-      firstTasks.length !==
-      secondTasks.length
-    ) {
-      return false
-    }
-
-    const secondTasksById =
-      new Map(
-        secondTasks.map(
-          (task) => [task.id, task],
-        ),
-      )
-
-    return firstTasks.every((task) => {
-      const matchingTask =
-        secondTasksById.get(task.id)
-
-      return (
-        matchingTask !== undefined &&
-        JSON.stringify(task) ===
-        JSON.stringify(matchingTask)
       )
     })
   }
