@@ -118,7 +118,7 @@ export function TaskCard({
     )
 
   const [mediaLoadError, setmediaLoadError] =
-    useState(false)
+    useState<string | null>(null)
 
   useEffect(() => {
     setcurrentMediaIndex(0)
@@ -128,7 +128,7 @@ export function TaskCard({
   ])
 
   useEffect(() => {
-    setmediaLoadError(false)
+    setmediaLoadError(null)
 
     if (!mediaAttachment) {
       setmediaPreviewUrl(null)
@@ -136,15 +136,15 @@ export function TaskCard({
     }
 
     if (mediaAttachment.previewUrl) {
-      setmediaPreviewUrl(
-        mediaAttachment.previewUrl,
-      )
+      setmediaPreviewUrl(mediaAttachment.previewUrl)
       return
     }
 
     if (!mediaAttachment.driveFileId) {
       setmediaPreviewUrl(null)
-      setmediaLoadError(true)
+      setmediaLoadError(
+        'This attachment has no Google Drive file reference.',
+      )
       return
     }
 
@@ -153,17 +153,20 @@ export function TaskCard({
     let isCancelled = false
     let objectUrl: string | null = null
 
-    void onLoadAttachment(
-      mediaAttachment,
-    )
+    void onLoadAttachment(mediaAttachment)
       .then((blob) => {
-        if (!blob || isCancelled) {
+        if (isCancelled) {
           return
         }
 
-        objectUrl =
-          URL.createObjectURL(blob)
+        if (!blob) {
+          setmediaLoadError(
+            'No attachment data was returned. Check the Google Drive connection.',
+          )
+          return
+        }
 
+        objectUrl = URL.createObjectURL(blob)
         setmediaPreviewUrl(objectUrl)
       })
       .catch((error) => {
@@ -171,7 +174,11 @@ export function TaskCard({
           return
         }
 
-        setmediaLoadError(true)
+        setmediaLoadError(
+          error instanceof Error
+            ? error.message
+            : 'Attachment download failed.',
+        )
 
         console.error(
           'Failed to load attachment preview:',
@@ -415,6 +422,21 @@ export function TaskCard({
                 ),
               )}
             </div>
+          )}
+
+          {mediaLoadError && (
+            <details
+              className="task-card__attachment-error"
+              onPointerDown={(event) =>
+                event.stopPropagation()
+              }
+            >
+              <summary>
+                Why is this attachment unavailable?
+              </summary>
+
+              <p>{mediaLoadError}</p>
+            </details>
           )}
         </div>
       )}

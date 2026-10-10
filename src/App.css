@@ -1806,3 +1806,23 @@
   font-size: 0.75rem;
   text-align: center;
 }
+
+.task-card__attachment-error {
+  padding: 0.6rem 0.75rem;
+  border-top: 1px solid #303746;
+  background: #191c23;
+  color: #b9c3d4;
+  font-size: 0.75rem;
+}
+
+.task-card__attachment-error summary {
+  cursor: pointer;
+}
+
+.task-card__attachment-error p {
+  margin: 0.5rem 0 0;
+  max-height: 8rem;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
