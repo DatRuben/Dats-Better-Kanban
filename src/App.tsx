@@ -61,6 +61,7 @@ import type {
   DriveProjectSummary,
 } from './storage/googleDriveApi'
 import {
+  pickGoogleDriveFolder,
   pickGoogleDriveProjectFile,
 } from './storage/googleDrivePicker'
 import { TaskCard } from './components/TaskCard'
@@ -1669,6 +1670,38 @@ function App() {
     }
   }
 
+  async function handleAuthorizeAttachmentsFolder() {
+    if (
+      !googleAccessToken ||
+      !googleProjectFolderId
+    ) {
+      return
+    }
+
+    setSharedProjectError(null)
+
+    try {
+      const folderId =
+        await pickGoogleDriveFolder(
+          googleAccessToken,
+        )
+
+      if (!folderId) {
+        return
+      }
+
+      setGoogleAttachmentsFolderId(
+        folderId,
+      )
+    } catch (error) {
+      setSharedProjectError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to authorize the attachments folder.',
+      )
+    }
+  }
+
   async function handleOpenSharedProject() {
     if (!googleAccessToken) {
       setSharedProjectError(
@@ -2523,6 +2556,27 @@ function App() {
                   ? 'Connect Google Drive'
                   : 'Reconnect Google Drive'}
           </button>
+
+          {!isDemoMode &&
+            googleAccessToken &&
+            googleProjectFolderId &&
+            !googleAttachmentsFolderId && (
+              <div className="shared-project-warning">
+                <span>
+                  Attachments need Drive authorization
+                  for this shared project.
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    void handleAuthorizeAttachmentsFolder()
+                  }}
+                >
+                  Authorize Attachments
+                </button>
+              </div>
+            )}
 
           {!isDemoMode && (
             <span className="save-status">
