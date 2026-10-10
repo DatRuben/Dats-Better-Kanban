@@ -54,6 +54,7 @@ import {
   DATS_PROJECT_DOCUMENT_FILE_NAME,
   loadProjectDocumentFromDrive,
   loadProjectFromDriveDocument,
+  isProjectAttachmentsFolder,
 } from './storage/googleDriveApi'
 import type {
   GoogleDriveUser,
@@ -1687,6 +1688,21 @@ function App() {
         )
 
       if (!folderId) {
+        return
+      }
+
+      const isValidFolder =
+        await isProjectAttachmentsFolder(
+          googleAccessToken,
+          folderId,
+          googleProjectFolderId,
+        )
+
+      if (!isValidFolder) {
+        setSharedProjectError(
+          'Select the "attachments" folder inside the currently open Dat’s project.',
+        )
+
         return
       }
 

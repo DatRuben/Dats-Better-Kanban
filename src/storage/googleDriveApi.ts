@@ -2074,6 +2074,54 @@ export async function loadAvailableProjectSummariesFromDrive(
   return summaries
 }
 
+export async function isProjectAttachmentsFolder(
+  accessToken: string,
+  folderId: string,
+  projectFolderId: string,
+): Promise<boolean> {
+  const url =
+    new URL(
+      `${GOOGLE_DRIVE_FILES_URL}/${folderId}`,
+    )
+
+  url.searchParams.set(
+    'fields',
+    'id,name,mimeType,parents',
+  )
+
+  const response =
+    await fetch(url, {
+      headers: {
+        Authorization:
+          `Bearer ${accessToken}`,
+      },
+    })
+
+  if (!response.ok) {
+    throw new Error(
+      `Google Drive folder validation failed with status ${response.status}.`,
+    )
+  }
+
+  const folder =
+    await response.json() as {
+      id: string
+      name: string
+      mimeType: string
+      parents?: string[]
+    }
+
+  return (
+    folder.mimeType ===
+    GOOGLE_DRIVE_FOLDER_MIME_TYPE &&
+    folder.name ===
+    ATTACHMENTS_FOLDER_NAME &&
+    folder.parents?.includes(
+      projectFolderId,
+    ) === true
+  )
+}
+
 export async function rememberProjectFolder(
   accessToken: string,
   projectsFolderId: string,
