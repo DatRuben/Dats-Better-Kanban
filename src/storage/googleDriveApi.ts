@@ -1760,8 +1760,11 @@ export async function downloadAttachmentFromDrive(
     )
 
   if (!response.ok) {
+    const responseText =
+      await response.text()
+
     throw new Error(
-      `Google Drive attachment download failed with status ${response.status}.`,
+      `Google Drive attachment download failed with status ${response.status}: ${responseText}`,
     )
   }
 
@@ -2305,4 +2308,59 @@ export async function loadFirstRememberedProjectFromDrive(
   }
 
   return null
+}
+
+export async function getAttachmentDriveAccess(
+  accessToken: string,
+  fileId: string,
+): Promise<{
+  name: string
+  isAppAuthorized: boolean
+  canDownload: boolean
+}> {
+  const url =
+    new URL(
+      `${GOOGLE_DRIVE_FILES_URL}/${fileId}`,
+    )
+
+  url.searchParams.set(
+    'fields',
+    'name,isAppAuthorized,capabilities(canDownload)',
+  )
+
+  const response =
+    await fetch(url, {
+      headers: {
+        Authorization:
+          `Bearer ${accessToken}`,
+      },
+    },
+  })
+
+if (!response.ok) {
+  const responseText =
+    await response.text()
+
+  throw new Error(
+    `Google Drive attachment access check failed with status ${response.status}: ${responseText}`,
+  )
+}
+
+const file =
+  await response.json() as {
+    name: string
+    isAppAuthorized?: boolean
+    capabilities?: {
+      canDownload?: boolean
+    }
+  }
+
+return {
+  name: file.name,
+  isAppAuthorized:
+    file.isAppAuthorized === true,
+  canDownload:
+    file.capabilities?.canDownload ===
+    true,
+}
 }

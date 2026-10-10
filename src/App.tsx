@@ -429,6 +429,10 @@ function App() {
   const [googleProjectsFolderId, setGoogleProjectsFolderId] =
     useState<string | null>(null)
 
+  const [
+    attachmentAccessRevision,
+    setAttachmentAccessRevision,
+  ] = useState(0)
 
   const handleLoadAttachment =
     useCallback(
@@ -454,11 +458,6 @@ function App() {
         attachmentAccessRevision,
       ],
     )
-
-  const [
-    attachmentAccessRevision,
-    setAttachmentAccessRevision,
-  ] = useState(0)
 
   function beginSave(): boolean {
     if (!canCurrentUserEditProject) {
