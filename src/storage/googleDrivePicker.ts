@@ -194,9 +194,10 @@ export async function pickGoogleDriveProjectFile(
 
 export async function pickGoogleDriveAttachmentFiles(
   accessToken: string,
-  fileIds: string[],
+  attachmentsFolderId: string,
+  allowedFileIds: string[],
 ): Promise<string[]> {
-  if (fileIds.length === 0) {
+  if (allowedFileIds.length === 0) {
     return []
   }
 
@@ -207,8 +208,8 @@ export async function pickGoogleDriveAttachmentFiles(
   const pickerApi =
     getGooglePickerApi()
 
-  const allowedFileIds =
-    new Set(fileIds)
+  const allowedFileIdSet =
+    new Set(allowedFileIds)
 
   return new Promise(
     (resolve) => {
@@ -218,8 +219,8 @@ export async function pickGoogleDriveAttachmentFiles(
         )
           .setIncludeFolders(false)
           .setSelectFolderEnabled(false)
-          .setFileIds(
-            fileIds.join(','),
+          .setParent(
+            attachmentsFolderId,
           )
 
       const picker =
@@ -228,7 +229,9 @@ export async function pickGoogleDriveAttachmentFiles(
           .enableFeature(
             pickerApi.Feature.MULTISELECT_ENABLED,
           )
-          .setOAuthToken(accessToken)
+          .setOAuthToken(
+            accessToken,
+          )
           .setDeveloperKey(
             GOOGLE_PICKER_API_KEY,
           )
@@ -251,7 +254,7 @@ export async function pickGoogleDriveAttachmentFiles(
                       fileId,
                     ): fileId is string =>
                       Boolean(fileId) &&
-                      allowedFileIds.has(
+                      allowedFileIdSet.has(
                         fileId,
                       ),
                   )

@@ -1683,7 +1683,10 @@ function App() {
   }
 
   async function handleAuthorizeExistingAttachments() {
-    if (!googleAccessToken) {
+    if (
+      !googleAccessToken ||
+      !googleAttachmentsFolderId
+    ) {
       return
     }
 
@@ -1715,6 +1718,7 @@ function App() {
       const selectedFileIds =
         await pickGoogleDriveAttachmentFiles(
           googleAccessToken,
+          googleAttachmentsFolderId,
           attachmentFileIds,
         )
 
