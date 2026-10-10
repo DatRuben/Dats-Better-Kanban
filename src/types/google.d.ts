@@ -26,6 +26,11 @@ declare global {
           CANCEL: string
         }
 
+        Feature: {
+          MULTISELECT_ENABLED: string
+          NAV_HIDDEN: string
+        }
+
         ViewId: {
           FOLDERS: string
           DOCS: string
@@ -77,11 +82,19 @@ declare global {
     setMimeTypes: (
       mimeTypes: string,
     ) => GooglePickerDocsView
+
+    setParent: (
+      parentId: string,
+    ) => GooglePickerDocsView
   }
 
   interface GooglePickerBuilder {
     addView: (
       view: GooglePickerDocsView,
+    ) => GooglePickerBuilder
+
+    enableFeature: (
+      feature: string,
     ) => GooglePickerBuilder
 
     setOAuthToken: (
