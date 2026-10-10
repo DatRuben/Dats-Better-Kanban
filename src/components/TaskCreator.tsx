@@ -441,6 +441,7 @@ export function TaskCreator({
 
                                                     <button
                                                         type="button"
+                                                        disabled={isSubmitting}
                                                         onClick={() =>
                                                             setRemovedAttachmentIds(
                                                                 (
@@ -462,6 +463,7 @@ export function TaskCreator({
                                             ) : (
                                                 <button
                                                     type="button"
+                                                    disabled={isSubmitting}
                                                     onClick={() =>
                                                         setRemovedAttachmentIds(
                                                             (
@@ -487,6 +489,7 @@ export function TaskCreator({
                     type="file"
                     accept="image/*,video/mp4,.blend,.glb"
                     multiple
+                    disabled={isSubmitting}
                     onChange={(event) => {
                         const selectedFiles =
                             Array.from(
@@ -552,6 +555,7 @@ export function TaskCreator({
 
                                         <button
                                             type="button"
+                                            disabled={isSubmitting}
                                             onClick={() =>
                                                 setAttachmentFiles(
                                                     (
@@ -613,20 +617,22 @@ export function TaskCreator({
                         Cancel
                     </button>
 
+
                     <button
                         type="submit"
                         className="task-creator__create"
                         disabled={
                             !title.trim() ||
-                            isUploadingAttachment
+                            isSubmitting
                         }
                     >
-                        {isUploadingAttachment
-                            ? 'Uploading...'
+                        {isSubmitting
+                            ? 'Submitting...'
                             : initialTask
                                 ? 'Save Changes'
                                 : 'Create Task'}
                     </button>
+
                 </div>
             </div>
         </form>

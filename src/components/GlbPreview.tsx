@@ -14,7 +14,7 @@ interface GlbPreviewProps {
   attachment: Attachment
 
   onLoadAttachment: (
-    attachment: Attachment,
+    driveFileId: string,
   ) => Promise<Blob | null>
 
   onClose: () => void
