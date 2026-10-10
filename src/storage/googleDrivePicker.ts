@@ -253,7 +253,8 @@ export async function pickGoogleDriveAttachmentFiles(
                     (
                       fileId,
                     ): fileId is string =>
-                      Boolean(fileId) &&
+                      typeof fileId ===
+                      'string' &&
                       allowedFileIdSet.has(
                         fileId,
                       ),

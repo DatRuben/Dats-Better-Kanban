@@ -2334,33 +2334,34 @@ export async function getAttachmentDriveAccess(
         Authorization:
           `Bearer ${accessToken}`,
       },
-    },
-  })
+    })
 
-if (!response.ok) {
-  const responseText =
-    await response.text()
+  if (!response.ok) {
+    const responseText =
+      await response.text()
 
-  throw new Error(
-    `Google Drive attachment access check failed with status ${response.status}: ${responseText}`,
-  )
-}
-
-const file =
-  await response.json() as {
-    name: string
-    isAppAuthorized?: boolean
-    capabilities?: {
-      canDownload?: boolean
-    }
+    throw new Error(
+      `Google Drive attachment access check failed with status ${response.status}: ${responseText}`,
+    )
   }
 
-return {
-  name: file.name,
-  isAppAuthorized:
-    file.isAppAuthorized === true,
-  canDownload:
-    file.capabilities?.canDownload ===
-    true,
-}
+  const file =
+    await response.json() as {
+      name: string
+      isAppAuthorized?: boolean
+      capabilities?: {
+        canDownload?: boolean
+      }
+    }
+
+  return {
+    name: file.name,
+
+    isAppAuthorized:
+      file.isAppAuthorized === true,
+
+    canDownload:
+      file.capabilities?.canDownload ===
+      true,
+  }
 }
