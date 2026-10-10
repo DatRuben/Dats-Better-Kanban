@@ -26,7 +26,7 @@ interface TaskCardProps {
   isEditing: boolean
   onEdit: () => void
   onLoadAttachment: (
-    attachment: Attachment,
+    driveFileId: string,
   ) => Promise<Blob | null>
   isTaskEditing: boolean
   canMoveManualUp: boolean
@@ -116,6 +116,15 @@ export function TaskCard({
   const mediaAttachment =
     mediaAttachments[currentMediaIndex] ?? null
 
+  const mediaAttachmentId =
+    mediaAttachment?.id ?? null
+
+  const mediaDriveFileId =
+    mediaAttachment?.driveFileId ?? null
+
+  const mediaLocalPreviewUrl =
+    mediaAttachment?.previewUrl ?? null
+
   const [mediaPreviewUrl, setmediaPreviewUrl] =
     useState<string | null>(
       mediaAttachment?.previewUrl ?? null,
@@ -131,20 +140,21 @@ export function TaskCard({
     mediaAttachmentIds,
   ])
 
+
   useEffect(() => {
     setmediaLoadError(null)
 
-    if (!mediaAttachment) {
+    if (!mediaAttachmentId) {
       setmediaPreviewUrl(null)
       return
     }
 
-    if (mediaAttachment.previewUrl) {
-      setmediaPreviewUrl(mediaAttachment.previewUrl)
+    if (mediaLocalPreviewUrl) {
+      setmediaPreviewUrl(mediaLocalPreviewUrl)
       return
     }
 
-    if (!mediaAttachment.driveFileId) {
+    if (!mediaDriveFileId) {
       setmediaPreviewUrl(null)
       setmediaLoadError(
         'This attachment has no Google Drive file reference.',
@@ -157,7 +167,7 @@ export function TaskCard({
     let isCancelled = false
     let objectUrl: string | null = null
 
-    void onLoadAttachment(mediaAttachment)
+    void onLoadAttachment(mediaDriveFileId)
       .then((blob) => {
         if (isCancelled) {
           return
@@ -171,6 +181,7 @@ export function TaskCard({
         }
 
         objectUrl = URL.createObjectURL(blob)
+
         setmediaPreviewUrl(objectUrl)
       })
       .catch((error) => {
@@ -198,9 +209,12 @@ export function TaskCard({
       }
     }
   }, [
-    mediaAttachment,
+    mediaAttachmentId,
+    mediaDriveFileId,
+    mediaLocalPreviewUrl,
     onLoadAttachment,
   ])
+
 
   const { ref } = useDraggable({
     id: task.id,
@@ -406,8 +420,8 @@ export function TaskCard({
                     key={attachment.id}
                     type="button"
                     className={`task-card__attachment-indicator ${index === currentMediaIndex
-                        ? 'task-card__attachment-indicator--active'
-                        : ''
+                      ? 'task-card__attachment-indicator--active'
+                      : ''
                       }`}
                     aria-label={`Show ${attachment.fileName}`}
                     aria-pressed={

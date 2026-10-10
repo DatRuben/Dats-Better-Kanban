@@ -40,7 +40,7 @@ interface KanbanColumnProps {
     files: File[],
   ) => Promise<Attachment[]>
   onLoadAttachment: (
-    attachment: Attachment,
+    driveFileId: string,
   ) => Promise<Blob | null>
   onColumnOrderingChange: (
     columnId: string,

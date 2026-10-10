@@ -39,28 +39,38 @@ export function GlbPreview({
   ] =
     useState<string | null>(null)
 
+  const {
+    id: attachmentId,
+    driveFileId,
+    fileName,
+    previewUrl,
+  } = attachment
+
+
   useEffect(() => {
     let isCancelled = false
-
-    let objectUrl:
-      string | null = null
-
-    let modelViewer:
-      HTMLElement | null = null
+    let objectUrl: string | null = null
+    let modelViewer: HTMLElement | null = null
 
     setIsLoading(true)
     setLoadError(null)
 
     async function loadModel() {
-      let sourceUrl =
-        attachment.previewUrl ??
-        null
+      let sourceUrl = previewUrl ?? null
 
       if (!sourceUrl) {
-        const blob =
-          await onLoadAttachment(
-            attachment,
+        if (!driveFileId) {
+          throw new Error(
+            'This 3D model has no Google Drive file reference.',
           )
+        }
+
+        const blob =
+          await onLoadAttachment(driveFileId)
+
+        if (isCancelled) {
+          return
+        }
 
         if (!blob) {
           throw new Error(
@@ -68,39 +78,27 @@ export function GlbPreview({
           )
         }
 
-        if (isCancelled) {
-          return
-        }
-
         const glbBlob =
-          blob.type ===
-            'model/gltf-binary'
+          blob.type === 'model/gltf-binary'
             ? blob
             : new Blob(
               [blob],
               {
-                type:
-                  'model/gltf-binary',
+                type: 'model/gltf-binary',
               },
             )
 
-        objectUrl =
-          URL.createObjectURL(
-            glbBlob,
-          )
-
-        sourceUrl =
-          objectUrl
+        objectUrl = URL.createObjectURL(glbBlob)
+        sourceUrl = objectUrl
       }
 
       if (isCancelled) {
         return
       }
 
-      modelViewer =
-        document.createElement(
-          'model-viewer',
-        )
+      modelViewer = document.createElement(
+        'model-viewer',
+      )
 
       modelViewer.className =
         'glb-preview__viewer'
@@ -112,7 +110,7 @@ export function GlbPreview({
 
       modelViewer.setAttribute(
         'alt',
-        attachment.fileName,
+        fileName,
       )
 
       modelViewer.setAttribute(
@@ -144,7 +142,6 @@ export function GlbPreview({
         () => {
           if (!isCancelled) {
             setIsLoading(false)
-
             setLoadError(
               'The GLB model could not be displayed.',
             )
@@ -152,33 +149,28 @@ export function GlbPreview({
         },
       )
 
-      viewerContainerRef
-        .current
-        ?.replaceChildren(
-          modelViewer,
-        )
+      viewerContainerRef.current
+        ?.replaceChildren(modelViewer)
     }
 
-    void loadModel().catch(
-      (error) => {
-        if (isCancelled) {
-          return
-        }
+    void loadModel().catch((error) => {
+      if (isCancelled) {
+        return
+      }
 
-        setIsLoading(false)
+      setIsLoading(false)
 
-        setLoadError(
-          error instanceof Error
-            ? error.message
-            : 'The 3D model could not be loaded.',
-        )
+      setLoadError(
+        error instanceof Error
+          ? error.message
+          : 'The 3D model could not be loaded.',
+      )
 
-        console.error(
-          'Failed to load GLB preview:',
-          error,
-        )
-      },
-    )
+      console.error(
+        'Failed to load GLB preview:',
+        error,
+      )
+    })
 
     return () => {
       isCancelled = true
@@ -186,15 +178,17 @@ export function GlbPreview({
       modelViewer?.remove()
 
       if (objectUrl) {
-        URL.revokeObjectURL(
-          objectUrl,
-        )
+        URL.revokeObjectURL(objectUrl)
       }
     }
   }, [
-    attachment,
+    attachmentId,
+    driveFileId,
+    fileName,
+    previewUrl,
     onLoadAttachment,
   ])
+
 
   return (
     <div

@@ -447,23 +447,21 @@ function App() {
     setAttachmentAccessRevision,
   ] = useState(0)
 
+
   const handleLoadAttachment =
     useCallback(
       async (
-        attachment: Attachment,
+        driveFileId: string,
       ): Promise<Blob | null> => {
         void attachmentAccessRevision
 
-        if (
-          !googleAccessToken ||
-          !attachment.driveFileId
-        ) {
+        if (!googleAccessToken) {
           return null
         }
 
         return downloadAttachmentFromDrive(
           googleAccessToken,
-          attachment.driveFileId,
+          driveFileId,
         )
       },
       [
@@ -471,6 +469,7 @@ function App() {
         attachmentAccessRevision,
       ],
     )
+
 
   function beginSave(): boolean {
     if (!canCurrentUserEditProject) {
