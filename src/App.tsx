@@ -62,6 +62,7 @@ import type {
   DriveProjectSummary,
 } from './storage/googleDriveApi'
 import {
+  pickGoogleDriveAttachmentFiles,
   pickGoogleDriveFolder,
   pickGoogleDriveProjectFile,
 } from './storage/googleDrivePicker'
@@ -434,6 +435,8 @@ function App() {
       async (
         attachment: Attachment,
       ): Promise<Blob | null> => {
+        void attachmentAccessRevision
+
         if (
           !googleAccessToken ||
           !attachment.driveFileId
@@ -446,8 +449,16 @@ function App() {
           attachment.driveFileId,
         )
       },
-      [googleAccessToken],
+      [
+        googleAccessToken,
+        attachmentAccessRevision,
+      ],
     )
+
+  const [
+    attachmentAccessRevision,
+    setAttachmentAccessRevision,
+  ] = useState(0)
 
   function beginSave(): boolean {
     if (!canCurrentUserEditProject) {
@@ -1671,6 +1682,61 @@ function App() {
     }
   }
 
+  async function handleAuthorizeExistingAttachments() {
+    if (!googleAccessToken) {
+      return
+    }
+
+    const attachmentFileIds = [
+      ...new Set(
+        currentProject.tasks.flatMap(
+          (task) =>
+            task.attachments.flatMap(
+              (attachment) =>
+                attachment.driveFileId
+                  ? [
+                    attachment.driveFileId,
+                  ]
+                  : [],
+            ),
+        ),
+      ),
+    ]
+
+    if (
+      attachmentFileIds.length === 0
+    ) {
+      return
+    }
+
+    setSharedProjectError(null)
+
+    try {
+      const selectedFileIds =
+        await pickGoogleDriveAttachmentFiles(
+          googleAccessToken,
+          attachmentFileIds,
+        )
+
+      if (
+        selectedFileIds.length === 0
+      ) {
+        return
+      }
+
+      setAttachmentAccessRevision(
+        (currentRevision) =>
+          currentRevision + 1,
+      )
+    } catch (error) {
+      setSharedProjectError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to authorize existing attachments.',
+      )
+    }
+  }
+
   async function handleAuthorizeAttachmentsFolder() {
     if (
       !googleAccessToken ||
@@ -2590,6 +2656,36 @@ function App() {
                   }}
                 >
                   Authorize Attachments
+                </button>
+              </div>
+            )}
+
+          {!isDemoMode &&
+            googleAccessToken &&
+            googleAttachmentsFolderId &&
+            !isCurrentUserProjectOwner &&
+            currentProject.tasks.some(
+              (task) =>
+                task.attachments.some(
+                  (attachment) =>
+                    Boolean(
+                      attachment.driveFileId,
+                    ),
+                ),
+            ) && (
+              <div className="shared-project-warning">
+                <span>
+                  Shared files may need authorization
+                  before Dat&apos;s can display them.
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    void handleAuthorizeExistingAttachments()
+                  }}
+                >
+                  Authorize Existing Attachments
                 </button>
               </div>
             )}

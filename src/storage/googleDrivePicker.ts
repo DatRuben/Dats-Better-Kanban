@@ -191,3 +191,88 @@ export async function pickGoogleDriveProjectFile(
     },
   )
 }
+
+export async function pickGoogleDriveAttachmentFiles(
+  accessToken: string,
+  fileIds: string[],
+): Promise<string[]> {
+  if (fileIds.length === 0) {
+    return []
+  }
+
+  verifyPickerConfiguration()
+
+  await loadGooglePickerApi()
+
+  const pickerApi =
+    getGooglePickerApi()
+
+  const allowedFileIds =
+    new Set(fileIds)
+
+  return new Promise(
+    (resolve) => {
+      const attachmentView =
+        new pickerApi.DocsView(
+          pickerApi.ViewId.DOCS,
+        )
+          .setIncludeFolders(false)
+          .setSelectFolderEnabled(false)
+          .setFileIds(
+            fileIds.join(','),
+          )
+
+      const picker =
+        new pickerApi.PickerBuilder()
+          .addView(attachmentView)
+          .enableFeature(
+            pickerApi.Feature.MULTISELECT_ENABLED,
+          )
+          .setOAuthToken(accessToken)
+          .setDeveloperKey(
+            GOOGLE_PICKER_API_KEY,
+          )
+          .setAppId(
+            GOOGLE_APP_ID,
+          )
+          .setCallback((data) => {
+            if (
+              data.action ===
+              pickerApi.Action.PICKED
+            ) {
+              const selectedFileIds =
+                (data.docs ?? [])
+                  .map(
+                    (document) =>
+                      document.id,
+                  )
+                  .filter(
+                    (
+                      fileId,
+                    ): fileId is string =>
+                      Boolean(fileId) &&
+                      allowedFileIds.has(
+                        fileId,
+                      ),
+                  )
+
+              resolve(
+                selectedFileIds,
+              )
+
+              return
+            }
+
+            if (
+              data.action ===
+              pickerApi.Action.CANCEL
+            ) {
+              resolve([])
+            }
+          })
+          .build()
+
+      picker.setVisible(true)
+    },
+  )
+}
