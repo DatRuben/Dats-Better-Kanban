@@ -2700,7 +2700,6 @@ function App() {
           {!isDemoMode &&
             googleAccessToken &&
             googleAttachmentsFolderId &&
-            !isCurrentUserProjectOwner &&
             currentProject.tasks.some(
               (task) =>
                 task.attachments.some(
