@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { SubmitEvent } from 'react'
 import type {
     Attachment,
@@ -75,9 +75,11 @@ export function TaskCreator({
         setRemovedAttachmentIds,
     ] = useState<string[]>([])
 
+    const submissionLockedRef = useRef(false)
+
     const [
-        isUploadingAttachment,
-        setIsUploadingAttachment,
+        isSubmitting,
+        setIsSubmitting,
     ] = useState(false)
 
     const [
@@ -122,87 +124,69 @@ export function TaskCreator({
         setTagInput('')
     }
 
+
     async function handleSubmit(
-        event:
-            SubmitEvent<HTMLFormElement>,
+        event: SubmitEvent<HTMLFormElement>,
     ) {
         event.preventDefault()
 
-        const trimmedTitle =
-            title.trim()
+        const trimmedTitle = title.trim()
 
         if (
             !trimmedTitle ||
-            isUploadingAttachment
+            submissionLockedRef.current
         ) {
             return
         }
 
-        let attachments =
-            initialTask?.attachments ?? []
-
-        if (
-            removedAttachmentIds.length >
-            0
-        ) {
-            attachments =
-                attachments.filter(
-                    (attachment) =>
-                        !removedAttachmentIds
-                            .includes(
-                                attachment.id,
-                            ),
-                )
-        }
+        submissionLockedRef.current = true
+        setIsSubmitting(true)
+        setAttachmentUploadError(null)
 
         try {
-            setAttachmentUploadError(
-                null,
-            )
-
-            if (
-                attachmentFiles.length >
-                0
-            ) {
-                setIsUploadingAttachment(
-                    true,
+            const retainedAttachments =
+                (initialTask?.attachments ?? []).filter(
+                    (attachment) =>
+                        !removedAttachmentIds.includes(
+                            attachment.id,
+                        ),
                 )
 
-                const uploadedAttachments =
-                    await onUploadAttachments(
-                        attachmentFiles,
+            const uploadedAttachments =
+                attachmentFiles.length > 0
+                    ? await onUploadAttachments(
+                        [...attachmentFiles],
                     )
+                    : []
 
-                attachments = [
-                    ...attachments,
+            const taskInput: NewTaskInput = {
+                title: trimmedTitle,
+                description: description.trim(),
+                priority,
+                assigneeId: assigneeId || null,
+                deadline: deadline || null,
+                tags: [...tags],
+                attachments: [
+                    ...retainedAttachments,
                     ...uploadedAttachments,
-                ]
+                ],
             }
 
-            onCreate({
-                title: trimmedTitle,
-                description:
-                    description.trim(),
-                priority,
-                assigneeId:
-                    assigneeId || null,
-                deadline:
-                    deadline || null,
-                tags,
-                attachments,
-            })
+            onCreate(taskInput)
+
+
         } catch (error) {
+            submissionLockedRef.current = false
+            setIsSubmitting(false)
+
             setAttachmentUploadError(
                 error instanceof Error
                     ? error.message
-                    : 'Attachment upload failed.',
-            )
-        } finally {
-            setIsUploadingAttachment(
-                false,
+                    : 'The task could not be submitted.',
             )
         }
     }
+
 
     return (
         <form
@@ -623,7 +607,7 @@ export function TaskCreator({
                         className="task-creator__cancel"
                         onClick={onCancel}
                         disabled={
-                            isUploadingAttachment
+                            isSubmitting
                         }
                     >
                         Cancel
