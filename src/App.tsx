@@ -55,6 +55,7 @@ import {
   loadProjectDocumentFromDrive,
   loadProjectFromDriveDocument,
   isProjectAttachmentsFolder,
+  getAttachmentDriveAccess,
 } from './storage/googleDriveApi'
 import type {
   GoogleDriveUser,
@@ -1705,9 +1706,11 @@ function App() {
       ),
     ]
 
-    if (
-      attachmentFileIds.length === 0
-    ) {
+    if (attachmentFileIds.length === 0) {
+      setSharedProjectError(
+        'This project has no Drive attachments to authorize.',
+      )
+
       return
     }
 
@@ -1721,16 +1724,47 @@ function App() {
           attachmentFileIds,
         )
 
-      if (
-        selectedFileIds.length === 0
-      ) {
+      if (selectedFileIds.length === 0) {
         return
+      }
+
+      for (const fileId of selectedFileIds) {
+        const access =
+          await getAttachmentDriveAccess(
+            googleAccessToken,
+            fileId,
+          )
+
+        console.log(
+          'Attachment Drive access:',
+          fileId,
+          access,
+        )
+
+        if (!access.isAppAuthorized) {
+          throw new Error(
+            `"${access.name}" was selected, but Google still reports that Dat's is not authorized to access it.`,
+          )
+        }
+
+        if (!access.canDownload) {
+          throw new Error(
+            `"${access.name}" is authorized, but this Google account cannot download it.`,
+          )
+        }
+
+        await downloadAttachmentFromDrive(
+          googleAccessToken,
+          fileId,
+        )
       }
 
       setAttachmentAccessRevision(
         (currentRevision) =>
           currentRevision + 1,
       )
+
+      setSharedProjectError(null)
     } catch (error) {
       setSharedProjectError(
         error instanceof Error
