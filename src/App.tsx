@@ -1683,10 +1683,7 @@ function App() {
   }
 
   async function handleAuthorizeExistingAttachments() {
-    if (
-      !googleAccessToken ||
-      !googleAttachmentsFolderId
-    ) {
+    if (!googleAccessToken) {
       return
     }
 
@@ -2698,7 +2695,6 @@ function App() {
 
           {!isDemoMode &&
             googleAccessToken &&
-            googleAttachmentsFolderId &&
             currentProject.tasks.some(
               (task) =>
                 task.attachments.some(
