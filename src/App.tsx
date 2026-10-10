@@ -1720,7 +1720,6 @@ function App() {
       const selectedFileIds =
         await pickGoogleDriveAttachmentFiles(
           googleAccessToken,
-          googleAttachmentsFolderId,
           attachmentFileIds,
         )
 

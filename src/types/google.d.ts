@@ -1,4 +1,4 @@
-export {}
+export { }
 
 declare global {
   interface Window {
@@ -85,6 +85,10 @@ declare global {
 
     setParent: (
       parentId: string,
+    ) => GooglePickerDocsView
+
+    setFileIds: (
+      fileIds: string,
     ) => GooglePickerDocsView
   }
 

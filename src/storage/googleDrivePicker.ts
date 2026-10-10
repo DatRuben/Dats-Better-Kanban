@@ -194,7 +194,6 @@ export async function pickGoogleDriveProjectFile(
 
 export async function pickGoogleDriveAttachmentFiles(
   accessToken: string,
-  attachmentsFolderId: string,
   allowedFileIds: string[],
 ): Promise<string[]> {
   if (allowedFileIds.length === 0) {
@@ -211,16 +210,16 @@ export async function pickGoogleDriveAttachmentFiles(
   const allowedFileIdSet =
     new Set(allowedFileIds)
 
-  return new Promise(
-    (resolve) => {
+  return new Promise<string[]>(
+    (resolve, reject) => {
       const attachmentView =
         new pickerApi.DocsView(
           pickerApi.ViewId.DOCS,
         )
           .setIncludeFolders(false)
           .setSelectFolderEnabled(false)
-          .setParent(
-            attachmentsFolderId,
+          .setFileIds(
+            [...allowedFileIdSet].join(','),
           )
 
       const picker =
@@ -229,50 +228,54 @@ export async function pickGoogleDriveAttachmentFiles(
           .enableFeature(
             pickerApi.Feature.MULTISELECT_ENABLED,
           )
-          .setOAuthToken(
-            accessToken,
-          )
+          .setOAuthToken(accessToken)
           .setDeveloperKey(
             GOOGLE_PICKER_API_KEY,
           )
-          .setAppId(
-            GOOGLE_APP_ID,
-          )
+          .setAppId(GOOGLE_APP_ID)
           .setCallback((data) => {
-            if (
-              data.action ===
-              pickerApi.Action.PICKED
-            ) {
-              const selectedFileIds =
-                (data.docs ?? [])
-                  .map(
-                    (document) =>
-                      document.id,
-                  )
-                  .filter(
-                    (
-                      fileId,
-                    ): fileId is string =>
-                      typeof fileId ===
-                      'string' &&
-                      allowedFileIdSet.has(
-                        fileId,
-                      ),
-                  )
-
-              resolve(
-                selectedFileIds,
-              )
-
-              return
-            }
-
             if (
               data.action ===
               pickerApi.Action.CANCEL
             ) {
               resolve([])
+              return
             }
+
+            if (
+              data.action !==
+              pickerApi.Action.PICKED
+            ) {
+              return
+            }
+
+            const selectedFileIds =
+              (data.docs ?? []).map(
+                (document) => document.id,
+              )
+
+            const hasInvalidSelection =
+              selectedFileIds.length === 0 ||
+              selectedFileIds.some(
+                (fileId) =>
+                  !fileId ||
+                  !allowedFileIdSet.has(fileId),
+              )
+
+            if (hasInvalidSelection) {
+              reject(
+                new Error(
+                  'Google Picker did not return valid project attachment files.',
+                ),
+              )
+              return
+            }
+
+            resolve(
+              [...new Set(
+                selectedFileIds as string[],
+              )],
+            )
           })
           .build()
 
