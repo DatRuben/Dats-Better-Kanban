@@ -55,6 +55,9 @@ interface KanbanColumnProps {
     columnId: string,
     hidePriorityOnCards: boolean,
   ) => void
+  onAuthorizeAttachment: (
+    attachment: Attachment,
+  ) => void
 }
 
 export function KanbanColumn({
@@ -81,6 +84,7 @@ export function KanbanColumn({
   allowManualTaskOrdering,
   onMoveTiedTask,
   onColumnPriorityVisibilityChange,
+  onAuthorizeAttachment,
 }: KanbanColumnProps) {
   const {
     ref,
@@ -314,6 +318,7 @@ export function KanbanColumn({
                 column.countsAsCompleted &&
                 column.hidePriorityOnCards === true
               }
+              onAuthorizeAttachment={onAuthorizeAttachment}
             />
           )
         })}

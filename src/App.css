@@ -1836,3 +1836,19 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+.task-card__attachment-error .task-card__file-action {
+  margin-top: 0.65rem;
+}
+
+.task-card__file-action:focus-visible {
+  outline: 2px solid #8ba6dc;
+  outline-offset: 2px;
+}
+
+.attachment-authorization-status {
+  color: #b9c3d4;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
