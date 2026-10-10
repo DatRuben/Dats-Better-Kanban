@@ -65,6 +65,7 @@ export function TaskCard({
   onMoveManualUp,
   onMoveManualDown,
   hidePriority = false,
+  onAuthorizeAttachment,
 }: TaskCardProps) {
   const assigneeInitials = assignee
     ? getInitials(assignee.displayName)
@@ -321,6 +322,7 @@ export function TaskCard({
           )}
       </div>
 
+
       {mediaAttachment && (
         <div className="task-card__attachment">
           <div className="task-card__attachment-frame">
@@ -361,11 +363,8 @@ export function TaskCard({
                   }
                   onClick={() =>
                     setcurrentMediaIndex(
-                      (currentIndex) =>
-                        Math.max(
-                          0,
-                          currentIndex - 1,
-                        ),
+                      (index) =>
+                        Math.max(0, index - 1),
                     )
                   }
                 >
@@ -385,10 +384,10 @@ export function TaskCard({
                   }
                   onClick={() =>
                     setcurrentMediaIndex(
-                      (currentIndex) =>
+                      (index) =>
                         Math.min(
                           mediaAttachments.length - 1,
-                          currentIndex + 1,
+                          index + 1,
                         ),
                     )
                   }
@@ -407,8 +406,8 @@ export function TaskCard({
                     key={attachment.id}
                     type="button"
                     className={`task-card__attachment-indicator ${index === currentMediaIndex
-                      ? 'task-card__attachment-indicator--active'
-                      : ''
+                        ? 'task-card__attachment-indicator--active'
+                        : ''
                       }`}
                     aria-label={`Show ${attachment.fileName}`}
                     aria-pressed={
@@ -427,7 +426,6 @@ export function TaskCard({
             </div>
           )}
 
-
           {mediaLoadError && (
             <details
               className="task-card__attachment-error"
@@ -441,7 +439,7 @@ export function TaskCard({
 
               <p>{mediaLoadError}</p>
 
-              {mediaAttachment?.driveFileId && (
+              {mediaAttachment.driveFileId && (
                 <button
                   type="button"
                   className="task-card__file-action"
@@ -454,107 +452,91 @@ export function TaskCard({
               )}
             </details>
           )}
+        </div>
+      )}
 
+      {fileAttachments.length > 0 && (
+        <div className="task-card__files">
+          {fileAttachments.map((attachment) => {
+            const isGlb =
+              isGlbFileName(attachment.fileName)
 
-          {fileAttachments.length > 0 && (
-            <div className="task-card__files">
-              {fileAttachments.map(
-                (attachment) => {
-                  const isGlb =
-                    isGlbFileName(
-                      attachment.fileName,
-                    )
+            const isPreviewOpen =
+              previewedGlbId === attachment.id
 
-                  const isPreviewOpen =
-                    previewedGlbId ===
-                    attachment.id
+            return (
+              <div
+                key={attachment.id}
+                className="task-card__file-entry"
+              >
+                <div
+                  className="task-card__file"
+                  title={attachment.fileName}
+                >
+                  <div className="task-card__file-info">
+                    <strong>
+                      {attachment.fileName}
+                    </strong>
 
-                  return (
-                    <div
-                      key={attachment.id}
-                      className="task-card__file-entry"
+                    <span>
+                      {getAttachmentTypeLabel(
+                        attachment.fileName,
+                        attachment.mimeType,
+                      )}
+                    </span>
+                  </div>
+
+                  {isGlb && (
+                    <button
+                      type="button"
+                      className="task-card__file-action"
+                      onPointerDown={(event) =>
+                        event.stopPropagation()
+                      }
+                      onClick={() =>
+                        setPreviewedGlbId(
+                          isPreviewOpen
+                            ? null
+                            : attachment.id,
+                        )
+                      }
                     >
-                      <div
-                        className="task-card__file"
-                        title={
-                          attachment.fileName
-                        }
-                      >
-                        <div className="task-card__file-info">
-                          <strong>
-                            {
-                              attachment.fileName
-                            }
-                          </strong>
+                      {isPreviewOpen
+                        ? 'Close'
+                        : 'Preview 3D'}
+                    </button>
+                  )}
 
-                          <span>
-                            {getAttachmentTypeLabel(
-                              attachment.fileName,
-                              attachment.mimeType,
-                            )}
-                          </span>
-                        </div>
+                  {attachment.driveFileId && (
+                    <button
+                      type="button"
+                      className="task-card__file-action"
+                      onPointerDown={(event) =>
+                        event.stopPropagation()
+                      }
+                      onClick={() => {
+                        onAuthorizeAttachment(attachment)
+                      }}
+                    >
+                      Authorize File
+                    </button>
+                  )}
+                </div>
 
-                        {isGlb && (
-                          <button
-                            type="button"
-                            className="task-card__file-action"
-                            onPointerDown={
-                              (event) =>
-                                event.stopPropagation()
-                            }
-                            onClick={() =>
-                              setPreviewedGlbId(
-                                isPreviewOpen
-                                  ? null
-                                  : attachment.id,
-                              )
-                            }
-                          >
-                            {isPreviewOpen
-                              ? 'Close'
-                              : 'Preview 3D'}
-                          </button>
-                        )}
-                      </div>
-
-                      {isPreviewOpen &&
-                        previewedGlb && (
-                          <GlbPreview
-                            attachment={
-                              previewedGlb
-                            }
-                            onLoadAttachment={
-                              onLoadAttachment
-                            }
-                            onClose={() =>
-                              setPreviewedGlbId(
-                                null,
-                              )
-                            }
-                          />
-                        )}
-                    </div>
-                  )
-                },
-              )}
-            </div>
-          )}
-
-          {attachment.driveFileId && (
-            <button
-              type="button"
-              className="task-card__file-action"
-              onPointerDown={(event) =>
-                event.stopPropagation()
-              }
-              onClick={() => {
-                onAuthorizeAttachment(attachment)
-              }}
-            >
-              Authorize File
-            </button>
-          )}
-        </article>
-      )
-      }
+                {isPreviewOpen && previewedGlb && (
+                  <GlbPreview
+                    attachment={previewedGlb}
+                    onLoadAttachment={onLoadAttachment}
+                    onClose={() =>
+                      setPreviewedGlbId(null)
+                    }
+                  />
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </article>
+  )
+}

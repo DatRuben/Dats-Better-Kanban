@@ -1845,10 +1845,3 @@
   outline: 2px solid #8ba6dc;
   outline-offset: 2px;
 }
-
-.attachment-authorization-status {
-  color: #b9c3d4;
-  font-size: 0.8rem;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}

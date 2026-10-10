@@ -55,7 +55,6 @@ import {
   loadProjectDocumentFromDrive,
   loadProjectFromDriveDocument,
   isProjectAttachmentsFolder,
-  getAttachmentDriveAccess,
 } from './storage/googleDriveApi'
 import type {
   GoogleDriveUser,
@@ -2453,16 +2452,6 @@ function App() {
               {sharedProjectError}
             </p>
           )}
-
-          {attachmentAuthorizationStatus && (
-            <p
-              className="attachment-authorization-status"
-              role="status"
-            >
-              {attachmentAuthorizationStatus}
-            </p>
-          )}
-
         </section>
       </main>
     )
