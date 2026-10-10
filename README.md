@@ -1,85 +1,106 @@
+
 # Dat's: Better Kanban
+
+**Version 1.0.0**
 
 A customizable Kanban project-management application built with React and TypeScript.
 
-Dat's: Better Kanban focuses on customizable workflows, Google Drive-based project ownership, and lightweight collaboration without requiring a central Dat's project database.
+Dat's: Better Kanban provides customizable workflows, task organization, and Google Drive-based project storage without requiring a centralized Dat's project database.
 
 ## Live Demo
 
 https://datsbetterkanban.dragooninteractive.com
 
-You can explore the application using Demo Mode without connecting Google Drive.
+Use Demo Mode to explore the application without connecting a Google account. Demo changes are not persisted.
 
 ## Features
+
+### Task Management
 
 - Customizable Kanban pipeline sections
 - Drag-and-drop tasks and pipeline sections
 - Task priorities, deadlines, descriptions, tags, and assignees
 - Priority/deadline and assignee sorting
 - Manual ordering for tied tasks
-- Image, GIF, and MP4 task attachments
-- Timeline view for upcoming work
-- Clickable Timeline task details
+- Timeline and My Tasks views
 - Completed-task history
-- Clickable Completed History task details
 - Configurable completion sections
-- Optional priority display for completed sections
-- My Tasks view
-- Owner, editor, and viewer project roles
-- Shared Google Drive projects
-- Project switching and remembered projects
-- Near-live synchronization between sessions
+
+### Attachments
+
+Supported attachments include:
+
+- Images and GIFs
+- MP4 videos
+- Blender `.blend` files
+- `.glb` 3D models
+
+Images, GIFs, and MP4 videos can be previewed in task cards.
+
+GLB models support interactive 3D preview.
+
+Blender files are preserved as source files. Dat's does not automatically convert `.blend` files into GLB models.
+
+### Google Drive Integration
+
+- Google Drive project storage
+- Shared projects
+- Owner, editor, and viewer roles
+- Project switching
+- Periodic synchronization between sessions
 - Conflict detection for simultaneous edits
-- Responsive layouts for smaller screens
-- Demo Mode for trying the application without saving data
+- Google Picker integration
+- Attachment authorization and recovery controls
 
-## Google Drive Storage
+## Project Storage
 
-When Google Drive mode is used, project data is stored in the user's own Google Drive.
+Dat's uses the Google Drive API with the `drive.file` OAuth scope.
 
-Dat's uses Google's `drive.file` permission rather than requesting general access to the user's entire Drive.
+Project data is stored in Google Drive rather than a centralized Dat's database.
 
-Each project uses a canonical `dats-project.json` document containing the project's Kanban state, including:
+The canonical `dats-project.json` document contains project information, members, columns, tasks, and attachment references.
 
-- project information
-- members
-- pipeline sections
-- tasks
-- task metadata
+Attachments are stored as separate Google Drive files.
 
-Attachments are stored as separate Drive files and referenced by the project document.
-
-Using one canonical project document allows a collaborator to explicitly authorize the shared project file while Dat's continues to use the narrower `drive.file` permission.
-
-## Project Structure
-
-A project is organized approximately like this:
+Example:
 
 ```text
-Dat's: Better Kanban
-└── Projects
-    └── Project
+Dat's: Better Kanban/
+└── Projects/
+    └── Project/
         ├── dats-project.json
-        └── attachments
+        └── attachments/
             ├── image.png
-            └── video.mp4
+            ├── video.mp4
+            ├── model.blend
+            └── model.glb
 ```
 
-Older project storage formats can be migrated into the canonical project document.
+Legacy project formats can be migrated into the canonical project document.
 
 ## Collaboration
 
-Projects can be shared through Google Drive.
+Project owners can share Google Drive projects with other users.
 
-Dat's supports owner, editor, and viewer roles.
+Dat's supports three project roles:
 
-Editors can modify project tasks and workflow data while viewers receive read-only access inside the application.
+- **Owner:** Manage project settings, members, and tasks
+- **Editor:** Modify shared project tasks and workflow data
+- **Viewer:** Read-only access within the application
 
-Project changes are saved to the shared `dats-project.json` document and other sessions periodically check for updates.
+Users may need to authorize the shared project document, attachments folder, or individual files through Google Picker.
 
-When different tasks are changed independently, Dat's attempts to merge both changes.
+Google Drive sharing permissions and app-level file authorization are separate requirements.
 
-When conflicting edits are detected, Dat's blocks unsafe automatic overwrites rather than silently replacing another user's work.
+### Synchronization
+
+Each session periodically checks the shared project document for updates.
+
+Independent task changes can be merged through the application's three-way merge system.
+
+Conflicting edits are reported instead of automatically choosing an unsafe local overwrite.
+
+Synchronization is periodic rather than transactional or instantaneous. Simultaneous saves require care, and Google Drive access is subject to the user's permissions.
 
 ## Tech Stack
 
@@ -91,10 +112,12 @@ When conflicting edits are detected, Dat's blocks unsafe automatic overwrites ra
 - Google Identity Services
 - Google Drive API
 - Google Picker API
+- Google Model Viewer
+- Three.js
 
 ## Running Locally
 
-Clone the repository and install the dependencies:
+Install dependencies:
 
 ```bash
 npm install
@@ -106,20 +129,16 @@ Start the development server:
 npm run dev
 ```
 
-Then open the local address shown by Vite in your browser.
-
-
-To create a production build:
+Build for production:
 
 ```bash
 npm run build
 ```
 
+Google Drive features additionally require valid Google Cloud OAuth and Picker configuration.
 
-## Current Status
+## Version 1.0
 
-Dat's: Better Kanban is under active development.
+Version 1.0 establishes the initial Kanban, project persistence, collaboration, and attachment workflows.
 
-The current version demonstrates the core Kanban workflow, customizable pipelines, timeline/history views, Google Drive persistence, synchronization, and task attachments.
-
-Additional project-management features and further UI improvements are planned for future versions.
+The application continues to evolve, with future improvements planned for the user interface, synchronization, and shared-file experience.

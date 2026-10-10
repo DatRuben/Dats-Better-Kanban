@@ -3434,6 +3434,7 @@ function App() {
                         'Unknown section'}
                     </p>
 
+
                     <TaskCard
                       task={task}
                       assignee={assignee}
@@ -3442,14 +3443,20 @@ function App() {
                       isEditing={false}
                       isTaskEditing={false}
                       onEdit={() => { }}
-                      onLoadAttachment={
-                        handleLoadAttachment
-                      }
+                      onLoadAttachment={handleLoadAttachment}
                       canMoveManualUp={false}
                       canMoveManualDown={false}
                       onMoveManualUp={() => { }}
                       onMoveManualDown={() => { }}
+                      onAuthorizeAttachment={(attachment) => {
+                        if (attachment.driveFileId) {
+                          void handleAuthorizeExistingAttachments(
+                            attachment.driveFileId,
+                          )
+                        }
+                      }}
                     />
+
                   </div>
                 )
               })}
