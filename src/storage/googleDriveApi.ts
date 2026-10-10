@@ -1771,6 +1771,38 @@ export async function downloadAttachmentFromDrive(
   return await response.blob()
 }
 
+
+export async function verifyAttachmentDownloadFromDrive(
+  accessToken: string,
+  fileId: string,
+): Promise<void> {
+  const response = await fetch(
+    `${GOOGLE_DRIVE_FILES_URL}/${fileId}?alt=media`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Range: 'bytes=0-0',
+      },
+    },
+  )
+
+  if (!response.ok) {
+    const responseText = await response.text()
+
+    throw new Error(
+      `Google Drive download check failed with status ${response.status}: ${responseText}`,
+    )
+  }
+
+
+  try {
+    await response.body?.cancel()
+  } catch {
+
+  }
+}
+
+
 export async function shareProjectFolderWithUser(
   accessToken: string,
   projectFolderId: string,

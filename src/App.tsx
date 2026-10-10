@@ -75,6 +75,9 @@ import {
   isGlbFileName,
   isPreviewableMedia,
 } from './utility/attachmentTypes'
+import {
+  verifySelectedAttachmentAccess,
+} from './storage/attachmentAuthorization'
 
 const priorityOrder = {
   critical: 0,
@@ -347,6 +350,16 @@ function App() {
   const [
     sharedProjectError,
     setSharedProjectError,
+  ] = useState<string | null>(null)
+
+  const [
+    isAuthorizingExistingAttachments,
+    setIsAuthorizingExistingAttachments,
+  ] = useState(false)
+
+  const [
+    attachmentAuthorizationStatus,
+    setAttachmentAuthorizationStatus,
   ] = useState<string | null>(null)
 
   const [googleAuthError, setGoogleAuthError] =
@@ -1458,6 +1471,8 @@ function App() {
     setIsProjectChooserOpen(false)
     setProjectChooserError(null)
 
+    setAttachmentAuthorizationStatus(null)
+
     setActiveView('board')
     setIsDemoMode(false)
   }
@@ -1682,23 +1697,26 @@ function App() {
     }
   }
 
+
   async function handleAuthorizeExistingAttachments() {
-    if (!googleAccessToken) {
+    if (
+      !googleAccessToken ||
+      isAuthorizingExistingAttachments
+    ) {
       return
     }
 
+    const attachments =
+      currentProject.tasks.flatMap(
+        (task) => task.attachments,
+      )
+
     const attachmentFileIds = [
       ...new Set(
-        currentProject.tasks.flatMap(
-          (task) =>
-            task.attachments.flatMap(
-              (attachment) =>
-                attachment.driveFileId
-                  ? [
-                    attachment.driveFileId,
-                  ]
-                  : [],
-            ),
+        attachments.flatMap((attachment) =>
+          attachment.driveFileId
+            ? [attachment.driveFileId]
+            : [],
         ),
       ),
     ]
@@ -1707,11 +1725,12 @@ function App() {
       setSharedProjectError(
         'This project has no Drive attachments to authorize.',
       )
-
       return
     }
 
+    setIsAuthorizingExistingAttachments(true)
     setSharedProjectError(null)
+    setAttachmentAuthorizationStatus(null)
 
     try {
       const selectedFileIds =
@@ -1724,51 +1743,71 @@ function App() {
         return
       }
 
-      for (const fileId of selectedFileIds) {
-        const access =
-          await getAttachmentDriveAccess(
-            googleAccessToken,
-            fileId,
-          )
-
-        console.log(
-          'Attachment Drive access:',
-          fileId,
-          access,
-        )
-
-        if (!access.isAppAuthorized) {
-          throw new Error(
-            `"${access.name}" was selected, but Google still reports that Dat's is not authorized to access it.`,
-          )
-        }
-
-        if (!access.canDownload) {
-          throw new Error(
-            `"${access.name}" is authorized, but this Google account cannot download it.`,
-          )
-        }
-
-        await downloadAttachmentFromDrive(
+      const report =
+        await verifySelectedAttachmentAccess(
           googleAccessToken,
-          fileId,
+          selectedFileIds,
         )
-      }
 
+      // Picker selection may have granted access
+      // even if some subsequent checks failed.
+      // Retry the previews in either case.
       setAttachmentAccessRevision(
-        (currentRevision) =>
-          currentRevision + 1,
+        (revision) => revision + 1,
       )
 
-      setSharedProjectError(null)
+      const successCount =
+        report.authorizedFileIds.length
+
+      const failureCount =
+        report.failures.length
+
+      setAttachmentAuthorizationStatus(
+        `${successCount} of ${selectedFileIds.length} selected attachments passed access checks. Previews are retrying.`,
+      )
+
+      if (failureCount > 0) {
+        const failureDetails =
+          report.failures
+            .slice(0, 3)
+            .map((failure) => {
+              const attachment =
+                attachments.find(
+                  (item) =>
+                    item.driveFileId ===
+                    failure.fileId,
+                )
+
+              const fileName =
+                attachment?.fileName ??
+                'Unknown attachment'
+
+              return `${fileName}: ${failure.reason}`
+            })
+            .join('\n')
+
+        const additionalFailures =
+          failureCount > 3
+            ? `\nAnd ${failureCount - 3} additional failures.`
+            : ''
+
+        setSharedProjectError(
+          `${failureCount} attachment access checks failed:\n${failureDetails}${additionalFailures}`,
+        )
+      } else {
+        setSharedProjectError(null)
+      }
     } catch (error) {
       setSharedProjectError(
         error instanceof Error
           ? error.message
           : 'Failed to authorize existing attachments.',
       )
+    } finally {
+      setIsAuthorizingExistingAttachments(false)
     }
   }
+
 
   async function handleAuthorizeAttachmentsFolder() {
     if (
@@ -2398,6 +2437,15 @@ function App() {
             </p>
           )}
 
+          {attachmentAuthorizationStatus && (
+            <p
+              className="attachment-authorization-status"
+              role="status"
+            >
+              {attachmentAuthorizationStatus}
+            </p>
+          )}
+
         </section>
       </main>
     )
@@ -2684,11 +2732,14 @@ function App() {
 
                 <button
                   type="button"
+                  disabled={isAuthorizingExistingAttachments}
                   onClick={() => {
-                    void handleAuthorizeAttachmentsFolder()
+                    void handleAuthorizeExistingAttachments()
                   }}
                 >
-                  Authorize Attachments
+                  {isAuthorizingExistingAttachments
+                    ? 'Checking Attachments...'
+                    : 'Authorize Existing Attachments'}
                 </button>
               </div>
             )}

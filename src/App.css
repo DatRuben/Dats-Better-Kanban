@@ -83,6 +83,8 @@
   margin: -1.25rem 0 1.5rem;
   color: #ff8a8a;
   font-size: 0.8rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .demo-badge {
@@ -1825,4 +1827,12 @@
   overflow-y: auto;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
+}
+
+.attachment-authorization-status {
+  margin: -1.25rem 0 1.5rem;
+  color: #b9c3d4;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
