@@ -1,0 +1,50 @@
+.completed-history__toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.completed-history__toolbar h2 { margin: 0; }
+
+.completed-history__mode {
+  display: inline-flex;
+  padding: 0.2rem;
+  border: 1px solid #384155;
+  background: #252a35;
+  border-radius: 0.55rem;
+}
+
+.completed-history__mode button {
+  padding: 0.45rem 0.85rem;
+  color: #aeb6c5;
+  background: transparent;
+  border: 0;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  font: inherit;
+}
+
+.completed-history__mode button[aria-pressed='true'] {
+  color: #e9eff9;
+  background: #414c61;
+}
+
+.completed-history__scroll { overflow-x: auto; padding-bottom: 0.75rem; }
+.completed-history__timeline { margin-bottom: 1.25rem; }
+.completed-history__date {
+  position: absolute;
+  top: calc(50% + 1.7rem);
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.7rem;
+  color: #aeb6c5;
+  white-space: nowrap;
+}
+.completed-history__empty { color: #aeb6c5; margin-top: 1.5rem; }
+
+.completed-history__timeline .timeline-group:nth-child(even) .completed-history__date {
+  top: calc(50% - 3rem);
+}

@@ -84,10 +84,10 @@ import {
   removePendingUpload,
   reconcilePendingUploads,
 } from './storage/pendingAttachmentUploads'
-
 import type {
   PendingAttachmentUpload,
 } from './storage/pendingAttachmentUploads'
+import { CompletedHistory } from './components/completedHistory'
 
 
 const priorityOrder = {
@@ -3741,38 +3741,10 @@ function App() {
       )}
 
       {effectiveActiveView === 'history' && (
-        <section className="history-view">
-          <h2>Completed History</h2>
-
-          <div className="history-list">
-            {completedTasks.map((task) => (
-              <button
-                key={task.id}
-                type="button"
-                className="history-item"
-                onClick={() =>
-                  setSelectedTaskId(task.id)
-                }
-              >
-                <div>
-                  <h3>{task.title}</h3>
-
-                  <p className="history-item__completed-at">
-                    {task.completedAt
-                      ? formatCompletedAt(task.completedAt)
-                      : 'Completion time unknown'}
-                  </p>
-                </div>
-
-                <span
-                  className={`timeline-item__priority timeline-item__priority--${task.priority}`}
-                >
-                  {task.priority}
-                </span>
-              </button>
-            ))}
-          </div>
-        </section>
+        <CompletedHistory
+          tasks={completedTasks}
+          onOpenTask={setSelectedTaskId}
+        />
       )}
 
       <TaskDetailsDialog
