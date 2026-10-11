@@ -2793,6 +2793,25 @@ function App() {
     )
   }
 
+  const availableTags = useMemo(() => {
+    const uniqueTags = new Map<string, string>()
+
+    for (const task of tasks) {
+      for (const rawTag of task.tags ?? []) {
+        const tag = rawTag.trim().replace(/^#+/, '').trim()
+        const key = tag.toLowerCase()
+
+        if (tag && !uniqueTags.has(key)) {
+          uniqueTags.set(key, tag)
+        }
+      }
+    }
+
+    return [...uniqueTags.values()].sort(
+      (a, b) => a.localeCompare(b),
+    )
+  }, [tasks])
+
   return (
     <main className="app-shell">
       <header className="app-header">
@@ -3597,6 +3616,7 @@ function App() {
                       )
                     }
                   }}
+                  availableTags={availableTags}
                 />
               )
             })}

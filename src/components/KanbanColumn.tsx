@@ -58,6 +58,7 @@ interface KanbanColumnProps {
   onAuthorizeAttachment: (
     attachment: Attachment,
   ) => void
+  availableTags: string[]
 }
 
 export function KanbanColumn({
@@ -85,6 +86,7 @@ export function KanbanColumn({
   onMoveTiedTask,
   onColumnPriorityVisibilityChange,
   onAuthorizeAttachment,
+  availableTags,
 }: KanbanColumnProps) {
   const {
     ref,
@@ -226,6 +228,7 @@ export function KanbanColumn({
             onCreate={onCreateTask}
             onCancel={onCancelCreatingTask}
             onUploadAttachments={onUploadAttachments}
+            availableTags={availableTags}
           />
         )}
 
@@ -281,6 +284,7 @@ export function KanbanColumn({
                 onUploadAttachments={
                   onUploadAttachments
                 }
+                availableTags={availableTags}
               />
             )
           }

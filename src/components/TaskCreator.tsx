@@ -10,6 +10,7 @@ import type {
 import {
     isSupportedAttachmentFile,
 } from '../utility/attachmentTypes'
+import { TagEditor } from './TagEditor'
 
 interface TaskCreatorProps {
     columnTitle: string
@@ -21,6 +22,7 @@ interface TaskCreatorProps {
     onUploadAttachments: (
         files: File[],
     ) => Promise<Attachment[]>
+    availableTags: string[]
 }
 
 export function TaskCreator({
@@ -31,6 +33,7 @@ export function TaskCreator({
     onCancel,
     onDelete,
     onUploadAttachments,
+    availableTags,
 }: TaskCreatorProps) {
     const [title, setTitle] = useState(
         initialTask?.title ?? '',
@@ -62,9 +65,6 @@ export function TaskCreator({
             initialTask?.tags ?? [],
         )
 
-    const [tagInput, setTagInput] =
-        useState('')
-
     const [
         attachmentFiles,
         setAttachmentFiles,
@@ -94,42 +94,6 @@ export function TaskCreator({
 
     const existingAttachments =
         initialTask?.attachments ?? []
-
-    function handleAddTag() {
-        const normalizedTag =
-            tagInput
-                .trim()
-                .replace(/^#+/, '')
-                .trim()
-
-        if (
-            !normalizedTag ||
-            tags.length >= 3
-        ) {
-            return
-        }
-
-        const alreadyExists =
-            tags.some(
-                (tag) =>
-                    tag.toLowerCase() ===
-                    normalizedTag.toLowerCase(),
-            )
-
-        if (alreadyExists) {
-            setTagInput('')
-            return
-        }
-
-        setTags((currentTags) => [
-            ...currentTags,
-            normalizedTag,
-        ])
-
-        setTagInput('')
-    }
-
-
 
     async function handleSubmit(
         event: SubmitEvent<HTMLFormElement>,
@@ -349,70 +313,14 @@ export function TaskCreator({
             <div className="task-creator__field">
                 <span>Tags</span>
 
-                <div className="task-creator__tag-input">
-                    <input
-                        type="text"
-                        value={tagInput}
-                        placeholder="Add tag"
-                        disabled={
-                            tags.length >= 3
-                        }
-                        onChange={(event) =>
-                            setTagInput(
-                                event.target.value,
-                            )
-                        }
-                    />
-
-                    <button
-                        type="button"
-                        disabled={
-                            !tagInput.trim() ||
-                            tags.length >= 3
-                        }
-                        onClick={
-                            handleAddTag
-                        }
-                    >
-                        Add
-                    </button>
-                </div>
-
-                {tags.length > 0 && (
-                    <div className="task-creator__tags">
-                        {tags.map(
-                            (tag) => (
-                                <button
-                                    key={tag}
-                                    type="button"
-                                    className="task-creator__tag"
-                                    title={`Remove ${tag}`}
-                                    onClick={() =>
-                                        setTags(
-                                            (
-                                                currentTags,
-                                            ) =>
-                                                currentTags.filter(
-                                                    (
-                                                        currentTag,
-                                                    ) =>
-                                                        currentTag !==
-                                                        tag,
-                                                ),
-                                        )
-                                    }
-                                >
-                                    #{tag} ×
-                                </button>
-                            ),
-                        )}
-                    </div>
-                )}
-
-                <small>
-                    {tags.length}/3 tags
-                </small>
+                <TagEditor
+                    tags={tags}
+                    availableTags={availableTags}
+                    onChange={setTags}
+                    maxTags={3}
+                />
             </div>
+
 
             <div className="task-creator__field">
                 <span>
