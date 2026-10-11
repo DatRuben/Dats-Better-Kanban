@@ -807,9 +807,11 @@ function App() {
     googleProjectFileId,
     googleProjectFolderId,
     googleProjectsFolderId,
+    googleUser,
     canCurrentUserEditProject,
     canCurrentUserEditProjectSettings,
   ])
+
 
   function queueAttachmentDeletions(
     attachments: Attachment[],
@@ -1485,15 +1487,16 @@ function App() {
     setProjectSyncError(null)
     setSharedProjectError(null)
 
-
     try {
       setPendingUploads(
-        getPendingUploads(
+        reconcilePendingUploads(
           userPermissionId,
           loadedDriveProject.projectFileId,
+          activeProject,
         ),
       )
-    } catch (error) {
+    }
+    catch (error) {
       setPendingUploads([])
 
       setSharedProjectError(
