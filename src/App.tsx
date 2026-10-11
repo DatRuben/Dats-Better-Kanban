@@ -1770,6 +1770,7 @@ function App() {
     }
   }
 
+
   async function handleAuthorizeExistingAttachments(
     targetFileId?: string,
   ) {
@@ -1831,21 +1832,67 @@ function App() {
           fileIds,
         )
 
-      const missingFileIds =
-        initialReport.failures.map(
-          (failure) => failure.fileId,
+      const authorizationFailures =
+        initialReport.failures.filter(
+          (failure) =>
+            failure.kind === 'authorization',
         )
 
-      if (missingFileIds.length === 0) {
+      const otherFailures =
+        initialReport.failures.filter(
+          (failure) =>
+            failure.kind !== 'authorization',
+        )
+
+      function describeFailures(
+        failures: typeof initialReport.failures,
+      ) {
+        return failures
+          .slice(0, 3)
+          .map((failure) => {
+            const attachment =
+              attachments.find(
+                (item) =>
+                  item.driveFileId === failure.fileId,
+              )
+
+            return (
+              `${attachment?.fileName ?? failure.fileId}: ` +
+              failure.reason
+            )
+          })
+          .join('\n')
+      }
+
+      // Do not open Picker for network failures,
+      // rate limits, or other unrelated errors.
+      if (authorizationFailures.length === 0) {
+        if (otherFailures.length === 0) {
+          setAttachmentAuthorizationStatus(
+            'All selected project files are already accessible.',
+          )
+          return
+        }
+
         setAttachmentAuthorizationStatus(
-          'All selected project files are already accessible.',
+          `${initialReport.authorizedFileIds.length} of ${fileIds.length} file(s) accessible. ${otherFailures.length} check(s) failed.`,
+        )
+
+        setSharedProjectError(
+          'Some files could not be checked. Retry later; authorization may not be the problem.\n' +
+          describeFailures(otherFailures),
         )
 
         return
       }
 
+      const missingFileIds =
+        authorizationFailures.map(
+          (failure) => failure.fileId,
+        )
+
       setAttachmentAuthorizationStatus(
-        `${missingFileIds.length} file(s) need access. Select them together in Google Picker.`,
+        `${missingFileIds.length} file(s) may need Google authorization. Select them in Picker.`,
       )
 
       const selectedFileIds =
@@ -1856,8 +1903,15 @@ function App() {
 
       if (selectedFileIds.length === 0) {
         setAttachmentAuthorizationStatus(
-          `${missingFileIds.length} file(s) still need access. Authorization was cancelled.`,
+          `${initialReport.authorizedFileIds.length} of ${fileIds.length} file(s) accessible. Authorization cancelled.`,
         )
+
+        if (otherFailures.length > 0) {
+          setSharedProjectError(
+            `${otherFailures.length} additional file check(s) failed:\n` +
+            describeFailures(otherFailures),
+          )
+        }
 
         return
       }
@@ -1876,49 +1930,47 @@ function App() {
         )
       }
 
-      const authorizedIds = new Set(
-        updatedReport.authorizedFileIds,
+      const authorizedIds = new Set([
+        ...initialReport.authorizedFileIds,
+        ...updatedReport.authorizedFileIds,
+      ])
+
+      const updatedFailuresById = new Map(
+        updatedReport.failures.map(
+          (failure) => [
+            failure.fileId,
+            failure,
+          ],
+        ),
       )
 
-      const remainingFileIds =
-        missingFileIds.filter(
-          (fileId) => !authorizedIds.has(fileId),
-        )
-
-      const accessibleCount =
-        fileIds.length - remainingFileIds.length
+      const remainingFailures = [
+        ...otherFailures,
+        ...authorizationFailures
+          .filter(
+            (failure) =>
+              !authorizedIds.has(failure.fileId),
+          )
+          .map(
+            (failure) =>
+              updatedFailuresById.get(
+                failure.fileId,
+              ) ?? failure,
+          ),
+      ]
 
       setAttachmentAuthorizationStatus(
-        `${accessibleCount} of ${fileIds.length} project file(s) are now accessible.`,
+        `${authorizedIds.size} of ${fileIds.length} project file(s) are accessible.`,
       )
 
-      if (remainingFileIds.length === 0) {
+      if (remainingFailures.length === 0) {
         setSharedProjectError(null)
         return
       }
 
-      const failureDetails =
-        updatedReport.failures
-          .slice(0, 3)
-          .map((failure) => {
-            const attachment =
-              attachments.find(
-                (item) =>
-                  item.driveFileId === failure.fileId,
-              )
-
-            return (
-              `${attachment?.fileName ?? failure.fileId}: ` +
-              failure.reason
-            )
-          })
-          .join('\n')
-
       setSharedProjectError(
-        `${remainingFileIds.length} file(s) still require access.` +
-        (failureDetails
-          ? `\n${failureDetails}`
-          : ''),
+        `${remainingFailures.length} file(s) could not be accessed.\n` +
+        describeFailures(remainingFailures),
       )
     } catch (error) {
       if (isGoogleUnauthorizedError(error)) {

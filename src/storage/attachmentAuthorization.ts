@@ -3,9 +3,15 @@ import {
   verifyAttachmentDownloadFromDrive,
 } from './googleDriveApi'
 
+export type AttachmentAccessFailureKind =
+  | 'authorization'
+  | 'temporary'
+  | 'other'
+
 export interface AttachmentAccessFailure {
   fileId: string
   reason: string
+  kind: AttachmentAccessFailureKind
 }
 
 export interface AttachmentAccessReport {
@@ -13,17 +19,66 @@ export interface AttachmentAccessReport {
   failures: AttachmentAccessFailure[]
 }
 
+export function classifyAttachmentAccessError(
+  message: string,
+): AttachmentAccessFailureKind {
+  // Google sometimes returns HTTP 403 for
+  // rate limits, not just permission failures.
+  if (
+    /rate.?limit|quota|dailyLimitExceeded|RESOURCE_EXHAUSTED|backendError|internalError|serviceUnavailable/i.test(
+      message,
+    )
+  ) {
+    return 'temporary'
+  }
+
+  const status =
+    /\bstatus\s+(\d{3})\b/i.exec(message)
+
+  if (status) {
+    const code = Number(status[1])
+
+    if (
+      code === 408 ||
+      code === 409 ||
+      code === 425 ||
+      code === 429 ||
+      code >= 500
+    ) {
+      return 'temporary'
+    }
+
+    if (code === 403 || code === 404) {
+      return 'authorization'
+    }
+  }
+
+  if (
+    /not authorized|permission denied|insufficient permissions|access denied/i.test(
+      message,
+    )
+  ) {
+    return 'authorization'
+  }
+
+  if (
+    /failed to fetch|network|timed out|timeout|offline|connection|aborterror/i.test(
+      message,
+    )
+  ) {
+    return 'temporary'
+  }
+
+  return 'other'
+}
+
 export function isLikelyAttachmentAccessError(
   message: string | null,
 ): boolean {
-  if (!message) {
-    return false
-  }
-
   return (
-    /\bstatus (403|404)\b/i.test(message) ||
-    /not authorized/i.test(message) ||
-    /permission denied/i.test(message)
+    message !== null &&
+    classifyAttachmentAccessError(message) ===
+      'authorization'
   )
 }
 
@@ -40,8 +95,6 @@ export async function verifySelectedAttachmentAccess(
     failures: [],
   }
 
-  // Check small groups to avoid excessive
-  // simultaneous Google Drive requests.
   const batchSize = 4
 
   for (
@@ -64,35 +117,45 @@ export async function verifySelectedAttachmentAccess(
 
           return {
             fileId,
-            error: null,
+            reason: null,
+            kind: null,
           }
         } catch (error) {
-          const message =
+          const reason =
             error instanceof Error
               ? error.message
               : 'Unknown attachment access error.'
 
-          if (/\bstatus 401\b/i.test(message)) {
+          // Expired sessions must be handled
+          // by the application, not Picker.
+          if (
+            /\bstatus\s+401\b/i.test(reason)
+          ) {
             throw error
           }
 
           return {
             fileId,
-            error: message,
+            reason,
+            kind:
+              classifyAttachmentAccessError(
+                reason,
+              ),
           }
         }
       }),
     )
 
     for (const result of results) {
-      if (result.error === null) {
+      if (result.reason === null) {
         report.authorizedFileIds.push(
           result.fileId,
         )
       } else {
         report.failures.push({
           fileId: result.fileId,
-          reason: result.error,
+          reason: result.reason,
+          kind: result.kind!,
         })
       }
     }
