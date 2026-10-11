@@ -30,21 +30,6 @@
   font-size: 0.8rem;
 }
 
-.privacy-policy-button {
-  padding: 0.55rem 0.85rem;
-  border: 1px solid #384155;
-  border-radius: 0.5rem;
-  color: #dce3ef;
-  background: #252a35;
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.privacy-policy-button:hover {
-  background: #303746;
-}
-
 .product-name {
   margin: 0;
   color: #8d96a8;

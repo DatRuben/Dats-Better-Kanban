@@ -371,37 +371,33 @@ export function TaskCreator({
 
                                                     <button
                                                         type="button"
+                                                        className="task-creator__attachment-action"
                                                         disabled={isSubmitting || hasStagedUploads}
                                                         onClick={() =>
                                                             setRemovedAttachmentIds(
-                                                                (
-                                                                    currentIds,
-                                                                ) =>
+                                                                (currentIds) =>
                                                                     currentIds.filter(
-                                                                        (
-                                                                            id,
-                                                                        ) =>
-                                                                            id !==
-                                                                            attachment.id,
+                                                                        (id) =>
+                                                                            id !== attachment.id,
                                                                     ),
                                                             )
                                                         }
                                                     >
                                                         Keep
                                                     </button>
+
                                                 </>
                                             ) : (
                                                 <button
                                                     type="button"
+                                                    className="task-creator__attachment-action task-creator__attachment-action--remove"
                                                     disabled={isSubmitting || hasStagedUploads}
                                                     onClick={() =>
                                                         setRemovedAttachmentIds(
-                                                            (
-                                                                currentIds,
-                                                            ) => [
-                                                                    ...currentIds,
-                                                                    attachment.id,
-                                                                ],
+                                                            (currentIds) => [
+                                                                ...currentIds,
+                                                                attachment.id,
+                                                            ],
                                                         )
                                                     }
                                                 >
@@ -483,27 +479,24 @@ export function TaskCreator({
                                             }
                                         </small>
 
+
                                         <button
                                             type="button"
+                                            className="task-creator__attachment-action task-creator__attachment-action--remove"
                                             disabled={isSubmitting || hasStagedUploads}
                                             onClick={() =>
                                                 setAttachmentFiles(
-                                                    (
-                                                        currentFiles,
-                                                    ) =>
+                                                    (currentFiles) =>
                                                         currentFiles.filter(
-                                                            (
-                                                                _,
-                                                                currentIndex,
-                                                            ) =>
-                                                                currentIndex !==
-                                                                index,
+                                                            (_, currentIndex) =>
+                                                                currentIndex !== index,
                                                         ),
                                                 )
                                             }
                                         >
                                             Remove
                                         </button>
+
                                     </div>
                                 ),
                             )}
