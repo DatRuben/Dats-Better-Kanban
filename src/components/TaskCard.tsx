@@ -244,7 +244,6 @@ export function TaskCard({
     onLoadAttachment,
   ])
 
-
   const { ref } = useDraggable({
     id: task.id,
     disabled:
@@ -405,11 +404,13 @@ export function TaskCard({
                     event.stopPropagation()
                   }
                   onClick={() =>
-                    setcurrentMediaIndex(
-                      (index) =>
-                        Math.max(0, index - 1),
+                    selectMediaAttachment(
+                      mediaAttachments[
+                        Math.max(0, currentMediaIndex - 1)
+                      ]?.id ?? null,
                     )
                   }
+
                 >
                   {'<'}
                 </button>
@@ -426,12 +427,13 @@ export function TaskCard({
                     event.stopPropagation()
                   }
                   onClick={() =>
-                    setcurrentMediaIndex(
-                      (index) =>
+                    selectMediaAttachment(
+                      mediaAttachments[
                         Math.min(
                           mediaAttachments.length - 1,
-                          index + 1,
-                        ),
+                          currentMediaIndex + 1,
+                        )
+                      ]?.id ?? null,
                     )
                   }
                 >
@@ -461,7 +463,7 @@ export function TaskCard({
                       event.stopPropagation()
                     }
                     onClick={() =>
-                      setcurrentMediaIndex(index)
+                      selectMediaAttachment(attachment.id)
                     }
                   />
                 ),

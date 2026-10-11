@@ -106,6 +106,23 @@ function getManualOrderKey(
   )
 }
 
+
+function isGoogleUnauthorizedError(
+  error: unknown,
+): boolean {
+  return (
+    error instanceof Error &&
+    error.message.includes('status 401')
+  )
+}
+
+function isTokenStillValid(
+  expiresAt: number,
+): boolean {
+  return Date.now() < expiresAt
+}
+
+
 function getRemainingTokenMinutes(
   expiresAt: number,
 ): number {
@@ -500,6 +517,25 @@ function App() {
       ],
     )
 
+
+  const expireGoogleSession = useCallback(() => {
+    clearStoredGoogleAccessToken()
+
+    setGoogleAccessToken(null)
+    setGoogleUser(null)
+
+    setGoogleTokenExpiresAt(null)
+    setGoogleTokenMinutesRemaining(0)
+    setPendingUploads([])
+
+    pendingSavesRef.current = 0
+
+    setSaveStatus('error')
+    setSaveError(
+      'Google Drive session expired. Reconnect to continue saving.',
+    )
+  }, [])
+
   const beginSave = useCallback((): boolean => {
     if (!canCurrentUserEditProject) {
       return false
@@ -567,33 +603,6 @@ function App() {
       )
     }
   }
-
-  function isGoogleUnauthorizedError(
-    error: unknown,
-  ) {
-    return (
-      error instanceof Error &&
-      error.message.includes('status 401')
-    )
-  }
-
-  const expireGoogleSession = useCallback(() => {
-    clearStoredGoogleAccessToken()
-
-    setGoogleAccessToken(null)
-    setGoogleUser(null)
-
-    setGoogleTokenExpiresAt(null)
-    setGoogleTokenMinutesRemaining(0)
-    setPendingUploads([])
-
-    pendingSavesRef.current = 0
-
-    setSaveStatus('error')
-    setSaveError(
-      'Google Drive session expired. Reconnect to continue saving.',
-    )
-  }, [])
 
   const failSave = useCallback(
     (error: unknown): void => {
@@ -868,12 +877,6 @@ function App() {
           attachment.driveFileId,
         )
     }
-  }
-
-  function isTokenStillValid(
-    expiresAt: number,
-  ): boolean {
-    return Date.now() < expiresAt
   }
 
   const [activeView, setActiveView] =
@@ -2431,6 +2434,10 @@ function App() {
         setGoogleTokenExpiresAt(
           previousExpiresAt,
         )
+
+        setGoogleTokenMinutesRemaining(
+          getRemainingTokenMinutes(previousExpiresAt),
+        )
       } else {
         setGoogleAccessToken(null)
         setGoogleTokenExpiresAt(null)
@@ -2636,9 +2643,10 @@ function App() {
       )
     } catch (error) {
       throw new Error(
-        `The file was uploaded to Google Drive, but its recovery information could not be saved. Drive file ID: ${driveFileId}. Do not upload it again until the problem is resolved. ${error instanceof Error ? error.message : ''
-        }`,
+        `The file was uploaded to Google Drive, but its recovery information could not be saved. Drive file ID: ${driveFileId}. Do not upload it again until the problem is resolved.`,
+        { cause: error },
       )
+
     }
 
     return attachment
@@ -3295,7 +3303,7 @@ function App() {
           </button>
         </nav>
 
-        {activeView !== 'mine' && (
+        {effectiveActiveView !== 'mine' && (
           <label className="assignee-filter">
             <span>Assignee</span>
 
@@ -3334,8 +3342,8 @@ function App() {
         )}
 
         {(
-          activeView === 'board' ||
-          activeView === 'timeline'
+          effectiveActiveView === 'board' ||
+          effectiveActiveView === 'timeline'
         ) && (
             <label className="task-sort">
               <span>Sort</span>
@@ -3360,7 +3368,7 @@ function App() {
             </label>
           )}
 
-        {activeView === 'board' &&
+        {effectiveActiveView === 'board' &&
           canCurrentUserEditProject && (
             <div className="board-toolbar__edit-controls">
               <button
@@ -3417,7 +3425,7 @@ function App() {
           )}
       </div>
 
-      {activeView === 'board' && (
+      {effectiveActiveView === 'board' && (
         <DragDropProvider
           onDragEnd={(event) => {
             if (event.canceled) {
@@ -3558,7 +3566,7 @@ function App() {
         </DragDropProvider>
       )}
 
-      {activeView === 'mine' && (
+      {effectiveActiveView === 'mine' && (
         <section className="my-tasks-view">
           <h2>My Tasks</h2>
 
@@ -3622,7 +3630,7 @@ function App() {
         </section>
       )}
 
-      {activeView === 'timeline' && (
+      {effectiveActiveView === 'timeline' && (
         <section
           className="timeline-view"
           onWheel={handleTimelineWheel}
@@ -3671,7 +3679,7 @@ function App() {
         </section>
       )}
 
-      {activeView === 'history' && (
+      {effectiveActiveView === 'history' && (
         <section className="history-view">
           <h2>Completed History</h2>
 
