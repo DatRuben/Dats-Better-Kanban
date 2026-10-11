@@ -26,14 +26,14 @@ interface KanbanColumnProps {
   onDeleteColumn: (columnId: string) => void
   isCreatingTask: boolean
   onStartCreatingTask: () => void
-  onCreateTask: (task: NewTaskInput) => void
+  onCreateTask: (task: NewTaskInput) => boolean
   onCancelCreatingTask: () => void
   editingTaskId: string | null
   onStartEditingTask: (taskId: string) => void
   onUpdateTask: (
     taskId: string,
     task: NewTaskInput,
-  ) => void
+  ) => boolean
   onCancelEditingTask: () => void
   onDeleteTask: (taskId: string) => void
   onUploadAttachments: (

@@ -1257,7 +1257,7 @@ function App() {
     taskInput: NewTaskInput,
   ) {
     if (!canCurrentUserEditProject) {
-      return
+      return false
     }
 
     const column = columns.find(
@@ -1265,7 +1265,7 @@ function App() {
     )
 
     if (!column) {
-      return
+      return false
     }
 
     const createdAt = new Date().toISOString()
@@ -1294,6 +1294,8 @@ function App() {
     ])
 
     setCreatingTaskColumnId(null)
+
+    return true
   }
 
   function handleUpdateTask(
@@ -1372,6 +1374,7 @@ function App() {
     )
 
     setEditingTaskId(null)
+    return true
   }
 
   function handleDeleteTask(taskId: string) {

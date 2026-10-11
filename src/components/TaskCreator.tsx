@@ -15,7 +15,7 @@ interface TaskCreatorProps {
     columnTitle: string
     members: DemoUser[]
     initialTask?: Task
-    onCreate: (task: NewTaskInput) => void
+    onCreate: (task: NewTaskInput) => boolean
     onCancel: () => void
     onDelete?: () => void
     onUploadAttachments: (
@@ -77,6 +77,9 @@ export function TaskCreator({
 
     const submissionLockedRef = useRef(false)
 
+    const stagedUploadsRef =
+        useRef<Attachment[] | null>(null)
+
     const [
         isSubmitting,
         setIsSubmitting,
@@ -125,6 +128,7 @@ export function TaskCreator({
     }
 
 
+
     async function handleSubmit(
         event: SubmitEvent<HTMLFormElement>,
     ) {
@@ -152,12 +156,19 @@ export function TaskCreator({
                         ),
                 )
 
-            const uploadedAttachments =
-                attachmentFiles.length > 0
-                    ? await onUploadAttachments(
-                        [...attachmentFiles],
-                    )
-                    : []
+            let uploadedAttachments =
+                stagedUploadsRef.current
+
+            if (uploadedAttachments === null) {
+                uploadedAttachments =
+                    attachmentFiles.length > 0
+                        ? await onUploadAttachments(
+                            [...attachmentFiles],
+                        )
+                        : []
+                stagedUploadsRef.current =
+                    uploadedAttachments
+            }
 
             const taskInput: NewTaskInput = {
                 title: trimmedTitle,
@@ -172,9 +183,13 @@ export function TaskCreator({
                 ],
             }
 
-            onCreate(taskInput)
+            const accepted = onCreate(taskInput)
 
-
+            if (!accepted) {
+                throw new Error(
+                    'The task could not be accepted. Any successfully uploaded files are retained for retry without reuploading.',
+                )
+            }
         } catch (error) {
             submissionLockedRef.current = false
             setIsSubmitting(false)
@@ -187,6 +202,8 @@ export function TaskCreator({
         }
     }
 
+    const hasStagedUploads =
+        (stagedUploadsRef.current?.length ?? 0) > 0
 
     return (
         <form
@@ -441,7 +458,7 @@ export function TaskCreator({
 
                                                     <button
                                                         type="button"
-                                                        disabled={isSubmitting}
+                                                        disabled={isSubmitting || hasStagedUploads}
                                                         onClick={() =>
                                                             setRemovedAttachmentIds(
                                                                 (
@@ -463,7 +480,7 @@ export function TaskCreator({
                                             ) : (
                                                 <button
                                                     type="button"
-                                                    disabled={isSubmitting}
+                                                    disabled={isSubmitting || hasStagedUploads}
                                                     onClick={() =>
                                                         setRemovedAttachmentIds(
                                                             (
@@ -489,7 +506,7 @@ export function TaskCreator({
                     type="file"
                     accept="image/*,video/mp4,.blend,.glb"
                     multiple
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || hasStagedUploads}
                     onChange={(event) => {
                         const selectedFiles =
                             Array.from(
@@ -555,7 +572,7 @@ export function TaskCreator({
 
                                         <button
                                             type="button"
-                                            disabled={isSubmitting}
+                                            disabled={isSubmitting || hasStagedUploads}
                                             onClick={() =>
                                                 setAttachmentFiles(
                                                     (
@@ -609,7 +626,18 @@ export function TaskCreator({
                     <button
                         type="button"
                         className="task-creator__cancel"
-                        onClick={onCancel}
+                        onClick={() => {
+                            if (
+                                hasStagedUploads &&
+                                !window.confirm(
+                                    'Files have already been uploaded to Google Drive but were not accepted into the task. Leaving now may leave unreferenced files in Drive. Leave anyway?',
+                                )
+                            ) {
+                                return
+                            }
+
+                            onCancel()
+                        }}
                         disabled={
                             isSubmitting
                         }
