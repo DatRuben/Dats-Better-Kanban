@@ -230,6 +230,7 @@ async function cleanupPendingAttachmentDeletions(
   accessToken: string,
   savedProject: Project,
   pendingDeletionFileIds: Set<string>,
+  localProject: Project,
 ) {
   if (pendingDeletionFileIds.size === 0) {
     return
@@ -238,7 +239,10 @@ async function cleanupPendingAttachmentDeletions(
   const referencedFileIds =
     new Set<string>()
 
-  for (const task of savedProject.tasks) {
+  for (const task of [
+    ...savedProject.tasks,
+    ...localProject.tasks,
+  ]) {
     for (const attachment of task.attachments) {
       if (attachment.driveFileId) {
         referencedFileIds.add(
@@ -255,10 +259,6 @@ async function cleanupPendingAttachmentDeletions(
     [...pendingDeletionFileIds]
   ) {
     if (referencedFileIds.has(fileId)) {
-      pendingDeletionFileIds.delete(
-        fileId,
-      )
-
       continue
     }
 
@@ -788,6 +788,7 @@ function App() {
             googleAccessToken,
             mergeResult.projectToSave,
             pendingAttachmentDeletionFileIdsRef.current,
+            mergeResult.localProject,
           )
 
           if (
@@ -2229,6 +2230,20 @@ function App() {
 
         const remoteProject =
           remoteDocument.project
+
+
+        if (
+          !hasPendingProjectSaves() &&
+          pendingAttachmentDeletionFileIdsRef.current.size > 0
+        ) {
+          await cleanupPendingAttachmentDeletions(
+            accessToken,
+            remoteProject,
+            pendingAttachmentDeletionFileIdsRef.current,
+            currentProjectRef.current,
+          )
+        }
+
 
         setPendingUploads(
           reconcilePendingUploads(
