@@ -1255,7 +1255,7 @@ function App() {
   function handleCreateTask(
     columnId: string,
     taskInput: NewTaskInput,
-  ) {
+  ): boolean {
     if (!canCurrentUserEditProject) {
       return false
     }
@@ -1301,9 +1301,9 @@ function App() {
   function handleUpdateTask(
     taskId: string,
     taskInput: NewTaskInput,
-  ) {
+  ): boolean {
     if (!canCurrentUserEditProject) {
-      return
+      return false
     }
 
     const existingTask =
@@ -1313,7 +1313,7 @@ function App() {
       )
 
     if (!existingTask) {
-      return
+      return false
     }
 
     const remainingAttachmentIds =

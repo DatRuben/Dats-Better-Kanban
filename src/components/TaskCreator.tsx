@@ -167,7 +167,9 @@ export function TaskCreator({
                         )
                         : []
                 stagedUploadsRef.current =
-                    uploadedAttachments
+                    uploadedAttachments.length > 0
+                        ? uploadedAttachments
+                        : null
             }
 
             const taskInput: NewTaskInput = {
@@ -613,9 +615,8 @@ export function TaskCreator({
                             <button
                                 type="button"
                                 className="task-creator__delete"
-                                onClick={
-                                    onDelete
-                                }
+                                disabled={isSubmitting || hasStagedUploads}
+                                onClick={onDelete}
                             >
                                 Delete
                             </button>
