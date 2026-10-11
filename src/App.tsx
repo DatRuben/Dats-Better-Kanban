@@ -2620,6 +2620,14 @@ function App() {
               {sharedProjectError}
             </p>
           )}
+
+
+          <footer className="welcome-screen__footer">
+            <a href="/privacy.html">
+              Privacy Policy
+            </a>
+          </footer>
+
         </section>
       </main>
     )
@@ -2904,13 +2912,6 @@ function App() {
                   : 'Projects'}
               </button>
             )}
-
-          <a
-            className="privacy-policy-button"
-            href="/privacy.html"
-          >
-            Privacy Policy
-          </a>
 
           <button
             type="button"
@@ -3766,6 +3767,7 @@ function App() {
         />
       )}
 
+
       <TaskDetailsDialog
         task={selectedTask}
         members={currentProject.members}
@@ -3774,7 +3776,18 @@ function App() {
           setSelectedTaskId(null)
         }
       />
+
+      <footer className="app-footer">
+        <span>
+          Dat&apos;s: Better Kanban · v{APP_VERSION}
+        </span>
+
+        <a href="/privacy.html">
+          Privacy Policy
+        </a>
+      </footer>
     </main>
+
   )
 
   function handleMoveTask(taskId: string, targetColumnId: string) {

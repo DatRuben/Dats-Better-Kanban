@@ -7,6 +7,8 @@
   padding: 2rem;
   color: #e7eaf0;
   background: #111318;
+  display: flex;
+  flex-direction: column;
 }
 
 .app-header {
@@ -2005,4 +2007,85 @@
 .app-description--editable[readonly] {
   resize: none;
   cursor: default;
+}
+
+
+/* Footer */
+
+.app-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: auto;
+  padding-top: 2rem;
+  color: #8d96a8;
+  font-size: 0.75rem;
+}
+
+.app-footer a,
+.welcome-screen__footer a {
+  color: #aeb6c5;
+  text-decoration: none;
+}
+
+.app-footer a:hover,
+.welcome-screen__footer a:hover {
+  color: #e7eaf0;
+  text-decoration: underline;
+}
+
+.welcome-screen__footer {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #303746;
+  font-size: 0.8rem;
+}
+
+/* Consistent attachment controls */
+
+.task-creator__tag-add,
+.task-creator__attachment-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2rem;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid #465269;
+  border-radius: 0.4rem;
+  background: #303746;
+  color: #e6ebf4;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.task-creator__tag-add:hover:not(:disabled),
+.task-creator__attachment-action:hover:not(:disabled) {
+  background: #414c61;
+}
+
+.task-creator__attachment-action--remove {
+  border-color: #765052;
+  background: #35282c;
+  color: #f2b8bd;
+}
+
+.task-creator__attachment-action--remove:hover:not(:disabled) {
+  background: #503238;
+}
+
+.task-creator__tag-add:disabled,
+.task-creator__attachment-action:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.task-creator__tag-add:focus-visible,
+.task-creator__attachment-action:focus-visible {
+  outline: 2px solid #8ba6dc;
+  outline-offset: 2px;
 }
