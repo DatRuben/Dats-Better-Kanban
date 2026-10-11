@@ -2,6 +2,7 @@ import './App.css'
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react'
@@ -102,6 +103,17 @@ function getManualOrderKey(
   return (
     task.manualOrderKey ??
     `${task.createdAt}:${task.id}`
+  )
+}
+
+function getRemainingTokenMinutes(
+  expiresAt: number,
+): number {
+  return Math.max(
+    0,
+    Math.ceil(
+      (expiresAt - Date.now()) / 60000,
+    ),
   )
 }
 
@@ -401,10 +413,13 @@ function App() {
   const scheduledSavesRef =
     useRef(0)
 
-  const currentProject = createProjectSnapshot(
-    project,
-    columns,
-    tasks,
+  const currentProject = useMemo(
+    () => createProjectSnapshot(
+      project,
+      columns,
+      tasks,
+    ),
+    [project, columns, tasks],
   )
 
   const currentProjectRef =
@@ -485,8 +500,7 @@ function App() {
       ],
     )
 
-
-  function beginSave(): boolean {
+  const beginSave = useCallback((): boolean => {
     if (!canCurrentUserEditProject) {
       return false
     }
@@ -505,7 +519,11 @@ function App() {
     setSaveError(null)
 
     return true
-  }
+  }, [
+    canCurrentUserEditProject,
+    expireGoogleSession,
+  ])
+
 
   function registerScheduledSave() {
     scheduledSavesRef.current += 1
@@ -550,45 +568,71 @@ function App() {
     }
   }
 
-  function failSave(error: unknown) {
-    if (isGoogleUnauthorizedError(error)) {
-      expireGoogleSession()
-      return
-    }
-
-    pendingSavesRef.current =
-      Math.max(
-        0,
-        pendingSavesRef.current - 1,
-      )
-
-    setSaveStatus('error')
-
-    setSaveError(
-      error instanceof Error
-        ? error.message
-        : 'Save failed.',
+  function isGoogleUnauthorizedError(
+    error: unknown,
+  ) {
+    return (
+      error instanceof Error &&
+      error.message.includes('status 401')
     )
   }
+
+  const expireGoogleSession = useCallback(() => {
+    clearStoredGoogleAccessToken()
+
+    setGoogleAccessToken(null)
+    setGoogleUser(null)
+
+    setGoogleTokenExpiresAt(null)
+    setGoogleTokenMinutesRemaining(0)
+    setPendingUploads([])
+
+    pendingSavesRef.current = 0
+
+    setSaveStatus('error')
+    setSaveError(
+      'Google Drive session expired. Reconnect to continue saving.',
+    )
+  }, [])
+
+  const failSave = useCallback(
+    (error: unknown): void => {
+      if (isGoogleUnauthorizedError(error)) {
+        expireGoogleSession()
+        return
+      }
+
+      pendingSavesRef.current =
+        Math.max(
+          0,
+          pendingSavesRef.current - 1,
+        )
+
+      setSaveStatus('error')
+
+      setSaveError(
+        error instanceof Error
+          ? error.message
+          : 'Save failed.',
+      )
+    },
+    [expireGoogleSession],
+  )
+
 
   useEffect(() => {
     if (
       !googleAccessToken ||
       !googleTokenExpiresAt
     ) {
-      setGoogleTokenMinutesRemaining(null)
       return
     }
 
-    const tokenExpiresAt =
-      googleTokenExpiresAt
-
-    function updateTokenTimeRemaining() {
+    const interval = window.setInterval(() => {
       const millisecondsRemaining =
-        tokenExpiresAt - Date.now()
+        googleTokenExpiresAt - Date.now()
 
       if (millisecondsRemaining <= 0) {
-        setGoogleTokenMinutesRemaining(0)
         expireGoogleSession()
         return
       }
@@ -598,15 +642,7 @@ function App() {
           millisecondsRemaining / 60000,
         ),
       )
-    }
-
-    updateTokenTimeRemaining()
-
-    const interval =
-      window.setInterval(
-        updateTokenTimeRemaining,
-        30000,
-      )
+    }, 30000)
 
     return () => {
       window.clearInterval(interval)
@@ -614,16 +650,14 @@ function App() {
   }, [
     googleAccessToken,
     googleTokenExpiresAt,
+    expireGoogleSession,
   ])
+
 
   useEffect(() => {
     currentProjectRef.current =
       currentProject
-  }, [
-    project,
-    columns,
-    tasks,
-  ])
+  }, [currentProject])
 
   useEffect(() => {
     if (
@@ -810,6 +844,9 @@ function App() {
     googleUser,
     canCurrentUserEditProject,
     canCurrentUserEditProjectSettings,
+    currentProject,
+    beginSave,
+    failSave,
   ])
 
 
@@ -833,6 +870,12 @@ function App() {
     }
   }
 
+  function isTokenStillValid(
+    expiresAt: number,
+  ): boolean {
+    return Date.now() < expiresAt
+  }
+
   const [activeView, setActiveView] =
     useState<
       'board' |
@@ -840,6 +883,10 @@ function App() {
       'timeline' |
       'history'
     >('board')
+  const effectiveActiveView =
+    activeView === 'mine' && !googleUser
+      ? 'board'
+      : activeView
   const [
     assigneeFilter,
     setAssigneeFilter,
@@ -2319,18 +2366,6 @@ function App() {
     updatingMemberId,
   ])
 
-  useEffect(() => {
-    if (
-      activeView === 'mine' &&
-      !googleUser
-    ) {
-      setActiveView('board')
-    }
-  }, [
-    activeView,
-    googleUser,
-  ])
-
   async function handleConnectGoogle(
     forceNewToken = false,
   ) {
@@ -2353,10 +2388,16 @@ function App() {
         storedAccessToken ??
         await requestGoogleAccessToken()
 
-      setGoogleTokenExpiresAt(
-        getStoredGoogleAccessTokenExpiresAt(),
-      )
+      const expiresAt =
+        getStoredGoogleAccessTokenExpiresAt()
 
+      setGoogleTokenExpiresAt(expiresAt)
+
+      setGoogleTokenMinutesRemaining(
+        expiresAt === null
+          ? null
+          : getRemainingTokenMinutes(expiresAt),
+      )
       if (isDemoMode) {
         await connectGoogleWithToken(
           accessToken,
@@ -2380,7 +2421,7 @@ function App() {
         forceNewToken &&
         previousAccessToken !== null &&
         previousExpiresAt !== null &&
-        Date.now() < previousExpiresAt
+        isTokenStillValid(previousExpiresAt)
 
       if (previousTokenStillValid) {
         setGoogleAccessToken(
@@ -2516,35 +2557,6 @@ function App() {
       </main>
     )
 
-  }
-
-  function isGoogleUnauthorizedError(
-    error: unknown,
-  ) {
-    return (
-      error instanceof Error &&
-      error.message.includes('status 401')
-    )
-  }
-
-  function expireGoogleSession() {
-    clearStoredGoogleAccessToken()
-
-    setGoogleAccessToken(null)
-    setGoogleUser(null)
-
-    setGoogleTokenExpiresAt(null)
-    setGoogleTokenMinutesRemaining(0)
-
-    setPendingUploads([])
-
-    pendingSavesRef.current = 0
-
-    setSaveStatus('error')
-
-    setSaveError(
-      'Google Drive session expired. Reconnect to continue saving.',
-    )
   }
 
   async function handleUploadAttachment(
@@ -2734,38 +2746,6 @@ function App() {
       'Attachment upload failed.',
     )
   }
-
-
-  useEffect(() => {
-    if (
-      isDemoMode ||
-      !googleUser ||
-      !googleProjectFileId
-    ) {
-      setPendingUploads([])
-      return
-    }
-
-    try {
-      setPendingUploads(
-        getPendingUploads(
-          googleUser.permissionId,
-          googleProjectFileId,
-        ),
-      )
-    } catch (error) {
-      setSharedProjectError(
-        error instanceof Error
-          ? error.message
-          : 'Could not load attachment recovery records.',
-      )
-    }
-  }, [
-    isDemoMode,
-    googleUser?.permissionId,
-    googleProjectFileId,
-  ])
-
 
   return (
     <main className="app-shell">

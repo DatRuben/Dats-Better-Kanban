@@ -105,13 +105,19 @@ export function TaskCard({
         ),
     ) ?? null
 
-  const mediaAttachmentIds =
-    mediaAttachments
-      .map((attachment) => attachment.id)
-      .join('|')
 
-  const [currentMediaIndex, setcurrentMediaIndex] =
-    useState(0)
+  const [
+    selectedMediaId,
+    setSelectedMediaId,
+  ] = useState<string | null>(null)
+
+  const currentMediaIndex = Math.max(
+    0,
+    mediaAttachments.findIndex(
+      (attachment) =>
+        attachment.id === selectedMediaId,
+    ),
+  )
 
   const mediaAttachment =
     mediaAttachments[currentMediaIndex] ?? null
@@ -125,44 +131,51 @@ export function TaskCard({
   const mediaLocalPreviewUrl =
     mediaAttachment?.previewUrl ?? null
 
-  const [mediaPreviewUrl, setmediaPreviewUrl] =
-    useState<string | null>(
-      mediaAttachment?.previewUrl ?? null,
-    )
+  const [mediaResult, setMediaResult] =
+    useState<{
+      attachmentId: string
+      driveFileId: string
+      loader: typeof onLoadAttachment
+      url: string | null
+      error: string | null
+    } | null>(null)
 
-  const [mediaLoadError, setmediaLoadError] =
-    useState<string | null>(null)
+  const resultMatchesSelection =
+    mediaResult !== null &&
+    mediaResult.attachmentId === mediaAttachmentId &&
+    mediaResult.driveFileId === mediaDriveFileId &&
+    mediaResult.loader === onLoadAttachment
+
+  const mediaPreviewUrl =
+    mediaLocalPreviewUrl ??
+    (resultMatchesSelection
+      ? mediaResult?.url ?? null
+      : null)
+
+  const mediaLoadError =
+    !mediaAttachmentId || mediaLocalPreviewUrl
+      ? null
+      : !mediaDriveFileId
+        ? 'This attachment has no Google Drive file reference.'
+        : resultMatchesSelection
+          ? mediaResult?.error ?? null
+          : null
+
+  function selectMediaAttachment(
+    attachmentId: string | null,
+  ) {
+    setSelectedMediaId(attachmentId)
+    setMediaResult(null)
+  }
 
   useEffect(() => {
-    setcurrentMediaIndex(0)
-  }, [
-    task.id,
-    mediaAttachmentIds,
-  ])
-
-
-  useEffect(() => {
-    setmediaLoadError(null)
-
-    if (!mediaAttachmentId) {
-      setmediaPreviewUrl(null)
+    if (
+      !mediaAttachmentId ||
+      mediaLocalPreviewUrl ||
+      !mediaDriveFileId
+    ) {
       return
     }
-
-    if (mediaLocalPreviewUrl) {
-      setmediaPreviewUrl(mediaLocalPreviewUrl)
-      return
-    }
-
-    if (!mediaDriveFileId) {
-      setmediaPreviewUrl(null)
-      setmediaLoadError(
-        'This attachment has no Google Drive file reference.',
-      )
-      return
-    }
-
-    setmediaPreviewUrl(null)
 
     let isCancelled = false
     let objectUrl: string | null = null
@@ -174,26 +187,42 @@ export function TaskCard({
         }
 
         if (!blob) {
-          setmediaLoadError(
-            'No attachment data was returned. Check the Google Drive connection.',
-          )
+          setMediaResult({
+            attachmentId: mediaAttachmentId,
+            driveFileId: mediaDriveFileId,
+            loader: onLoadAttachment,
+            url: null,
+            error:
+              'No attachment data was returned. Check the Google Drive connection.',
+          })
           return
         }
 
         objectUrl = URL.createObjectURL(blob)
 
-        setmediaPreviewUrl(objectUrl)
+        setMediaResult({
+          attachmentId: mediaAttachmentId,
+          driveFileId: mediaDriveFileId,
+          loader: onLoadAttachment,
+          url: objectUrl,
+          error: null,
+        })
       })
       .catch((error) => {
         if (isCancelled) {
           return
         }
 
-        setmediaLoadError(
-          error instanceof Error
-            ? error.message
-            : 'Attachment download failed.',
-        )
+        setMediaResult({
+          attachmentId: mediaAttachmentId,
+          driveFileId: mediaDriveFileId,
+          loader: onLoadAttachment,
+          url: null,
+          error:
+            error instanceof Error
+              ? error.message
+              : 'Attachment download failed.',
+        })
 
         console.error(
           'Failed to load attachment preview:',

@@ -52,9 +52,6 @@ export function GlbPreview({
     let objectUrl: string | null = null
     let modelViewer: HTMLElement | null = null
 
-    setIsLoading(true)
-    setLoadError(null)
-
     async function loadModel() {
       let sourceUrl = previewUrl ?? null
 
@@ -133,6 +130,7 @@ export function GlbPreview({
         () => {
           if (!isCancelled) {
             setIsLoading(false)
+            setLoadError(null)
           }
         },
       )
