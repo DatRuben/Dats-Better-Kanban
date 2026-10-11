@@ -97,6 +97,13 @@ export function mergeProjectDocuments(
             remoteProject.name,
         )
 
+    const descriptionMerge =
+        mergeValue(
+            baseProject.description,
+            localProject.description,
+            remoteProject.description,
+        )
+
     const memberMerge =
         mergeValue(
             baseProject.members,
@@ -269,6 +276,7 @@ export function mergeProjectDocuments(
         baseProject.id !==
         localProject.id ||
         nameMerge.conflict ||
+        descriptionMerge.conflict ||
         memberMerge.conflict ||
         columnMerge.conflict
 
@@ -285,6 +293,7 @@ export function mergeProjectDocuments(
             ...localProject,
             schemaVersion,
             name: nameMerge.localValue,
+            description: descriptionMerge.localValue,
             members: memberMerge.localValue,
             columns: columnMerge.localValue,
             tasks: localTasks,
@@ -295,6 +304,7 @@ export function mergeProjectDocuments(
             ...remoteProject,
             schemaVersion,
             name: nameMerge.saveValue,
+            description: descriptionMerge.saveValue,
             members: memberMerge.saveValue,
             columns: columnMerge.saveValue,
             tasks: tasksToSave,

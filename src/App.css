@@ -1974,3 +1974,35 @@
 .task-creator__tag-option--active {
   background: #414c61;
 }
+
+.app-description--editable {
+  display: block;
+  width: min(100%, 40rem);
+  min-height: 3.5rem;
+  box-sizing: border-box;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid transparent;
+  border-radius: 0.45rem;
+  color: #8d96a8;
+  background: transparent;
+  font: inherit;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.app-description--editable:not([readonly]):hover {
+  border-color: #384155;
+}
+
+.app-description--editable:not([readonly]):focus {
+  border-color: #6d86b8;
+  color: #e7eaf0;
+  background: #1b1f27;
+  outline: none;
+}
+
+.app-description--editable[readonly] {
+  resize: none;
+  cursor: default;
+}

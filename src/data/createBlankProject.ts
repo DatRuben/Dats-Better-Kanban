@@ -1,10 +1,14 @@
 import type { Project } from '../types/board'
+import {
+  DEFAULT_PROJECT_DESCRIPTION,
+} from '../config/app'
 
 export function createBlankProject(): Project {
   return {
     schemaVersion: 2,
     id: crypto.randomUUID(),
     name: 'Untitled Project',
+    description: DEFAULT_PROJECT_DESCRIPTION,
 
     columns: [
       {

@@ -63,10 +63,12 @@ export interface AttachmentDeletionRequest {
   completedAt?: string
 }
 
+
 export interface Project {
   schemaVersion: number
   id: string
   name: string
+  description?: string
   columns: BoardColumn[]
   tasks: Task[]
   members: DemoUser[]

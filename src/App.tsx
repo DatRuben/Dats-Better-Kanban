@@ -32,7 +32,10 @@ import {
   getStoredGoogleAccessTokenExpiresAt,
 } from './auth/googleAuth'
 import { createBlankProject } from './data/createBlankProject'
-import { APP_VERSION } from './config/app'
+import {
+  APP_VERSION,
+  DEFAULT_PROJECT_DESCRIPTION,
+} from './config/app'
 import {
   createProjectOnDrive,
   downloadAttachmentFromDrive,
@@ -355,6 +358,25 @@ function App() {
     ),
     [project, columns, tasks],
   )
+
+  const availableTags = useMemo(() => {
+    const uniqueTags = new Map<string, string>()
+
+    for (const task of tasks) {
+      for (const rawTag of task.tags ?? []) {
+        const tag = rawTag.trim().replace(/^#+/, '').trim()
+        const key = tag.toLowerCase()
+
+        if (tag && !uniqueTags.has(key)) {
+          uniqueTags.set(key, tag)
+        }
+      }
+    }
+
+    return [...uniqueTags.values()].sort(
+      (a, b) => a.localeCompare(b),
+    )
+  }, [tasks])
 
   const currentProjectRef =
     useRef<Project>(
@@ -2793,25 +2815,6 @@ function App() {
     )
   }
 
-  const availableTags = useMemo(() => {
-    const uniqueTags = new Map<string, string>()
-
-    for (const task of tasks) {
-      for (const rawTag of task.tags ?? []) {
-        const tag = rawTag.trim().replace(/^#+/, '').trim()
-        const key = tag.toLowerCase()
-
-        if (tag && !uniqueTags.has(key)) {
-          uniqueTags.set(key, tag)
-        }
-      }
-    }
-
-    return [...uniqueTags.values()].sort(
-      (a, b) => a.localeCompare(b),
-    )
-  }, [tasks])
-
   return (
     <main className="app-shell">
       <header className="app-header">
@@ -2837,10 +2840,29 @@ function App() {
             aria-label="Project name"
           />
 
-          <p className="app-description">
-            A customizable Kanban project-management tool for organizing
-            tasks, timelines, and project workflows.
-          </p>
+
+          <textarea
+            className="app-description app-description--editable"
+            aria-label="Project description"
+            rows={2}
+            maxLength={500}
+            value={
+              project.description ??
+              DEFAULT_PROJECT_DESCRIPTION
+            }
+            readOnly={
+              !canCurrentUserEditProjectSettings
+            }
+            onChange={(event) => {
+              const description = event.target.value
+
+              setProject((currentProject) => ({
+                ...currentProject,
+                description,
+              }))
+            }}
+          />
+
         </div>
 
         <div className="app-header__actions">
