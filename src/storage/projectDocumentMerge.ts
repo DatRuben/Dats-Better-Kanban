@@ -111,6 +111,39 @@ export function mergeProjectDocuments(
             remoteProject.columns,
         )
 
+
+    const deletionRequestsByFileId = new Map<
+        string,
+        NonNullable<Project['attachmentDeletionRequests']>[number]
+    >()
+
+    for (const request of [
+        ...(baseProject.attachmentDeletionRequests ?? []),
+        ...(remoteProject.attachmentDeletionRequests ?? []),
+        ...(localProject.attachmentDeletionRequests ?? []),
+    ]) {
+        const existing = deletionRequestsByFileId.get(
+            request.driveFileId,
+        )
+
+        if (
+            !existing ||
+            (!existing.completedAt && request.completedAt)
+        ) {
+            deletionRequestsByFileId.set(
+                request.driveFileId,
+                request,
+            )
+        }
+    }
+
+    const mergedDeletionRequests = [
+        ...deletionRequestsByFileId.values(),
+    ].sort((a, b) =>
+        a.driveFileId.localeCompare(b.driveFileId),
+    )
+
+
     const baseById =
         new Map(
             baseProject.tasks.map(
@@ -201,10 +234,6 @@ export function mergeProjectDocuments(
                     remoteTask ?? null,
             })
 
-            /*
-             * Keep the user's local version visible,
-             * but preserve the remote version in Drive.
-             */
             if (localTask) {
                 localTasks.push(localTask)
             }

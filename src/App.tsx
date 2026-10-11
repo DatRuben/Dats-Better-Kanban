@@ -878,6 +878,50 @@ function App() {
           attachment.driveFileId,
         )
     }
+
+
+    const driveFileIds = attachments.flatMap(
+      (attachment) =>
+        attachment.driveFileId
+          ? [attachment.driveFileId]
+          : [],
+    )
+
+    if (driveFileIds.length === 0) {
+      return
+    }
+
+    setProject((currentProject) => {
+      const existingRequests =
+        currentProject.attachmentDeletionRequests ?? []
+
+      const requestedAt = new Date().toISOString()
+
+      const newRequests = driveFileIds
+        .filter(
+          (fileId) =>
+            !existingRequests.some(
+              (request) =>
+                request.driveFileId === fileId,
+            ),
+        )
+        .map((driveFileId) => ({
+          driveFileId,
+          requestedAt,
+        }))
+
+      if (newRequests.length === 0) {
+        return currentProject
+      }
+
+      return {
+        ...currentProject,
+        attachmentDeletionRequests: [
+          ...existingRequests,
+          ...newRequests,
+        ],
+      }
+    })
   }
 
   const [activeView, setActiveView] =

@@ -57,6 +57,12 @@ export interface BoardColumn {
   hidePriorityOnCards?: boolean
 }
 
+export interface AttachmentDeletionRequest {
+  driveFileId: string
+  requestedAt: string
+  completedAt?: string
+}
+
 export interface Project {
   schemaVersion: number
   id: string
@@ -64,4 +70,5 @@ export interface Project {
   columns: BoardColumn[]
   tasks: Task[]
   members: DemoUser[]
+  attachmentDeletionRequests?: AttachmentDeletionRequest[]
 }
