@@ -1,21 +1,20 @@
-
 import { useDraggable } from '@dnd-kit/react'
-
 import type {
   Attachment,
   DemoUser,
   Task,
 } from '../types/board'
-
 import {
   getAttachmentTypeLabel,
   isGlbFileName,
   isPreviewableMedia,
 } from '../utility/attachmentTypes'
-
 import {
   AttachmentCarousel,
 } from './AttachmentCarousel'
+import {
+  AttachmentDownloadButton,
+} from './AttachmentDownloadButton'
 
 interface TaskCardProps {
   task: Task
@@ -153,42 +152,41 @@ export function TaskCard({
             <div className="task-card__edit-controls">
               {(canMoveManualUp ||
                 canMoveManualDown) && (
-                <div className="task-card__manual-order">
-                  <button
-                    type="button"
-                    disabled={!canMoveManualUp}
-                    title="Move task up"
-                    aria-label="Move task up"
-                    onPointerDown={(event) =>
-                      event.stopPropagation()
-                    }
-                    onClick={onMoveManualUp}
-                  >
-                    ↑
-                  </button>
+                  <div className="task-card__manual-order">
+                    <button
+                      type="button"
+                      disabled={!canMoveManualUp}
+                      title="Move task up"
+                      aria-label="Move task up"
+                      onPointerDown={(event) =>
+                        event.stopPropagation()
+                      }
+                      onClick={onMoveManualUp}
+                    >
+                      ↑
+                    </button>
 
-                  <button
-                    type="button"
-                    disabled={!canMoveManualDown}
-                    title="Move task down"
-                    aria-label="Move task down"
-                    onPointerDown={(event) =>
-                      event.stopPropagation()
-                    }
-                    onClick={onMoveManualDown}
-                  >
-                    ↓
-                  </button>
-                </div>
-              )}
+                    <button
+                      type="button"
+                      disabled={!canMoveManualDown}
+                      title="Move task down"
+                      aria-label="Move task down"
+                      onPointerDown={(event) =>
+                        event.stopPropagation()
+                      }
+                      onClick={onMoveManualDown}
+                    >
+                      ↓
+                    </button>
+                  </div>
+                )}
 
               <button
                 type="button"
-                className={`task-card__edit-button ${
-                  isEditing
+                className={`task-card__edit-button ${isEditing
                     ? 'task-card__edit-button--active'
                     : ''
-                }`}
+                  }`}
                 onPointerDown={(event) =>
                   event.stopPropagation()
                 }
@@ -234,6 +232,13 @@ export function TaskCard({
                       )}
                     </span>
                   </div>
+                  <AttachmentDownloadButton
+                    attachment={attachment}
+                    onLoadAttachment={onLoadAttachment}
+                    onAuthorizeAttachment={
+                      onAuthorizeAttachment
+                    }
+                  />
                 </div>
               </div>
             ),

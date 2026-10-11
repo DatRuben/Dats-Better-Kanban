@@ -75,10 +75,6 @@ import {
   TaskDetailsDialog,
 } from './components/TaskDetailsDialog'
 import {
-  isGlbFileName,
-  isPreviewableMedia,
-} from './utility/attachmentTypes'
-import {
   verifySelectedAttachmentAccess,
 } from './storage/attachmentAuthorization'
 import {
@@ -2692,29 +2688,19 @@ function App() {
       file.type ||
       'application/octet-stream'
 
-    if (isDemoMode) {
-      const canPreviewLocally =
-        isPreviewableMedia(
-          file.type,
-        ) ||
-        isGlbFileName(
-          file.name,
-        )
 
+    if (isDemoMode) {
       const previewUrl =
-        canPreviewLocally
-          ? URL.createObjectURL(file)
-          : undefined
+        URL.createObjectURL(file)
 
       return {
         id: crypto.randomUUID(),
         fileName: file.name,
         mimeType,
-        ...(previewUrl
-          ? { previewUrl }
-          : {}),
+        previewUrl,
       }
     }
+
 
     if (
       !googleAccessToken ||

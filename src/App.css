@@ -2121,3 +2121,35 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
+
+
+/* Download controls for non-preview attachments */
+
+.attachment-download {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+  max-width: 100%;
+}
+
+.attachment-download__error {
+  display: grid;
+  gap: 0.4rem;
+  max-width: 13rem;
+  color: #ff9b9b;
+  font-size: 0.65rem;
+  overflow-wrap: anywhere;
+}
+
+.attachment-download .task-card__file-action:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+@media (max-width: 600px) {
+  .attachment-download {
+    align-items: flex-start;
+  }
+}

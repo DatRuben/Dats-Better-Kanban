@@ -5,16 +5,13 @@ import {
   useEffect,
   useState,
 } from 'react'
-
 import type {
   Attachment,
 } from '../types/board'
-
 import {
   isGlbFileName,
   isPreviewableMedia,
 } from '../utility/attachmentTypes'
-
 import {
   isLikelyAttachmentAccessError,
 } from '../storage/attachmentAuthorization'

@@ -1,21 +1,21 @@
 import { useEffect } from 'react'
-
 import type {
     Attachment,
     BoardColumn,
     DemoUser,
     Task,
 } from '../types/board'
-
 import {
     getAttachmentTypeLabel,
     isGlbFileName,
     isPreviewableMedia,
 } from '../utility/attachmentTypes'
-
 import {
     AttachmentCarousel,
 } from './AttachmentCarousel'
+import {
+    AttachmentDownloadButton,
+} from './AttachmentDownloadButton'
 
 interface TaskDetailsDialogProps {
     task: Task | null
@@ -277,6 +277,22 @@ export function TaskDetailsDialog({
                                             </div>
                                         ),
                                     )}
+                                    <span>
+                                        {getAttachmentTypeLabel(
+                                            attachment.fileName,
+                                            attachment.mimeType,
+                                        )}
+                                    </span>
+
+
+                                    <AttachmentDownloadButton
+                                        attachment={attachment}
+                                        onLoadAttachment={onLoadAttachment}
+                                        onAuthorizeAttachment={
+                                            onAuthorizeAttachment
+                                        }
+                                    />
+
                                 </div>
                             )}
                         </div>
