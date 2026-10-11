@@ -279,45 +279,29 @@ export function mergeProjectDocuments(
             remoteProject.schemaVersion,
         )
 
+
     return {
         localProject: {
             ...localProject,
-
             schemaVersion,
-
-            name:
-                nameMerge.localValue,
-
-            members:
-                memberMerge.localValue,
-
-            columns:
-                columnMerge.localValue,
-
-            tasks:
-                localTasks,
+            name: nameMerge.localValue,
+            members: memberMerge.localValue,
+            columns: columnMerge.localValue,
+            tasks: localTasks,
+            attachmentDeletionRequests: mergedDeletionRequests,
         },
 
         projectToSave: {
             ...remoteProject,
-
             schemaVersion,
-
-            name:
-                nameMerge.saveValue,
-
-            members:
-                memberMerge.saveValue,
-
-            columns:
-                columnMerge.saveValue,
-
-            tasks:
-                tasksToSave,
+            name: nameMerge.saveValue,
+            members: memberMerge.saveValue,
+            columns: columnMerge.saveValue,
+            tasks: tasksToSave,
+            attachmentDeletionRequests: mergedDeletionRequests,
         },
 
         taskConflicts,
-
         projectConflict,
     }
 }
