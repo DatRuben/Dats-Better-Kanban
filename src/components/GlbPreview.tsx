@@ -22,6 +22,7 @@ interface GlbPreviewProps {
   ) => Promise<Blob | null>
   onClose: () => void
   onAuthorizeAttachment?: () => void
+  embedded?: boolean
 }
 
 export function GlbPreview({
@@ -29,6 +30,7 @@ export function GlbPreview({
   onLoadAttachment,
   onClose,
   onAuthorizeAttachment,
+  embedded = false,
 }: GlbPreviewProps) {
   const viewerContainerRef =
     useRef<HTMLDivElement | null>(null)
@@ -78,8 +80,8 @@ export function GlbPreview({
           blob.type === 'model/gltf-binary'
             ? blob
             : new Blob([blob], {
-                type: 'model/gltf-binary',
-              })
+              type: 'model/gltf-binary',
+            })
 
         objectUrl =
           URL.createObjectURL(glbBlob)
@@ -191,16 +193,20 @@ export function GlbPreview({
         event.stopPropagation()
       }
     >
-      <div className="glb-preview__header">
-        <strong>{fileName}</strong>
 
-        <button
-          type="button"
-          onClick={onClose}
-        >
-          Close
-        </button>
-      </div>
+      {!embedded && (
+        <div className="glb-preview__header">
+          <strong>{fileName}</strong>
+
+          <button
+            type="button"
+            onClick={onClose}
+          >
+            Close
+          </button>
+        </div>
+      )}
+
 
       {isLoading && (
         <div className="glb-preview__status">

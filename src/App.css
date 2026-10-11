@@ -1845,3 +1845,70 @@
   outline: 2px solid #8ba6dc;
   outline-offset: 2px;
 }
+
+
+/* Unified attachment carousel */
+
+.task-card__attachment,
+.task-card__attachment-frame,
+.task-card__attachment img,
+.task-card__attachment video {
+  background: #222630;
+}
+
+.task-card__attachment-slide {
+  display: grid;
+  min-height: 14rem;
+  align-items: center;
+  background: #222630;
+}
+
+.task-card__attachment-slide>img,
+.task-card__attachment-slide>video {
+  width: 100%;
+  max-width: 100%;
+  max-height: 14rem;
+  object-fit: contain;
+}
+
+.task-card__attachment-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.45rem 0.65rem;
+  color: #b9c3d4;
+  background: #1b1f27;
+  font-size: 0.7rem;
+}
+
+.task-card__attachment-caption span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-card__attachment-caption span:last-child {
+  flex: 0 0 auto;
+}
+
+.task-card__attachment-slide .glb-preview {
+  border: none;
+  border-radius: 0;
+  background: #222630;
+}
+
+.task-card__attachment-slide .glb-preview__container {
+  min-height: 14rem;
+}
+
+.task-card__attachment-slide .glb-preview__viewer {
+  width: 100%;
+  height: 14rem;
+  background: #222630;
+}
+
+.task-card__attachment-slide .glb-preview__status {
+  background: #222630;
+}
