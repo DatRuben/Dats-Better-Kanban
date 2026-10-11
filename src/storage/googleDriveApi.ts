@@ -1907,12 +1907,15 @@ export async function deleteAttachmentFromDrive(
       },
     )
 
+
   if (
     !response.ok &&
     response.status !== 404
   ) {
+    const errorDetails = await response.text()
+
     throw new Error(
-      `Google Drive attachment deletion failed with status ${response.status}.`,
+      `Google Drive attachment deletion failed with status ${response.status}: ${errorDetails}`,
     )
   }
 }
