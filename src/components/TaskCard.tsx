@@ -564,21 +564,6 @@ export function TaskCard({
                         : 'Preview 3D'}
                     </button>
                   )}
-
-                  {attachment.driveFileId && (
-                    <button
-                      type="button"
-                      className="task-card__file-action"
-                      onPointerDown={(event) =>
-                        event.stopPropagation()
-                      }
-                      onClick={() => {
-                        onAuthorizeAttachment(attachment)
-                      }}
-                    >
-                      Authorize File
-                    </button>
-                  )}
                 </div>
 
 
