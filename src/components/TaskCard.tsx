@@ -5,7 +5,6 @@ import {
   useEffect,
   useState,
 } from 'react'
-
 import { useDraggable } from '@dnd-kit/react'
 import type {
   Attachment,
@@ -17,6 +16,9 @@ import {
   isGlbFileName,
   isPreviewableMedia,
 } from '../utility/attachmentTypes'
+import {
+  isLikelyAttachmentAccessError,
+} from '../storage/attachmentAuthorization'
 
 
 const GlbPreview = lazy(async () => {
@@ -494,17 +496,18 @@ export function TaskCard({
 
               <p>{mediaLoadError}</p>
 
-              {mediaAttachment.driveFileId && (
-                <button
-                  type="button"
-                  className="task-card__file-action"
-                  onClick={() => {
-                    onAuthorizeAttachment(mediaAttachment)
-                  }}
-                >
-                  Authorize This File
-                </button>
-              )}
+              {mediaAttachment.driveFileId &&
+                isLikelyAttachmentAccessError(mediaLoadError) && (
+                  <button
+                    type="button"
+                    className="task-card__file-action"
+                    onClick={() => {
+                      onAuthorizeAttachment(mediaAttachment)
+                    }}
+                  >
+                    Authorize This File
+                  </button>
+                )}
             </details>
           )}
         </div>
@@ -592,6 +595,9 @@ export function TaskCard({
                       onLoadAttachment={onLoadAttachment}
                       onClose={() =>
                         setPreviewedGlbId(null)
+                      }
+                      onAuthorizeAttachment={() =>
+                        onAuthorizeAttachment(previewedGlb)
                       }
                     />
                   </Suspense>

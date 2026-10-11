@@ -1,3 +1,4 @@
+
 import '@google/model-viewer'
 
 import {
@@ -10,33 +11,32 @@ import type {
   Attachment,
 } from '../types/board'
 
+import {
+  isLikelyAttachmentAccessError,
+} from '../storage/attachmentAuthorization'
+
 interface GlbPreviewProps {
   attachment: Attachment
-
   onLoadAttachment: (
     driveFileId: string,
   ) => Promise<Blob | null>
-
   onClose: () => void
+  onAuthorizeAttachment?: () => void
 }
 
 export function GlbPreview({
   attachment,
   onLoadAttachment,
   onClose,
+  onAuthorizeAttachment,
 }: GlbPreviewProps) {
   const viewerContainerRef =
-    useRef<HTMLDivElement | null>(
-      null,
-    )
+    useRef<HTMLDivElement | null>(null)
 
   const [isLoading, setIsLoading] =
     useState(true)
 
-  const [
-    loadError,
-    setLoadError,
-  ] =
+  const [loadError, setLoadError] =
     useState<string | null>(null)
 
   const {
@@ -45,7 +45,6 @@ export function GlbPreview({
     fileName,
     previewUrl,
   } = attachment
-
 
   useEffect(() => {
     let isCancelled = false
@@ -58,7 +57,7 @@ export function GlbPreview({
       if (!sourceUrl) {
         if (!driveFileId) {
           throw new Error(
-            'This 3D model has no Google Drive file reference.',
+            'This model has no Google Drive file reference.',
           )
         }
 
@@ -71,21 +70,20 @@ export function GlbPreview({
 
         if (!blob) {
           throw new Error(
-            'The 3D model could not be loaded.',
+            'No 3D model data was returned.',
           )
         }
 
         const glbBlob =
           blob.type === 'model/gltf-binary'
             ? blob
-            : new Blob(
-              [blob],
-              {
+            : new Blob([blob], {
                 type: 'model/gltf-binary',
-              },
-            )
+              })
 
-        objectUrl = URL.createObjectURL(glbBlob)
+        objectUrl =
+          URL.createObjectURL(glbBlob)
+
         sourceUrl = objectUrl
       }
 
@@ -93,62 +91,57 @@ export function GlbPreview({
         return
       }
 
-      modelViewer = document.createElement(
-        'model-viewer',
-      )
+      const viewer =
+        document.createElement('model-viewer')
 
-      modelViewer.className =
+      modelViewer = viewer
+
+      viewer.className =
         'glb-preview__viewer'
 
-      modelViewer.setAttribute(
+      viewer.setAttribute(
         'src',
         sourceUrl,
       )
 
-      modelViewer.setAttribute(
+      viewer.setAttribute(
         'alt',
         fileName,
       )
 
-      modelViewer.setAttribute(
+      viewer.setAttribute(
         'camera-controls',
         '',
       )
 
-      modelViewer.setAttribute(
+      viewer.setAttribute(
         'auto-rotate',
         '',
       )
 
-      modelViewer.setAttribute(
+      viewer.setAttribute(
         'shadow-intensity',
         '1',
       )
 
-      modelViewer.addEventListener(
-        'load',
-        () => {
-          if (!isCancelled) {
-            setIsLoading(false)
-            setLoadError(null)
-          }
-        },
-      )
+      viewer.addEventListener('load', () => {
+        if (!isCancelled) {
+          setIsLoading(false)
+          setLoadError(null)
+        }
+      })
 
-      modelViewer.addEventListener(
-        'error',
-        () => {
-          if (!isCancelled) {
-            setIsLoading(false)
-            setLoadError(
-              'The GLB model could not be displayed.',
-            )
-          }
-        },
-      )
+      viewer.addEventListener('error', () => {
+        if (!isCancelled) {
+          setIsLoading(false)
+          setLoadError(
+            'The GLB model could not be displayed.',
+          )
+        }
+      })
 
       viewerContainerRef.current
-        ?.replaceChildren(modelViewer)
+        ?.replaceChildren(viewer)
     }
 
     void loadModel().catch((error) => {
@@ -172,7 +165,6 @@ export function GlbPreview({
 
     return () => {
       isCancelled = true
-
       modelViewer?.remove()
 
       if (objectUrl) {
@@ -187,6 +179,10 @@ export function GlbPreview({
     onLoadAttachment,
   ])
 
+  const canOfferAuthorization =
+    Boolean(driveFileId) &&
+    Boolean(onAuthorizeAttachment) &&
+    isLikelyAttachmentAccessError(loadError)
 
   return (
     <div
@@ -196,9 +192,7 @@ export function GlbPreview({
       }
     >
       <div className="glb-preview__header">
-        <strong>
-          {attachment.fileName}
-        </strong>
+        <strong>{fileName}</strong>
 
         <button
           type="button"
@@ -216,7 +210,16 @@ export function GlbPreview({
 
       {loadError && (
         <div className="glb-preview__status">
-          {loadError}
+          <p>{loadError}</p>
+
+          {canOfferAuthorization && (
+            <button
+              type="button"
+              onClick={onAuthorizeAttachment}
+            >
+              Check / Authorize File
+            </button>
+          )}
         </div>
       )}
 

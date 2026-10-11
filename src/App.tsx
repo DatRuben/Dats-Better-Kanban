@@ -1748,8 +1748,6 @@ function App() {
     }
   }
 
-
-
   async function handleAuthorizeExistingAttachments(
     targetFileId?: string,
   ) {
@@ -1767,16 +1765,18 @@ function App() {
 
     const allFileIds = [
       ...new Set(
-        attachments.flatMap(
-          (attachment) =>
-            attachment.driveFileId
-              ? [attachment.driveFileId]
-              : [],
+        attachments.flatMap((attachment) =>
+          attachment.driveFileId
+            ? [attachment.driveFileId]
+            : [],
         ),
       ),
     ]
 
-    if (targetFileId && !allFileIds.includes(targetFileId)) {
+    if (
+      targetFileId &&
+      !allFileIds.includes(targetFileId)
+    ) {
       setSharedProjectError(
         'This file is not referenced by the current project.',
       )
@@ -1788,83 +1788,122 @@ function App() {
       : allFileIds
 
     if (fileIds.length === 0) {
-      setSharedProjectError(
-        'This project has no Drive attachments to authorize.',
+      setAttachmentAuthorizationStatus(
+        'This project has no Google Drive attachments.',
       )
       return
     }
 
+    const accessToken = googleAccessToken
+
     setIsAuthorizingExistingAttachments(true)
     setSharedProjectError(null)
-    setAttachmentAuthorizationStatus(null)
+    setAttachmentAuthorizationStatus(
+      `Checking access to ${fileIds.length} file(s)...`,
+    )
 
     try {
-      const selectedFileIds =
-        await pickGoogleDriveAttachmentFiles(
-          googleAccessToken,
+      const initialReport =
+        await verifySelectedAttachmentAccess(
+          accessToken,
           fileIds,
         )
 
-      if (selectedFileIds.length === 0) {
+      const missingFileIds =
+        initialReport.failures.map(
+          (failure) => failure.fileId,
+        )
+
+      if (missingFileIds.length === 0) {
+        setAttachmentAuthorizationStatus(
+          'All selected project files are already accessible.',
+        )
+
         return
       }
 
-      const report =
+      setAttachmentAuthorizationStatus(
+        `${missingFileIds.length} file(s) need access. Select them together in Google Picker.`,
+      )
+
+      const selectedFileIds =
+        await pickGoogleDriveAttachmentFiles(
+          accessToken,
+          missingFileIds,
+        )
+
+      if (selectedFileIds.length === 0) {
+        setAttachmentAuthorizationStatus(
+          `${missingFileIds.length} file(s) still need access. Authorization was cancelled.`,
+        )
+
+        return
+      }
+
+      const updatedReport =
         await verifySelectedAttachmentAccess(
-          googleAccessToken,
+          accessToken,
           selectedFileIds,
         )
 
-      // A Picker selection may grant access,
-      // even when one verification fails.
-      // Trigger the existing preview retry.
-      setAttachmentAccessRevision(
-        (revision) => revision + 1,
+      if (
+        updatedReport.authorizedFileIds.length > 0
+      ) {
+        setAttachmentAccessRevision(
+          (revision) => revision + 1,
+        )
+      }
+
+      const authorizedIds = new Set(
+        updatedReport.authorizedFileIds,
       )
 
-      const successCount =
-        report.authorizedFileIds.length
+      const remainingFileIds =
+        missingFileIds.filter(
+          (fileId) => !authorizedIds.has(fileId),
+        )
 
-      const failureCount =
-        report.failures.length
+      const accessibleCount =
+        fileIds.length - remainingFileIds.length
 
       setAttachmentAuthorizationStatus(
-        `${successCount} of ${selectedFileIds.length} selected files passed access checks.`,
+        `${accessibleCount} of ${fileIds.length} project file(s) are now accessible.`,
       )
 
-      if (failureCount === 0) {
+      if (remainingFileIds.length === 0) {
         setSharedProjectError(null)
         return
       }
 
       const failureDetails =
-        report.failures
+        updatedReport.failures
           .slice(0, 3)
           .map((failure) => {
             const attachment =
               attachments.find(
                 (item) =>
-                  item.driveFileId ===
-                  failure.fileId,
+                  item.driveFileId === failure.fileId,
               )
 
-            const fileName =
-              attachment?.fileName ??
-              failure.fileId
-
-            return `${fileName}: ${failure.reason}`
+            return (
+              `${attachment?.fileName ?? failure.fileId}: ` +
+              failure.reason
+            )
           })
           .join('\n')
 
-      const additionalFailures =
-        failureCount > 3
-          ? `\nAnd ${failureCount - 3} more failures.`
-          : ''
-
       setSharedProjectError(
-        `${failureCount} file access checks failed:\n${failureDetails}${additionalFailures}`,
+        `${remainingFileIds.length} file(s) still require access.` +
+        (failureDetails
+          ? `\n${failureDetails}`
+          : ''),
       )
     } catch (error) {
+      if (isGoogleUnauthorizedError(error)) {
+        expireGoogleSession()
+        return
+      }
+
       setSharedProjectError(
         error instanceof Error
           ? error.message
@@ -1874,8 +1913,6 @@ function App() {
       setIsAuthorizingExistingAttachments(false)
     }
   }
-
-
 
   async function handleAuthorizeAttachmentsFolder() {
     if (
@@ -2938,7 +2975,7 @@ function App() {
                 >
                   {isAuthorizingExistingAttachments
                     ? 'Checking Attachments...'
-                    : 'Authorize Project Files'}
+                    : 'Check Project File Access'}
                 </button>
               </div>
             )}
