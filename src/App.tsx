@@ -891,11 +891,11 @@ function App() {
       return
     }
 
+    const requestedAt = new Date().toISOString()
+
     setProject((currentProject) => {
       const existingRequests =
         currentProject.attachmentDeletionRequests ?? []
-
-      const requestedAt = new Date().toISOString()
 
       const newRequests = driveFileIds
         .filter(

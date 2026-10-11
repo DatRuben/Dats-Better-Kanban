@@ -209,7 +209,7 @@ export function KanbanColumn({
       </header>
 
       <div className="kanban-column__content">
-        {!isPipelineEditing && !isCreatingTask && (
+        {isTaskEditing && !isPipelineEditing && !isCreatingTask && (
           <button
             type="button"
             className="kanban-column__add-task"
@@ -219,7 +219,7 @@ export function KanbanColumn({
           </button>
         )}
 
-        {!isPipelineEditing && isCreatingTask && (
+        {isTaskEditing && !isPipelineEditing && isCreatingTask && (
           <TaskCreator
             columnTitle={column.title}
             members={members}
