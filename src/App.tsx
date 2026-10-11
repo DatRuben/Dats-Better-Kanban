@@ -214,18 +214,6 @@ function formatDeadline(deadline: string) {
   })
 }
 
-function formatCompletedAt(completedAt: string) {
-  const date = new Date(completedAt)
-
-  return date.toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  })
-}
-
 async function cleanupPendingAttachmentDeletions(
   accessToken: string,
   savedProject: Project,
@@ -1059,10 +1047,26 @@ function App() {
     }
   }
 
+
   function compareTasksByAssignee(
     firstTask: Task,
     secondTask: Task,
   ) {
+    const currentUserId =
+      googleUser?.permissionId ?? null
+
+    if (currentUserId) {
+      const firstIsMine =
+        firstTask.assigneeId === currentUserId
+
+      const secondIsMine =
+        secondTask.assigneeId === currentUserId
+
+      if (firstIsMine !== secondIsMine) {
+        return firstIsMine ? -1 : 1
+      }
+    }
+
     const firstAssignee =
       currentProject.members.find(
         (member) =>
@@ -1083,10 +1087,7 @@ function App() {
       return 1
     }
 
-    if (
-      firstAssignee &&
-      secondAssignee
-    ) {
+    if (firstAssignee && secondAssignee) {
       const nameDifference =
         firstAssignee.displayName.localeCompare(
           secondAssignee.displayName,
@@ -1102,6 +1103,7 @@ function App() {
       secondTask,
     )
   }
+
 
   function compareVisibleTasks(
     firstTask: Task,

@@ -7,7 +7,7 @@ import {
   isGlbFileName,
   isPreviewableMedia,
 } from '../utility/attachmentTypes'
-import './TaskDetailsMedia.css'
+import './taskDetailsMedia.css'
 
 const GlbPreview = lazy(async () => {
   const module = await import('./GlbPreview')

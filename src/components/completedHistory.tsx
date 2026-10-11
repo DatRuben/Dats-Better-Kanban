@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { Task } from '../types/board'
-import './CompletedHistory.css'
+import './completedHistory.css'
 
 interface CompletedHistoryProps {
   tasks: Task[]
