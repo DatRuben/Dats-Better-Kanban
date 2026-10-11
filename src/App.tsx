@@ -77,6 +77,17 @@ import {
 import {
   verifySelectedAttachmentAccess,
 } from './storage/attachmentAuthorization'
+import {
+  getPendingUploads,
+  recordPendingUpload,
+  removePendingUpload,
+  reconcilePendingUploads,
+} from './storage/pendingAttachmentUploads'
+
+import type {
+  PendingAttachmentUpload,
+} from './storage/pendingAttachmentUploads'
+
 
 const priorityOrder = {
   critical: 0,
@@ -447,6 +458,10 @@ function App() {
     setAttachmentAccessRevision,
   ] = useState(0)
 
+  const [
+    pendingUploads,
+    setPendingUploads,
+  ] = useState<PendingAttachmentUpload[]>([])
 
   const handleLoadAttachment =
     useCallback(
@@ -713,6 +728,16 @@ function App() {
               googleAccessToken,
               googleProjectFileId,
               mergeResult.projectToSave,
+            )
+          }
+
+          if (googleUser) {
+            setPendingUploads(
+              reconcilePendingUploads(
+                googleUser.permissionId,
+                googleProjectFileId,
+                mergeResult.projectToSave,
+              ),
             )
           }
 
@@ -2131,6 +2156,14 @@ function App() {
         const remoteProject =
           remoteDocument.project
 
+        setPendingUploads(
+          reconcilePendingUploads(
+            googlePermissionId,
+            projectFileId,
+            remoteProject,
+          ),
+        )
+
         const localProject =
           currentProjectRef.current
 
@@ -2520,12 +2553,19 @@ function App() {
 
     if (
       !googleAccessToken ||
-      !googleAttachmentsFolderId
+      !googleAttachmentsFolderId ||
+      !googleProjectFileId ||
+      !googleUser
     ) {
       throw new Error(
         'Google Drive is not ready for attachment uploads.',
       )
     }
+
+    const driveFileId =
+
+const projectFileId = googleProjectFileId
+    const userPermissionId = googleUser.permissionId
 
     const driveFileId =
       await uploadAttachmentToDrive(
@@ -2534,12 +2574,35 @@ function App() {
         file,
       )
 
-    return {
+    const attachment: Attachment = {
       id: crypto.randomUUID(),
       fileName: file.name,
       mimeType,
       driveFileId,
     }
+
+    try {
+      recordPendingUpload({
+        projectFileId,
+        userPermissionId,
+        attachment,
+        uploadedAt: new Date().toISOString(),
+      })
+
+      setPendingUploads(
+        getPendingUploads(
+          userPermissionId,
+          projectFileId,
+        ),
+      )
+    } catch (error) {
+      throw new Error(
+        `The file was uploaded to Google Drive, but its recovery information could not be saved. Drive file ID: ${driveFileId}. Do not upload it again until the problem is resolved. ${error instanceof Error ? error.message : ''
+        }`,
+      )
+    }
+
+    return attachment
   }
 
   async function handleUploadAttachments(
@@ -2601,6 +2664,21 @@ function App() {
               googleAccessToken,
               attachment.driveFileId,
             )
+
+            if (googleUser && googleProjectFileId) {
+              removePendingUpload(
+                googleUser.permissionId,
+                googleProjectFileId,
+                attachment.driveFileId,
+              )
+
+              setPendingUploads(
+                getPendingUploads(
+                  googleUser.permissionId,
+                  googleProjectFileId,
+                ),
+              )
+            }
           },
         ),
       )
@@ -2629,6 +2707,38 @@ function App() {
       'Attachment upload failed.',
     )
   }
+
+
+  useEffect(() => {
+    if (
+      isDemoMode ||
+      !googleUser ||
+      !googleProjectFileId
+    ) {
+      setPendingUploads([])
+      return
+    }
+
+    try {
+      setPendingUploads(
+        getPendingUploads(
+          googleUser.permissionId,
+          googleProjectFileId,
+        ),
+      )
+    } catch (error) {
+      setSharedProjectError(
+        error instanceof Error
+          ? error.message
+          : 'Could not load attachment recovery records.',
+      )
+    }
+  }, [
+    isDemoMode,
+    googleUser?.permissionId,
+    googleProjectFileId,
+  ])
+
 
   return (
     <main className="app-shell">
@@ -2749,6 +2859,44 @@ function App() {
                 </button>
               </div>
             )}
+
+
+          {!isDemoMode &&
+            googleAccessToken &&
+            pendingUploads.length > 0 && (
+              <div className="shared-project-warning">
+                <span>
+                  {pendingUploads.length} attachment upload(s)
+                  awaiting project-save confirmation.
+                  Avoid reuploading these files.
+                </span>
+
+                <ul>
+                  {pendingUploads.map((entry) => {
+                    const linkedLocally =
+                      currentProject.tasks.some(
+                        (task) =>
+                          task.attachments.some(
+                            (attachment) =>
+                              attachment.driveFileId ===
+                              entry.attachment.driveFileId,
+                          ),
+                      )
+
+                    return (
+                      <li key={entry.attachment.driveFileId}>
+                        {entry.attachment.fileName}
+                        {' — '}
+                        {linkedLocally
+                          ? 'Linked locally; awaiting Drive confirmation'
+                          : 'Not linked locally; recovery may be needed'}
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            )}
+
 
           {!isDemoMode &&
             googleAccessToken &&
