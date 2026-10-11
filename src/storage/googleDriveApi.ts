@@ -805,7 +805,7 @@ async function writeJsonFile(
   fileName: string,
   value: unknown,
 ): Promise<void> {
-  let fileId =
+  const fileId =
     await findFile(
       accessToken,
       fileName,
@@ -1255,7 +1255,7 @@ export async function saveTaskToDrive(
   tasksFolderId: string,
   task: Task,
 ): Promise<void> {
-  let taskFileId =
+  const taskFileId =
     await findTaskFileById(
       accessToken,
       tasksFolderId,
@@ -1797,8 +1797,11 @@ export async function verifyAttachmentDownloadFromDrive(
 
   try {
     await response.body?.cancel()
-  } catch {
-
+  } catch (error) {
+    console.warn(
+      'Failed to cancel attachment verification response:',
+      error,
+    )
   }
 }
 
