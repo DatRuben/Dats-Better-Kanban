@@ -88,6 +88,10 @@ import type {
   PendingAttachmentUpload,
 } from './storage/pendingAttachmentUploads'
 import { CompletedHistory } from './components/completedHistory'
+import {
+  processSharedAttachmentDeletions,
+} from './storage/sharedAttachmentDeletion'
+
 
 
 const priorityOrder = {
@@ -212,81 +216,6 @@ function formatDeadline(deadline: string) {
     month: 'short',
     day: 'numeric',
   })
-}
-
-async function cleanupPendingAttachmentDeletions(
-  accessToken: string,
-  savedProject: Project,
-  pendingDeletionFileIds: Set<string>,
-  localProject: Project,
-) {
-  if (pendingDeletionFileIds.size === 0) {
-    return
-  }
-
-  const referencedFileIds =
-    new Set<string>()
-
-  for (const task of [
-    ...savedProject.tasks,
-    ...localProject.tasks,
-  ]) {
-    for (const attachment of task.attachments) {
-      if (attachment.driveFileId) {
-        referencedFileIds.add(
-          attachment.driveFileId,
-        )
-      }
-    }
-  }
-
-  const fileIdsToDelete: string[] = []
-
-  for (
-    const fileId of
-    [...pendingDeletionFileIds]
-  ) {
-    if (referencedFileIds.has(fileId)) {
-      continue
-    }
-
-    fileIdsToDelete.push(fileId)
-  }
-
-  const deletionResults =
-    await Promise.allSettled(
-      fileIdsToDelete.map(
-        (fileId) =>
-          deleteAttachmentFromDrive(
-            accessToken,
-            fileId,
-          ),
-      ),
-    )
-
-  deletionResults.forEach(
-    (result, index) => {
-      const fileId =
-        fileIdsToDelete[index]
-
-      if (!fileId) {
-        return
-      }
-
-      if (result.status === 'fulfilled') {
-        pendingDeletionFileIds.delete(
-          fileId,
-        )
-
-        return
-      }
-
-      console.error(
-        `Failed to delete removed attachment ${fileId} from Google Drive:`,
-        result.reason,
-      )
-    },
-  )
 }
 
 function App() {
@@ -439,11 +368,6 @@ function App() {
 
   const projectDocumentConflictRef =
     useRef(false)
-
-  const pendingAttachmentDeletionFileIdsRef =
-    useRef<Set<string>>(
-      new Set(),
-    )
 
   const isCurrentUserProjectOwner =
     googleUser !== null &&
@@ -772,13 +696,6 @@ function App() {
             )
           }
 
-          await cleanupPendingAttachmentDeletions(
-            googleAccessToken,
-            mergeResult.projectToSave,
-            pendingAttachmentDeletionFileIdsRef.current,
-            mergeResult.localProject,
-          )
-
           if (
             canCurrentUserEditProjectSettings &&
             googleProjectsFolderId &&
@@ -848,6 +765,7 @@ function App() {
   ])
 
 
+
   function queueAttachmentDeletions(
     attachments: Attachment[],
   ) {
@@ -855,27 +773,17 @@ function App() {
       return
     }
 
-    for (const attachment of attachments) {
-      if (!attachment.driveFileId) {
-        continue
-      }
+    const fileIds = [
+      ...new Set(
+        attachments.flatMap((attachment) =>
+          attachment.driveFileId
+            ? [attachment.driveFileId]
+            : [],
+        ),
+      ),
+    ]
 
-      pendingAttachmentDeletionFileIdsRef
-        .current
-        .add(
-          attachment.driveFileId,
-        )
-    }
-
-
-    const driveFileIds = attachments.flatMap(
-      (attachment) =>
-        attachment.driveFileId
-          ? [attachment.driveFileId]
-          : [],
-    )
-
-    if (driveFileIds.length === 0) {
+    if (fileIds.length === 0) {
       return
     }
 
@@ -885,14 +793,14 @@ function App() {
       const existingRequests =
         currentProject.attachmentDeletionRequests ?? []
 
-      const newRequests = driveFileIds
-        .filter(
-          (fileId) =>
-            !existingRequests.some(
-              (request) =>
-                request.driveFileId === fileId,
-            ),
-        )
+      const existingIds = new Set(
+        existingRequests.map(
+          (request) => request.driveFileId,
+        ),
+      )
+
+      const newRequests = fileIds
+        .filter((fileId) => !existingIds.has(fileId))
         .map((driveFileId) => ({
           driveFileId,
           requestedAt,
@@ -1555,9 +1463,6 @@ function App() {
       false
 
     taskSyncConflictIdsRef.current =
-      new Set()
-
-    pendingAttachmentDeletionFileIdsRef.current =
       new Set()
 
     setTaskSyncConflicts([])
@@ -2277,20 +2182,6 @@ function App() {
         const remoteProject =
           remoteDocument.project
 
-
-        if (
-          !hasPendingProjectSaves() &&
-          pendingAttachmentDeletionFileIdsRef.current.size > 0
-        ) {
-          await cleanupPendingAttachmentDeletions(
-            accessToken,
-            remoteProject,
-            pendingAttachmentDeletionFileIdsRef.current,
-            currentProjectRef.current,
-          )
-        }
-
-
         setPendingUploads(
           reconcilePendingUploads(
             googlePermissionId,
@@ -2331,23 +2222,69 @@ function App() {
           mergeResult.taskConflicts,
         )
 
+
         lastSyncedProjectRef.current =
           remoteProject
 
         currentProjectRef.current =
           mergeResult.localProject
 
-        setProject(
-          mergeResult.localProject,
-        )
+        setProject(mergeResult.localProject)
+        setColumns(mergeResult.localProject.columns)
+        setTasks(mergeResult.localProject.tasks)
 
-        setColumns(
-          mergeResult.localProject.columns,
-        )
+        if (
+          googleAttachmentsFolderId &&
+          !mergeResult.projectConflict &&
+          mergeResult.taskConflicts.length === 0 &&
+          !projectDocumentConflictRef.current &&
+          !hasPendingProjectSaves()
+        ) {
+          const completedFileIds =
+            await processSharedAttachmentDeletions({
+              accessToken,
+              projectFileId,
+              userPermissionId: googlePermissionId,
+              attachmentsFolderId: googleAttachmentsFolderId,
+              savedProject: remoteProject,
+              localProject: mergeResult.localProject,
 
-        setTasks(
-          mergeResult.localProject.tasks,
-        )
+              canProceed: () =>
+                !isCancelled &&
+                !hasPendingProjectSaves() &&
+                !projectDocumentConflictRef.current &&
+                taskSyncConflictIdsRef.current.size === 0,
+
+              getCurrentLocalProject: () =>
+                currentProjectRef.current,
+            })
+
+          if (!isCancelled && completedFileIds.length > 0) {
+            const completedIds =
+              new Set(completedFileIds)
+
+            const completedAt =
+              new Date().toISOString()
+
+            setProject((currentProject) => ({
+              ...currentProject,
+              attachmentDeletionRequests:
+                (
+                  currentProject.attachmentDeletionRequests
+                  ?? []
+                ).map((request) =>
+                  completedIds.has(request.driveFileId) &&
+                    !request.completedAt
+                    ? {
+                      ...request,
+                      completedAt,
+                    }
+                    : request,
+                ),
+            }))
+          }
+        }
+
 
         if (
           mergeResult.projectConflict ||
@@ -2429,6 +2366,7 @@ function App() {
     removingMemberId,
     updatingMemberId,
     expireGoogleSession,
+    googleAttachmentsFolderId,
   ])
 
 
