@@ -77,8 +77,10 @@ export function TaskCreator({
 
     const submissionLockedRef = useRef(false)
 
-    const stagedUploadsRef =
-        useRef<Attachment[] | null>(null)
+    const [
+        stagedUploads,
+        setStagedUploads,
+    ] = useState<Attachment[] | null>(null)
 
     const [
         isSubmitting,
@@ -156,8 +158,7 @@ export function TaskCreator({
                         ),
                 )
 
-            let uploadedAttachments =
-                stagedUploadsRef.current
+            let uploadedAttachments = stagedUploads
 
             if (uploadedAttachments === null) {
                 uploadedAttachments =
@@ -166,10 +167,12 @@ export function TaskCreator({
                             [...attachmentFiles],
                         )
                         : []
-                stagedUploadsRef.current =
+
+                setStagedUploads(
                     uploadedAttachments.length > 0
                         ? uploadedAttachments
-                        : null
+                        : null,
+                )
             }
 
             const taskInput: NewTaskInput = {
@@ -205,7 +208,7 @@ export function TaskCreator({
     }
 
     const hasStagedUploads =
-        (stagedUploadsRef.current?.length ?? 0) > 0
+        (stagedUploads?.length ?? 0) > 0
 
     return (
         <form

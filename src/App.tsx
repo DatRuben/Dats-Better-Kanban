@@ -1438,6 +1438,7 @@ function App() {
 
   function activateDriveProject(
     loadedDriveProject: LoadedDriveProject,
+    userPermissionId: string,
   ) {
     setAssigneeFilter('all')
     setTaskSortMode('priority')
@@ -1483,6 +1484,24 @@ function App() {
     setSyncError(null)
     setProjectSyncError(null)
     setSharedProjectError(null)
+
+
+    try {
+      setPendingUploads(
+        getPendingUploads(
+          userPermissionId,
+          loadedDriveProject.projectFileId,
+        ),
+      )
+    } catch (error) {
+      setPendingUploads([])
+
+      setSharedProjectError(
+        error instanceof Error
+          ? error.message
+          : 'Could not restore attachment recovery records.',
+      )
+    }
 
     setIsPipelineEditing(false)
     setIsTaskEditing(false)
@@ -1615,6 +1634,7 @@ function App() {
 
     activateDriveProject(
       loadedDriveProject,
+      googleUser.permissionId,
     )
   }
 
@@ -2102,6 +2122,7 @@ function App() {
 
     activateDriveProject(
       loadedDriveProject,
+      connectedGoogleUser.permissionId,
     )
 
     setGoogleAccessToken(accessToken)
@@ -2385,6 +2406,7 @@ function App() {
   function handleEnterDemo() {
     setIsDemoMode(true)
     setHasChosenMode(true)
+    setPendingUploads([])
   }
 
   if (
@@ -2511,6 +2533,8 @@ function App() {
     setGoogleTokenExpiresAt(null)
     setGoogleTokenMinutesRemaining(0)
 
+    setPendingUploads([])
+
     pendingSavesRef.current = 0
 
     setSaveStatus('error')
@@ -2562,9 +2586,8 @@ function App() {
       )
     }
 
-    const driveFileId =
 
-const projectFileId = googleProjectFileId
+    const projectFileId = googleProjectFileId
     const userPermissionId = googleUser.permissionId
 
     const driveFileId =
@@ -2573,6 +2596,7 @@ const projectFileId = googleProjectFileId
         googleAttachmentsFolderId,
         file,
       )
+
 
     const attachment: Attachment = {
       id: crypto.randomUUID(),
