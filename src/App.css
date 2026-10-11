@@ -2074,3 +2074,50 @@
   outline: 2px solid #8ba6dc;
   outline-offset: 2px;
 }
+
+
+/* Attachment gallery inside task details */
+
+.task-details-dialog__carousel {
+  min-width: 0;
+}
+
+.task-details-dialog__carousel .task-card__attachment {
+  margin: 0;
+  border: 1px solid #303746;
+  border-radius: 0.5rem;
+}
+
+.task-details-dialog__carousel .task-card__attachment-slide {
+  min-height: 20rem;
+}
+
+.task-details-dialog__carousel .task-card__attachment-slide>img,
+.task-details-dialog__carousel .task-card__attachment-slide>video {
+  max-height: 22rem;
+}
+
+.task-details-dialog__carousel .glb-preview__container {
+  min-height: 20rem;
+}
+
+.task-details-dialog__carousel .glb-preview__viewer {
+  height: 22rem;
+}
+
+.task-details-dialog__other-files {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.task-details-dialog__other-files h4 {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #aeb6c5;
+}
+
+.task-details-dialog__other-files .task-details-dialog__attachment {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}

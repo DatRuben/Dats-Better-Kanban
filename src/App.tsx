@@ -2621,7 +2621,6 @@ function App() {
             </p>
           )}
 
-
           <footer className="welcome-screen__footer">
             <a href="/privacy.html">
               Privacy Policy
@@ -3775,7 +3774,18 @@ function App() {
         onClose={() =>
           setSelectedTaskId(null)
         }
+        onLoadAttachment={
+          handleLoadAttachment
+        }
+        onAuthorizeAttachment={(attachment) => {
+          if (attachment.driveFileId) {
+            void handleAuthorizeExistingAttachments(
+              attachment.driveFileId,
+            )
+          }
+        }}
       />
+
 
       <footer className="app-footer">
         <span>
