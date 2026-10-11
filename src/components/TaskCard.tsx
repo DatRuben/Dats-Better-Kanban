@@ -1,7 +1,11 @@
+
 import {
+  lazy,
+  Suspense,
   useEffect,
   useState,
 } from 'react'
+
 import { useDraggable } from '@dnd-kit/react'
 import type {
   Attachment,
@@ -13,9 +17,15 @@ import {
   isGlbFileName,
   isPreviewableMedia,
 } from '../utility/attachmentTypes'
-import {
-  GlbPreview,
-} from './GlbPreview'
+
+
+const GlbPreview = lazy(async () => {
+  const module = await import('./GlbPreview')
+
+  return {
+    default: module.GlbPreview,
+  }
+})
 
 
 interface TaskCardProps {
@@ -568,15 +578,25 @@ export function TaskCard({
                   )}
                 </div>
 
+
                 {isPreviewOpen && previewedGlb && (
-                  <GlbPreview
-                    attachment={previewedGlb}
-                    onLoadAttachment={onLoadAttachment}
-                    onClose={() =>
-                      setPreviewedGlbId(null)
+                  <Suspense
+                    fallback={
+                      <div className="glb-preview__status">
+                        Loading 3D preview…
+                      </div>
                     }
-                  />
+                  >
+                    <GlbPreview
+                      attachment={previewedGlb}
+                      onLoadAttachment={onLoadAttachment}
+                      onClose={() =>
+                        setPreviewedGlbId(null)
+                      }
+                    />
+                  </Suspense>
                 )}
+
               </div>
             )
           })}

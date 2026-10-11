@@ -2367,7 +2367,9 @@ function App() {
     isInvitingMember,
     removingMemberId,
     updatingMemberId,
+    expireGoogleSession,
   ])
+
 
   async function handleConnectGoogle(
     forceNewToken = false,
