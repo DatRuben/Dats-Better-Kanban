@@ -411,52 +411,54 @@ export function TaskCreator({
                         </div>
                     )}
 
+
                 <input
                     type="file"
                     accept="image/*,video/mp4,.blend,.glb"
                     multiple
                     disabled={isSubmitting || hasStagedUploads}
                     onChange={(event) => {
-                        const selectedFiles =
-                            Array.from(
-                                event.target
-                                    .files ?? [],
-                            )
+                        const selectedFiles = Array.from(
+                            event.currentTarget.files ?? [],
+                        )
 
-                        const unsupportedFile =
-                            selectedFiles.find(
-                                (file) =>
-                                    !isSupportedAttachmentFile(
-                                        file,
-                                    ),
-                            )
+                        event.currentTarget.value = ''
 
-                        if (
-                            unsupportedFile
-                        ) {
-                            setAttachmentFiles(
-                                [],
-                            )
+                        const unsupportedFile = selectedFiles.find(
+                            (file) =>
+                                !isSupportedAttachmentFile(file),
+                        )
 
+                        if (unsupportedFile) {
                             setAttachmentUploadError(
                                 `${unsupportedFile.name} is not a supported attachment type.`,
                             )
-
-                            event.target.value =
-                                ''
-
                             return
                         }
 
-                        setAttachmentFiles(
-                            selectedFiles,
-                        )
+                        setAttachmentFiles((currentFiles) => {
+                            const newFiles = selectedFiles.filter(
+                                (file) =>
+                                    !currentFiles.some(
+                                        (existingFile) =>
+                                            existingFile.name === file.name &&
+                                            existingFile.size === file.size &&
+                                            existingFile.lastModified ===
+                                            file.lastModified &&
+                                            existingFile.type === file.type,
+                                    ),
+                            )
 
-                        setAttachmentUploadError(
-                            null,
-                        )
+                            return [
+                                ...currentFiles,
+                                ...newFiles,
+                            ]
+                        })
+
+                        setAttachmentUploadError(null)
                     }}
                 />
+
 
                 {attachmentFiles.length >
                     0 && (
@@ -471,14 +473,13 @@ export function TaskCreator({
                                     index,
                                 ) => (
                                     <div
-                                        key={`${file.name}-${file.size}-${file.lastModified}`}
+                                        key={`${file.name}-${file.size}-${file.lastModified}-${file.type}`}
                                     >
                                         <small>
                                             {
                                                 file.name
                                             }
                                         </small>
-
 
                                         <button
                                             type="button"

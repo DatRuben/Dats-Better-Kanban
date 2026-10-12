@@ -30,9 +30,11 @@ export function GlbPreview({
   attachment,
   onLoadAttachment,
   onClose,
+  onRetry,
   onAuthorizeAttachment,
   embedded = false,
 }: GlbPreviewProps) {
+
   const viewerContainerRef =
     useRef<HTMLDivElement | null>(null)
 
@@ -219,7 +221,6 @@ export function GlbPreview({
         <div className="glb-preview__status">
           <p>{loadError}</p>
 
-
           {onRetry && (
             <button
               type="button"
@@ -229,7 +230,6 @@ export function GlbPreview({
               Retry Preview
             </button>
           )}
-
 
           {canOfferAuthorization && (
             <button
