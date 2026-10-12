@@ -21,6 +21,7 @@ interface GlbPreviewProps {
     driveFileId: string,
   ) => Promise<Blob | null>
   onClose: () => void
+  onRetry?: () => void
   onAuthorizeAttachment?: () => void
   embedded?: boolean
 }
@@ -217,6 +218,18 @@ export function GlbPreview({
       {loadError && (
         <div className="glb-preview__status">
           <p>{loadError}</p>
+
+
+          {onRetry && (
+            <button
+              type="button"
+              className="task-card__file-action"
+              onClick={onRetry}
+            >
+              Retry Preview
+            </button>
+          )}
+
 
           {canOfferAuthorization && (
             <button

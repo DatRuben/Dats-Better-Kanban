@@ -2153,3 +2153,13 @@
     align-items: flex-start;
   }
 }
+
+
+.glb-preview__status .task-card__file-action {
+  display: inline-flex;
+  margin: 0.5rem 0.25rem 0;
+}
+
+.glb-preview__status .task-card__file-action:hover {
+  background: #303746;
+}
