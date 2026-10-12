@@ -2182,19 +2182,16 @@
 }
 
 @media (hover: hover) {
-  .task-card__attachment-caption:is(
-    :hover,
+
+  .task-card__attachment-caption:is( :hover,
     :focus-within,
-    :has(.attachment-download__error)
-  ) .task-card__attachment-caption-info {
+    :has(.attachment-download__error)) .task-card__attachment-caption-info {
     opacity: 0;
   }
 
-  .task-card__attachment-caption:is(
-    :hover,
+  .task-card__attachment-caption:is( :hover,
     :focus-within,
-    :has(.attachment-download__error)
-  ) .task-card__attachment-download {
+    :has(.attachment-download__error)) .task-card__attachment-download {
     opacity: 1;
     pointer-events: auto;
   }
@@ -2443,5 +2440,35 @@
 
   .member-panel>div:not(.member-panel__invite)>select {
     margin-left: 0;
+  }
+}
+
+
+/* Project details in normal viewing mode */
+
+.app-header .project-title {
+  max-width: 32rem;
+  margin: 0;
+  padding: 0.15rem 0.3rem;
+  color: #e7eaf0;
+  font-size: 2rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.app-description--static {
+  box-sizing: border-box;
+  width: min(100%, 40rem);
+  min-height: 3.5rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid transparent;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+  .app-header .project-title {
+    font-size: 1.5rem;
   }
 }

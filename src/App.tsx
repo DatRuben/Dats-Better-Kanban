@@ -2860,6 +2860,11 @@ function App() {
     )
   }
 
+  const isEditingProjectDetails =
+    effectiveActiveView === 'board' &&
+    isPipelineEditing &&
+    canCurrentUserEditProjectSettings
+
   return (
     <main className="app-shell">
       <header className="app-header">
@@ -2871,42 +2876,49 @@ function App() {
             </span>
           </p>
 
-          <input
-            className="project-title-input"
-            type="text"
-            value={project.name}
-            readOnly={!canCurrentUserEditProjectSettings}
-            onChange={(event) => {
-              setProject((currentProject) => ({
-                ...currentProject,
-                name: event.target.value,
-              }))
-            }}
-            aria-label="Project name"
-          />
+          {isEditingProjectDetails ? (
+            <>
+              <input
+                className="project-title-input"
+                type="text"
+                value={project.name}
+                aria-label="Project name"
+                onChange={(event) => {
+                  setProject((currentProject) => ({
+                    ...currentProject,
+                    name: event.target.value,
+                  }))
+                }}
+              />
 
+              <textarea
+                className="app-description app-description--editable"
+                aria-label="Project description"
+                rows={2}
+                maxLength={500}
+                value={
+                  project.description ??
+                  DEFAULT_PROJECT_DESCRIPTION
+                }
+                onChange={(event) => {
+                  setProject((currentProject) => ({
+                    ...currentProject,
+                    description: event.target.value,
+                  }))
+                }}
+              />
+            </>
+          ) : (
+            <>
+              <h1 className="project-title">
+                {project.name}
+              </h1>
 
-          <textarea
-            className="app-description app-description--editable"
-            aria-label="Project description"
-            rows={2}
-            maxLength={500}
-            value={
-              project.description ??
-              DEFAULT_PROJECT_DESCRIPTION
-            }
-            readOnly={
-              !canCurrentUserEditProjectSettings
-            }
-            onChange={(event) => {
-              const description = event.target.value
-
-              setProject((currentProject) => ({
-                ...currentProject,
-                description,
-              }))
-            }}
-          />
+              <p className="app-description app-description--static">
+                {project.description ?? DEFAULT_PROJECT_DESCRIPTION}
+              </p>
+          </>
+          )}
 
         </div>
 
