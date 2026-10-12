@@ -3027,12 +3027,53 @@ function App() {
                       )
 
                     return (
+
                       <li key={entry.attachment.driveFileId}>
-                        {entry.attachment.fileName}
-                        {' — '}
-                        {linkedLocally
-                          ? 'Linked locally; awaiting Drive confirmation'
-                          : 'Not linked locally; recovery may be needed'}
+                        <span>
+                          {entry.attachment.fileName}
+                          {' — '}
+                          {linkedLocally
+                            ? 'Linked locally; awaiting Drive confirmation'
+                            : 'Not linked locally; recovery may be needed'}
+                        </span>
+                        
+                        {!linkedLocally && (
+                          <button
+                            type="button"
+                            className="pending-upload-dismiss"
+                            onClick={() => {
+                              const driveFileId =
+                                entry.attachment.driveFileId
+
+                              if (!driveFileId) {
+                                return
+                              }
+
+                              const confirmed = window.confirm(
+                                `Dismiss recovery record for "${entry.attachment.fileName}"? This will not delete any Google Drive files.`,
+                              )
+
+                              if (!confirmed) {
+                                return
+                              }
+
+                              removePendingUpload(
+                                entry.userPermissionId,
+                                entry.projectFileId,
+                                driveFileId,
+                              )
+
+                              setPendingUploads(
+                                getPendingUploads(
+                                  entry.userPermissionId,
+                                  entry.projectFileId,
+                                ),
+                              )
+                            }}
+                          >
+                            Dismiss
+                          </button>
+                        )}
                       </li>
                     )
                   })}

@@ -2211,17 +2211,14 @@
   align-items: flex-end;
 }
 
-.task-card__attachment-frame:hover
-> .task-card__attachment-download,
-.task-card__attachment-frame:focus-within
-> .task-card__attachment-download {
+.task-card__attachment-frame:hover>.task-card__attachment-download,
+.task-card__attachment-frame:focus-within>.task-card__attachment-download {
   opacity: 1;
   pointer-events: auto;
 }
 
 
-.task-card__attachment-frame:has(.attachment-download__error)
-> .task-card__attachment-download {
+.task-card__attachment-frame:has(.attachment-download__error)>.task-card__attachment-download {
   opacity: 1;
   pointer-events: auto;
 }
@@ -2488,4 +2485,21 @@
   .app-header .project-title {
     font-size: 1.5rem;
   }
+}
+
+.pending-upload-dismiss {
+  margin-left: 0.75rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid #465269;
+  border-radius: 0.4rem;
+  color: #c8d0df;
+  background: #252a35;
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.pending-upload-dismiss:hover {
+  border-color: #6d86b8;
+  background: #303746;
 }
