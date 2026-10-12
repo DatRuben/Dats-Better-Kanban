@@ -70,7 +70,6 @@ import {
   pickGoogleDriveFolder,
   pickGoogleDriveProjectFile,
 } from './storage/googleDrivePicker'
-import { TaskCard } from './components/TaskCard'
 import {
   TaskDetailsDialog,
 } from './components/TaskDetailsDialog'
