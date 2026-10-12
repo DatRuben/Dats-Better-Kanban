@@ -254,47 +254,39 @@ export function TaskDetailsDialog({
                                 />
                             </div>
 
+
                             {fileAttachments.length > 0 && (
                                 <div className="task-details-dialog__other-files">
                                     <h4>Other files</h4>
 
-                                    {fileAttachments.map(
-                                        (attachment) => (
-                                            <div
-                                                key={attachment.id}
-                                                className="task-details-dialog__attachment"
-                                            >
-                                                <strong>
-                                                    {attachment.fileName}
-                                                </strong>
+                                    {fileAttachments.map((attachment) => (
+                                        <div
+                                            key={attachment.id}
+                                            className="task-details-dialog__attachment"
+                                        >
+                                            <strong>
+                                                {attachment.fileName}
+                                            </strong>
 
-                                                <span>
-                                                    {getAttachmentTypeLabel(
-                                                        attachment.fileName,
-                                                        attachment.mimeType,
-                                                    )}
-                                                </span>
-                                            </div>
-                                        ),
-                                    )}
-                                    <span>
-                                        {getAttachmentTypeLabel(
-                                            attachment.fileName,
-                                            attachment.mimeType,
-                                        )}
-                                    </span>
+                                            <span>
+                                                {getAttachmentTypeLabel(
+                                                    attachment.fileName,
+                                                    attachment.mimeType,
+                                                )}
+                                            </span>
 
-
-                                    <AttachmentDownloadButton
-                                        attachment={attachment}
-                                        onLoadAttachment={onLoadAttachment}
-                                        onAuthorizeAttachment={
-                                            onAuthorizeAttachment
-                                        }
-                                    />
-
+                                            <AttachmentDownloadButton
+                                                attachment={attachment}
+                                                onLoadAttachment={onLoadAttachment}
+                                                onAuthorizeAttachment={
+                                                    onAuthorizeAttachment
+                                                }
+                                            />
+                                        </div>
+                                    ))}
                                 </div>
                             )}
+
                         </div>
                     )}
                 </div>
