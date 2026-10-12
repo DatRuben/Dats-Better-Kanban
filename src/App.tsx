@@ -2917,7 +2917,7 @@ function App() {
               <p className="app-description app-description--static">
                 {project.description ?? DEFAULT_PROJECT_DESCRIPTION}
               </p>
-          </>
+            </>
           )}
 
         </div>
@@ -3696,6 +3696,7 @@ function App() {
         </DragDropProvider>
       )}
 
+
       {effectiveActiveView === 'mine' && (
         <section className="my-tasks-view">
           <h2>My Tasks</h2>
@@ -3705,57 +3706,52 @@ function App() {
               No active tasks are assigned to you.
             </p>
           ) : (
-            <div className="my-tasks-list">
-              {myTasks.map((task, index) => {
-                const taskColumn =
-                  columns.find(
-                    (column) =>
-                      column.id === task.columnId,
-                  )
-
-                const assignee =
-                  currentProject.members.find(
-                    (member) =>
-                      member.id === task.assigneeId,
-                  ) ?? null
+            <ul className="my-tasks-list">
+              {myTasks.map((task) => {
+                const taskColumn = columns.find(
+                  (column) =>
+                    column.id === task.columnId,
+                )
 
                 return (
-                  <div
+                  <li
                     key={task.id}
                     className="my-tasks-item"
                   >
-                    <p className="my-tasks-item__column">
-                      {taskColumn?.title ??
-                        'Unknown section'}
-                    </p>
+                    <button
+                      type="button"
+                      className="my-tasks-item__button"
+                      onClick={() =>
+                        setSelectedTaskId(task.id)
+                      }
+                    >
+                      <span className="my-tasks-item__main">
+                        <span className="my-tasks-item__title">
+                          {task.title}
+                        </span>
 
+                        <span className="my-tasks-item__column">
+                          {taskColumn?.title ??
+                            'Unknown section'}
+                        </span>
+                      </span>
 
-                    <TaskCard
-                      task={task}
-                      assignee={assignee}
-                      taskNumber={index + 1}
-                      isPipelineEditing={false}
-                      isEditing={false}
-                      isTaskEditing={false}
-                      onEdit={() => { }}
-                      onLoadAttachment={handleLoadAttachment}
-                      canMoveManualUp={false}
-                      canMoveManualDown={false}
-                      onMoveManualUp={() => { }}
-                      onMoveManualDown={() => { }}
-                      onAuthorizeAttachment={(attachment) => {
-                        if (attachment.driveFileId) {
-                          void handleAuthorizeExistingAttachments(
-                            attachment.driveFileId,
-                          )
-                        }
-                      }}
-                    />
+                      <span
+                        className={`my-tasks-item__priority timeline-item__priority--${task.priority}`}
+                      >
+                        {task.priority}
+                      </span>
 
-                  </div>
+                      <span className="my-tasks-item__deadline">
+                        {task.deadline
+                          ? formatDeadline(task.deadline)
+                          : 'No deadline'}
+                      </span>
+                    </button>
+                  </li>
                 )
               })}
-            </div>
+            </ul>
           )}
         </section>
       )}

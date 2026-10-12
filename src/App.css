@@ -1326,24 +1326,93 @@
 
 .my-tasks-list {
   display: grid;
-  grid-template-columns:
-    repeat(auto-fill,
-      minmax(16rem, 1fr));
-  gap: 1rem;
-  margin-top: 1rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
 }
 
 .my-tasks-item {
   min-width: 0;
 }
 
+.my-tasks-item__button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  min-width: 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid #303746;
+  border-radius: 0.55rem;
+  color: #e7eaf0;
+  background: #222630;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.my-tasks-item__button:hover {
+  border-color: #6d86b8;
+  background: #2a303c;
+}
+
+.my-tasks-item__button:focus-visible {
+  outline: 2px solid #8ba6dc;
+  outline-offset: 2px;
+}
+
+.my-tasks-item__main {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.my-tasks-item__title {
+  min-width: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
 .my-tasks-item__column {
-  margin: 0 0 0.4rem;
   color: #8f99aa;
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
+}
+
+.my-tasks-item__priority {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.my-tasks-item__deadline {
+  color: #aeb6c5;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .my-tasks-item__button {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.35rem 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .my-tasks-item__main {
+    grid-row: span 2;
+  }
+
+  .my-tasks-item__priority,
+  .my-tasks-item__deadline {
+    text-align: right;
+  }
 }
 
 .my-tasks-view__empty {
@@ -1583,13 +1652,6 @@
 
   .project-chooser__header {
     flex-wrap: wrap;
-  }
-
-  .my-tasks-list {
-    grid-template-columns:
-      repeat(auto-fill,
-        minmax(min(16rem, 100%),
-          1fr));
   }
 
   .task-details-dialog {
