@@ -364,35 +364,22 @@ export function AttachmentCarousel({
                         >
                             {'>'}
                         </button>
+
+                        <div className="task-card__attachment-download">
+                            <AttachmentDownloadButton
+                                key={selectedAttachment.id}
+                                attachment={selectedAttachment}
+                                onLoadAttachment={onLoadAttachment}
+                                onAuthorizeAttachment={
+                                    onAuthorizeAttachment
+                                }
+                            />
+                        </div>
+
                     </div>
                 )}
             </div>
-
-
-            <div className="task-card__attachment-caption">
-                <div className="task-card__attachment-caption-info">
-                    <span title={selectedAttachment.fileName}>
-                        {selectedAttachment.fileName}
-                    </span>
-
-                    <span>
-                        {currentIndex + 1} / {mediaAttachments.length}
-                    </span>
-                </div>
-
-                <div className="task-card__attachment-download">
-                    <AttachmentDownloadButton
-                        key={selectedAttachment.id}
-                        attachment={selectedAttachment}
-                        onLoadAttachment={onLoadAttachment}
-                        onAuthorizeAttachment={
-                            onAuthorizeAttachment
-                        }
-                    />
-                </div>
-            </div>
-
-
+            
             {hasMultipleAttachments && (
                 <div className="task-card__attachment-indicators">
                     {mediaAttachments.map(

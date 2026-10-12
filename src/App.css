@@ -1920,34 +1920,6 @@
   object-fit: contain;
 }
 
-.task-card__attachment-caption {
-  position: relative;
-  color: #b9c3d4;
-  background: #1b1f27;
-  font-size: 0.7rem;
-}
-
-.task-card__attachment-caption-info {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  min-width: 0;
-  padding: 0.45rem 0.65rem;
-}
-
-.task-card__attachment-caption-info span:first-child {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.task-card__attachment-caption-info span:last-child {
-  flex: 0 0 auto;
-}
-
-
 .task-card__attachment-slide .glb-preview {
   border: none;
   border-radius: 0;
@@ -2236,27 +2208,43 @@
   transition: opacity 0.15s ease;
 }
 
+
+/* Download overlay on attachment preview */
+
+.task-card__attachment-download {
+  position: absolute;
+  z-index: 2;
+  top: 0.6rem;
+  right: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  box-sizing: border-box;
+  max-width: calc(100% - 1.2rem);
+  padding: 0.3rem;
+  border: 1px solid #384155;
+  border-radius: 0.45rem;
+  background: rgb(27 31 39 / 92%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
 .task-card__attachment-download .attachment-download {
   align-items: flex-end;
 }
 
-@media (hover: hover) {
-  .task-card__attachment-caption:is(:hover, :focus-within) .task-card__attachment-caption-info {
-    opacity: 0;
-  }
-
-  .task-card__attachment-caption:is(:hover, :focus-within) .task-card__attachment-download {
-    opacity: 1;
-    pointer-events: auto;
-  }
+.task-card__attachment-frame:hover
+> .task-card__attachment-download,
+.task-card__attachment-frame:focus-within
+> .task-card__attachment-download {
+  opacity: 1;
+  pointer-events: auto;
 }
 
-.task-card__attachment-caption:has(.attachment-download__error) .task-card__attachment-caption-info {
-  display: none;
-}
 
-.task-card__attachment-caption:has(.attachment-download__error) .task-card__attachment-download {
-  position: relative;
+.task-card__attachment-frame:has(.attachment-download__error)
+> .task-card__attachment-download {
   opacity: 1;
   pointer-events: auto;
 }
@@ -2264,12 +2252,11 @@
 
 @media (hover: none) {
   .task-card__attachment-download {
-    position: static;
     opacity: 1;
     pointer-events: auto;
-    border-top: 1px solid #303746;
   }
 }
+
 
 .app-header__actions {
   flex-wrap: wrap;
