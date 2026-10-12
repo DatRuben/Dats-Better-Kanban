@@ -2174,3 +2174,231 @@
 .task-card__attachment-download .attachment-download {
   align-items: flex-end;
 }
+
+.app-header__actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: min(100%, 52rem);
+  min-width: 0;
+}
+
+.shared-project-warning {
+  display: flex;
+  flex: 1 1 100%;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid #384155;
+  border-radius: 0.65rem;
+  background: #1b202a;
+  color: #b9c3d4;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.shared-project-warning>span {
+  flex: 1 1 14rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.shared-project-warning>button {
+  flex: 0 0 auto;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid #6d86b8;
+  border-radius: 0.5rem;
+  color: #e7eaf0;
+  background: #2a3447;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.shared-project-warning>button:hover:not(:disabled) {
+  border-color: #8ba6dc;
+  background: #35435a;
+}
+
+.shared-project-warning>button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.shared-project-warning ul {
+  flex: 1 1 100%;
+  margin: 0;
+  padding-left: 1.25rem;
+  color: #aeb6c5;
+  overflow-wrap: anywhere;
+}
+
+.shared-project-warning li+li {
+  margin-top: 0.35rem;
+}
+
+.member-panel {
+  display: grid;
+  gap: 0.85rem;
+  margin: -1rem 0 1.5rem;
+  padding: 1.25rem;
+  border: 1px solid #303746;
+  border-radius: 0.75rem;
+  background: #171a21;
+}
+
+.member-panel h2 {
+  margin: 0;
+  color: #e7eaf0;
+  font-size: 1.1rem;
+}
+
+
+.member-panel__invite {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 8rem auto;
+  align-items: center;
+  gap: 0.65rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #303746;
+}
+
+.member-panel input,
+.member-panel select {
+  min-width: 0;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #384155;
+  border-radius: 0.5rem;
+  color: #e7eaf0;
+  background: #252a35;
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+.member-panel input::placeholder {
+  color: #8f99aa;
+}
+
+.member-panel button {
+  padding: 0.65rem 0.9rem;
+  border: 1px solid #6d86b8;
+  border-radius: 0.5rem;
+  color: #e7eaf0;
+  background: #2a3447;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.member-panel button:hover:not(:disabled) {
+  border-color: #8ba6dc;
+  background: #35435a;
+}
+
+.member-panel button:disabled,
+.member-panel select:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+
+.member-panel>div:not(.member-panel__invite) {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+  min-width: 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid #303746;
+  border-radius: 0.55rem;
+  background: #222630;
+}
+
+.member-panel>div:not(.member-panel__invite)>strong {
+  flex: 1 1 10rem;
+  min-width: 0;
+  color: #e7eaf0;
+  overflow-wrap: anywhere;
+}
+
+.member-panel>div:not(.member-panel__invite)>span {
+  color: #aeb6c5;
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.member-panel>div:not(.member-panel__invite)>select {
+  margin-left: auto;
+}
+
+
+.member-panel>div:not(.member-panel__invite)>button {
+  border-color: #69424a;
+  background: #34252b;
+  color: #ffb6bc;
+}
+
+.member-panel>div:not(.member-panel__invite)>button:hover:not(:disabled) {
+  border-color: #a65b68;
+  background: #493038;
+}
+
+
+.shared-project-warning button:focus-visible,
+.member-panel button:focus-visible,
+.member-panel input:focus-visible,
+.member-panel select:focus-visible {
+  outline: 2px solid #8ba6dc;
+  outline-offset: 2px;
+}
+
+@media (max-width: 900px) {
+  .app-header__actions {
+    max-width: none;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  .shared-project-warning {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .shared-project-warning>span {
+    flex: initial;
+  }
+
+  .shared-project-warning>button {
+    width: 100%;
+  }
+
+  .member-panel {
+    padding: 0.85rem;
+  }
+
+  .member-panel__invite {
+    grid-template-columns: 1fr;
+  }
+
+  .member-panel__invite>button {
+    width: 100%;
+  }
+
+  .member-panel>div:not(.member-panel__invite) {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .member-panel>div:not(.member-panel__invite)>strong {
+    flex: initial;
+  }
+
+  .member-panel>div:not(.member-panel__invite)>select {
+    margin-left: 0;
+  }
+}
