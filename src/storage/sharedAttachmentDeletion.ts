@@ -75,14 +75,17 @@ function hasSuccessReceipt(
     }
 }
 
+
 function rememberSuccess(
     key: string,
 ): void {
     try {
         localStorage.setItem(key, '1')
     } catch {
+        // Do not interrupt attachment cleanup.
     }
 }
+
 
 function pauseRetry(
     key: string,
