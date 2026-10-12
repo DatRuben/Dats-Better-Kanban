@@ -1672,77 +1672,134 @@ async function getTaskFileName(
   return `${cleanTitle} - ${task.id}.json`
 }
 
+
 export async function uploadAttachmentToDrive(
   accessToken: string,
   attachmentsFolderId: string,
   file: File,
 ): Promise<string> {
   const mimeType =
-    file.type ||
-    'application/octet-stream'
+    file.type || 'application/octet-stream'
 
-  const boundary =
-    `dats_${crypto.randomUUID()}`
+  const metadata = {
+    name: file.name,
+    mimeType,
+    parents: [attachmentsFolderId],
+  }
 
-  const metadata =
-    JSON.stringify({
-      name: file.name,
-      mimeType,
-      parents: [
-        attachmentsFolderId,
-      ],
-    })
+  function uploadError(
+    status: number,
+    stage: string,
+  ): Error {
+    let guidance =
+      'Check your Google Drive connection and retry.'
 
-  const multipartBody =
-    new Blob(
-      [
-        `--${boundary}\r\n`,
-        'Content-Type: application/json; charset=UTF-8\r\n',
-        '\r\n',
-        metadata,
-        '\r\n',
+    if (status === 401) {
+      guidance =
+        'Your Google session may have expired. Reconnect your account.'
+    } else if (status === 403) {
+      guidance =
+        'Google Drive denied the request. Check folder permissions or usage limits.'
+    } else if (status === 404) {
+      guidance =
+        'The upload destination may no longer be accessible.'
+    } else if (status === 413) {
+      guidance =
+        'Google Drive rejected the upload size.'
+    } else if (status === 429 || status >= 500) {
+      guidance =
+        'Google Drive may be temporarily unavailable or rate-limited. Try again later.'
+    }
 
-        `--${boundary}\r\n`,
-        `Content-Type: ${mimeType}\r\n`,
-        '\r\n',
-        file,
-        '\r\n',
-
-        `--${boundary}--\r\n`,
-      ],
+    return new Error(
+      `Google Drive attachment upload ${stage} failed with status ${status}. ${guidance}`,
     )
+  }
 
-  const uploadResponse =
-    await fetch(
-      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',
+  let sessionResponse: Response
+
+  try {
+    sessionResponse = await fetch(
+      'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=id',
       {
         method: 'POST',
-
         headers: {
           Authorization:
             `Bearer ${accessToken}`,
-
           'Content-Type':
-            `multipart/related; boundary=${boundary}`,
+            'application/json; charset=UTF-8',
+          'X-Upload-Content-Type':
+            mimeType,
+          'X-Upload-Content-Length':
+            String(file.size),
         },
-
-        body: multipartBody,
+        body: JSON.stringify(metadata),
       },
     )
+  } catch {
+    throw new Error(
+      'Could not start the Google Drive upload. Check your network connection and try again.',
+    )
+  }
+
+  if (!sessionResponse.ok) {
+    throw uploadError(
+      sessionResponse.status,
+      'initialization',
+    )
+  }
+
+  const sessionUrl =
+    sessionResponse.headers.get('Location')
+
+  if (!sessionUrl) {
+    throw new Error(
+      'Google Drive did not return an upload session URL.',
+    )
+  }
+
+  let uploadResponse: Response
+
+  try {
+    uploadResponse = await fetch(
+      sessionUrl,
+      {
+        method: 'PUT',
+        headers: {
+          Authorization:
+            `Bearer ${accessToken}`,
+          'Content-Type': mimeType,
+        },
+        body: file,
+      },
+    )
+  } catch {
+    throw new Error(
+      'The Google Drive file transfer was interrupted. Check whether the file appeared in Drive before uploading it again.',
+    )
+  }
 
   if (!uploadResponse.ok) {
-    throw new Error(
-      `Google Drive attachment upload failed with status ${uploadResponse.status}.`,
+    throw uploadError(
+      uploadResponse.status,
+      'transfer',
     )
   }
 
   const uploadedFile =
     await uploadResponse.json() as {
-      id: string
+      id?: string
     }
+
+  if (!uploadedFile.id) {
+    throw new Error(
+      'Google Drive completed the upload but did not return a file ID. Check the attachments folder before retrying.',
+    )
+  }
 
   return uploadedFile.id
 }
+
 
 export async function downloadAttachmentFromDrive(
   accessToken: string,
