@@ -1896,8 +1896,6 @@
 }
 
 
-/* Unified attachment carousel */
-
 .task-card__attachment,
 .task-card__attachment-frame,
 .task-card__attachment img,
@@ -1939,9 +1937,6 @@
 .task-card__attachment-slide .glb-preview__status {
   background: #222630;
 }
-
-
-/* Project tag autocomplete */
 
 .task-creator__tag-picker {
   position: relative;
@@ -2192,24 +2187,6 @@
 .glb-preview__status .task-card__file-action:hover {
   background: #303746;
 }
-
-.task-card__attachment-download {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  box-sizing: border-box;
-  min-width: 0;
-  padding: 0.25rem 0.65rem;
-  background: #1b1f27;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s ease;
-}
-
-
-/* Download overlay on attachment preview */
 
 .task-card__attachment-download {
   position: absolute;
@@ -2485,9 +2462,6 @@
     margin-left: 0;
   }
 }
-
-
-/* Project details in normal viewing mode */
 
 .app-header .project-title {
   max-width: 32rem;
