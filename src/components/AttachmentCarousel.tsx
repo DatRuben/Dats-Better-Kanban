@@ -13,6 +13,9 @@ import {
     isPreviewableMedia,
 } from '../utility/attachmentTypes'
 import {
+    AttachmentDownloadButton,
+} from './AttachmentDownloadButton'
+import {
     isLikelyAttachmentAccessError,
 } from '../storage/attachmentAuthorization'
 
@@ -373,6 +376,17 @@ export function AttachmentCarousel({
                 <span>
                     {currentIndex + 1} / {mediaAttachments.length}
                 </span>
+            </div>
+
+            <div className="task-card__attachment-download">
+                <AttachmentDownloadButton
+                    key={selectedAttachment.id}
+                    attachment={selectedAttachment}
+                    onLoadAttachment={onLoadAttachment}
+                    onAuthorizeAttachment={
+                        onAuthorizeAttachment
+                    }
+                />
             </div>
 
             {hasMultipleAttachments && (

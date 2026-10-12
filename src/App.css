@@ -2162,3 +2162,15 @@
 .glb-preview__status .task-card__file-action:hover {
   background: #303746;
 }
+
+.task-card__attachment-download {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.45rem 0.65rem;
+  border-top: 1px solid #303746;
+  background: #1b1f27;
+}
+
+.task-card__attachment-download .attachment-download {
+  align-items: flex-end;
+}
